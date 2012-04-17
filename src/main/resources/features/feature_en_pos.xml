@@ -1,0 +1,57 @@
+<!--Feature template for POS tagging in English -->
+<feature_template>
+	<cutoff label="0" feature="1" df="1" ambiguity="0.5"/>
+	<cutoff label="0" feature="1" df="2" ambiguity="0.7"/>
+
+	<feature n="1" f0="i-3:f"/>
+	<feature n="1" f0="i-2:f"/>
+	<feature n="1" f0="i-1:f"/>
+	<feature n="1" f0="i:f"/>
+	<feature n="1" f0="i+1:f"/>
+	<feature n="1" f0="i+2:f"/>
+	<feature n="1" f0="i+3:f"/>
+
+	<feature n="1" f0="i-3:p"/>
+	<feature n="1" f0="i-2:p"/>
+	<feature n="1" f0="i-1:p"/>
+	<feature n="1" f0="i:a"/>
+	<feature n="1" f0="i+1:a"/>
+	<feature n="1" f0="i+2:a"/>
+	<feature n="1" f0="i+3:a"/>
+	
+	<feature n="2" f0="i-2:m" f1="i-1:m"/>
+	<feature n="2" f0="i-1:m" f1="i:m"/>
+	<feature n="2" f0="i:m"   f1="i+1:m"/>
+	<feature n="2" f0="i+1:m" f1="i+2:m"/>
+	<feature n="2" f0="i-1:m" f1="i+1:m"/>
+	
+	<feature n="2" f0="i-2:p" f1="i-1:p"/>
+	<feature n="2" f0="i+1:a" f1="i+2:a"/>
+	<feature n="2" f0="i-1:p" f1="i+1:a"/>
+	<feature n="2" f0="i-1:p" f1="i:a"   visible="false"/>
+	<feature n="2" f0="i:a"   f1="i+1:a" visible="false"/>
+	
+	<feature n="3" f0="i-2:m" f1="i-1:m" f2="i:m"/>
+	<feature n="3" f0="i-1:m" f1="i:m"   f2="i+1:m"/>
+	<feature n="3" f0="i:m"   f1="i+1:m" f2="i+2:m"/>
+	<feature n="3" f0="i-2:m" f1="i-1:m" f2="i+1:m"/>
+	<feature n="3" f0="i-1:m" f1="i+1:m" f2="i+2:m"/>
+	
+	<feature n="3" f0="i-2:p" f1="i-1:p" f2="i:a"/>
+	<feature n="3" f0="i-1:p" f1="i:a"   f2="i+1:a"/>
+	<feature n="3" f0="i-2:p" f1="i-1:p" f2="i+1:a"/>	
+	<feature n="3" f0="i-1:p" f1="i+1:a" f2="i+2:a"/>
+	<feature n="3" f0="i:a"   f1="i+1:a" f2="i+2:a" visible="false"/>
+	
+	<feature t="s" n="1" f0="i:pf3"/>
+	<feature t="s" n="1" f0="i:sf4"/>
+	
+	<feature t="b" n="1" f0="i:b0" note="all upper case"/>
+	<feature t="b" n="1" f0="i:b1" note="all lower case"/>
+	<feature t="b" n="1" f0="i:b2" note="begins with a capital letter"/>
+	<feature t="b" n="1" f0="i:b3" note="contains a capital letter not at the beginning"/>
+	<feature t="b" n="1" f0="i:b4" note="contains more than one capital letters not at the beginning"/>
+	<feature t="b" n="1" f0="i:b5" note="contains a period"/>
+	<feature t="b" n="1" f0="i:b6" note="contains a number"/>
+	<feature t="b" n="1" f0="i:b7" note="contains a hyphen"/>
+</feature_template>

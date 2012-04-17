@@ -1,0 +1,148 @@
+/**
+* Copyright (c) 2011, Regents of the University of Colorado
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+* Neither the name of the University of Colorado at Boulder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+* POSSIBILITY OF SUCH DAMAGE.
+*/
+package edu.colorado.clear.experiment;
+
+import java.io.FileInputStream;
+
+import org.kohsuke.args4j.Option;
+import org.w3c.dom.Element;
+
+import edu.colorado.clear.classification.model.StringModel;
+import edu.colorado.clear.dependency.DEPTree;
+import edu.colorado.clear.dependency.SRLEval;
+import edu.colorado.clear.dependency.SRLParser;
+import edu.colorado.clear.feature.xml.SRLFtrXml;
+import edu.colorado.clear.reader.SRLReader;
+import edu.colorado.clear.run.SRLTrain;
+import edu.colorado.clear.util.UTInput;
+import edu.colorado.clear.util.UTXml;
+import edu.colorado.clear.util.pair.IntIntPair;
+import edu.colorado.clear.util.pair.Pair;
+import edu.colorado.clear.util.pair.StringIntPair;
+
+/**
+ * Trains a liblinear model.
+ * @since v0.1
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
+public class SRLDevelop extends SRLTrain
+{
+	@Option(name="-d", usage="the directory containing development file (input; required)", required=true, metaVar="<filename>")
+	private String s_devDir;
+	
+	public SRLDevelop() {}
+	
+	public SRLDevelop(String[] args)
+	{
+		initArgs(args);
+		
+		String[] featureXmls = new String[SRLParser.MODEL_SIZE];
+		featureXmls[SRLParser.MODEL_LEFT]  = s_featureACXml;
+		featureXmls[SRLParser.MODEL_RIGHT] = s_featureACXml;
+	//	featureXmls[SRLParser.MODEL_DOWN]  = s_featureDownXml;
+		
+		try
+		{
+			run(s_configXml, featureXmls, s_trainDir, s_devDir);	
+		}
+		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	private void run(String configXml, String[] featureXmls, String trainDir, String devDir) throws Exception
+	{
+		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
+		SRLReader reader  = (SRLReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		String[]  trainFiles = getSortedFileList(trainDir);
+		String[]  devFiles = getSortedFileList(devDir);
+		
+		SRLFtrXml[] xmls = new SRLFtrXml[featureXmls.length];
+		int i;
+		
+		for (i=0; i<xmls.length; i++)
+			xmls[i] = new SRLFtrXml(new FileInputStream(featureXmls[i]));
+		
+		Pair<StringModel[],Double> model = new Pair<StringModel[],Double>(null, 0d);
+		double prevScore;
+		
+		i = 0;
+		develop(eConfig, reader, xmls, trainFiles, devFiles, model, i++);
+		
+		do
+		{
+			prevScore = model.o2;
+			develop(eConfig, reader, xmls, trainFiles, devFiles, model, i++);
+		}
+		while (model.o2 > prevScore);
+	}
+	
+	/** @param devId if {@code -1}, train the models using all training files. */
+	protected void develop(Element eConfig, SRLReader reader, SRLFtrXml[] xmls, String[] trainFiles, String[] devFiles, Pair<StringModel[],Double> model, int boost) throws Exception
+	{
+		IntIntPair gTrans = new IntIntPair(0, 0), lTrans;
+		SRLEval gEval = new SRLEval();
+		StringIntPair[][] gHeads, sHeads;
+		SRLParser parser;
+		DEPTree tree;
+		int i;
+		
+		parser = getTrainedParser(eConfig, reader, xmls, trainFiles, model.o1, -1);
+		model.o1 = parser.getModels();
+		
+		for (String devFile : devFiles)
+		{
+			reader.open(UTInput.createBufferedFileReader(devFile));
+		//	lEval = new SRLEval();
+			
+			System.out.println("Predicting: "+devFile);
+			for (i=0; (tree = reader.next()) != null; i++)
+			{
+				gHeads = tree.getSHeads();
+				parser.label(tree);
+				lTrans = parser.getNumTransitions();
+				gTrans.i1 += lTrans.i1;
+				gTrans.i2 += lTrans.i2;
+				sHeads = tree.getSHeads();
+				
+		//		lEval.evaluate(gHeads, sHeads);
+				gEval.evaluate(gHeads, sHeads);
+				if (i%1000 == 0)	System.out.print(".");
+			}
+			System.out.println();
+			reader.close();
+			
+		//	lEval.printOverall();
+		}
+		
+		System.out.println("Total");
+		gEval.printOverall();
+		
+		System.out.printf("# of trans: %5.2f (%d/%d)\n", 100d*gTrans.i2/gTrans.i1, gTrans.i2, gTrans.i1);
+		model.o2 = gEval.getF1(SRLEval.LAS);
+	}
+	
+	static public void main(String[] args)
+	{
+		new SRLDevelop(args);
+	}
+}
