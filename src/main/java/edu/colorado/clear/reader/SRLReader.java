@@ -23,6 +23,7 @@
 */
 package edu.colorado.clear.reader;
 
+import java.util.Arrays;
 import java.util.List;
 
 import edu.colorado.clear.dependency.DEPLib;
@@ -89,17 +90,24 @@ public class SRLReader extends DEPReader
 
 		for (i=1; i<size; i++)
 		{
-			node  = tree.get(i);
-			heads = lines.get(i-1)[i_sheads];
-			if (heads.equals(AbstractColumnReader.BLANK_COLUMN))	continue;
-
-			for (String head : heads.split(DEPLib.DELIM_HEADS))
+			try
 			{
-				tmp    = head.split(DEPLib.DELIM_HEADS_KEY);
-				headId = Integer.parseInt(tmp[0]);
-				label  = tmp[1];
-				
-				node.addSHead(tree.get(headId), label);
+				node  = tree.get(i);
+				heads = lines.get(i-1)[i_sheads];
+				if (heads.equals(AbstractColumnReader.BLANK_COLUMN))	continue;
+
+				for (String head : heads.split(DEPLib.DELIM_HEADS))
+				{
+					tmp    = head.split(DEPLib.DELIM_HEADS_KEY);
+					headId = Integer.parseInt(tmp[0]);
+					label  = tmp[1];
+					
+					node.addSHead(tree.get(headId), label);				
+				}
+			}
+			catch (Exception e)
+			{
+				System.err.println(Arrays.toString(lines.get(i-1)));
 			}
 		}
 	}

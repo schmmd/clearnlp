@@ -14,7 +14,7 @@ public class PBExtract
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outFile);
 		
-		for (PBInstance instance : PBLib.getPBInstances(propFile, treeDir, false))
+		for (PBInstance instance : PBLib.getPBInstanceList(propFile, treeDir, false))
 		{
 			if (instance.getArgSize() < 2)	continue;
 			

@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -73,7 +74,7 @@ public class PBLib
 	 * @param propFile the PropBank file to retrieve instances from.
 	 * @return the sorted list of PropBank instances from the specific file.
 	 */
-	static public List<PBInstance> getPBInstances(String propFile)
+	static public List<PBInstance> getPBInstanceList(String propFile)
 	{
 		List<PBInstance> list = new ArrayList<PBInstance>();
 		PBReader   reader = new PBReader(UTInput.createBufferedFileReader(propFile));
@@ -95,9 +96,9 @@ public class PBLib
 	 * @param norm if {@code true}, normalize indices of constituent trees.
 	 * @return the sorted list of PropBank instances from the specific file.
 	 */
-	static public List<PBInstance> getPBInstances(String propFile, String treeDir, boolean norm)
+	static public List<PBInstance> getPBInstanceList(String propFile, String treeDir, boolean norm)
 	{
-		List<PBInstance> list = PBLib.getPBInstances(propFile);
+		List<PBInstance> list = PBLib.getPBInstanceList(propFile);
 		CTReader reader = new CTReader();
 		CTTree   tree   = null;
 		String treeFile = "";
@@ -124,34 +125,46 @@ public class PBLib
 		return list;
 	}
 	
-	static public List<PBInstance> getPBInstances(String propFile, String treeDir, Map<String,String> map)
+	/**
+	 * Returns a map using "treePath TreeId" as a key and a list of associated instances as a value.  
+	 * Each instance takes the constituent tree associated with it.
+	 * @param propFile the PropBank file to retrieve instances from.
+	 * @param treeDir the Treebank directory path.
+	 * @param norm if {@code true}, normalize indices of constituent trees.
+	 * @return a map using "treePath TreeId" as a key and a list of associated instances as a value.
+	 */
+	static public Map<String,List<PBInstance>> getPBInstanceMap(String propFile, String treeDir, boolean norm)
 	{
-		List<PBInstance> list = PBLib.getPBInstances(propFile);
-		CTReader reader = null;
-		CTTree   tree   = null;
-		String treeFile = "", path;
-		int    treeId   = -1;
+		Map<String,List<PBInstance>> map = new HashMap<String,List<PBInstance>>();
+		List<PBInstance> list = null;
+		String ckey, pkey = "";
 		
-		for (PBInstance instance : list)
+		for (PBInstance inst : PBLib.getPBInstanceList(propFile, treeDir, norm))
 		{
-			if ((path = map.get(instance.treePath)) != null)
-				instance.treePath = path;
+			ckey = getTreePathId(inst);
 			
-			if (!treeFile.equals(instance.treePath))
+			if (!ckey.equals(pkey))
 			{
-				treeFile = instance.treePath;
-				treeId   = -1;
-				reader   = new CTReader(UTInput.createBufferedFileReader(treeDir+File.separator+treeFile));
+				list = new ArrayList<PBInstance>();
+				pkey = ckey;
+				map.put(ckey, list);
 			}
 			
-			for (; treeId < instance.treeId; treeId++)
-				tree = reader.nextTree();
-			
-			tree.setPBLocs();
-			instance.setTree(tree);
+			list.add(inst);
 		}
 		
-		return list;
+		return map;
+	}
+	
+	static private String getTreePathId(PBInstance inst)
+	{
+		StringBuilder build = new StringBuilder();
+		
+		build.append(inst.treePath);
+		build.append(PBLib.DELIM_INST);
+		build.append(inst.treeId);
+		
+		return build.toString();
 	}
 	
 	/**

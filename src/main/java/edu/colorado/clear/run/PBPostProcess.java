@@ -57,7 +57,7 @@ public class PBPostProcess extends AbstractRun
 	
 	public void postProcess(String propFile, String postFile, String treeDir, boolean norm, String language)
 	{
-		List<PBInstance> instances = PBLib.getPBInstances(propFile, treeDir, norm);
+		List<PBInstance> instances = PBLib.getPBInstanceList(propFile, treeDir, norm);
 		mergeLightVerbs(instances);
 		PBArg aDSP;
 		

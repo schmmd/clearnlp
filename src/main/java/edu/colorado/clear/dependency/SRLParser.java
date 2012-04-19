@@ -154,15 +154,8 @@ public class SRLParser extends AbstractTool
 	/** @return the ID of the next predicate. */
 	private int getNextPredId(int prevId)
 	{
-		int i, size = d_tree.size();
-		
-		for (i=prevId+1; i<size; i++)
-		{
-			if (d_tree.get(i).getFeat(DEPLib.FEAT_PB) != null)
-				return i;
-		}
-		
-		return size;
+		DEPNode pred = d_tree.getNextPredicate(prevId);
+		return (pred != null) ? pred.id : d_tree.size();
 	}
 	
 	/** Initializes dependency arcs of all nodes. */

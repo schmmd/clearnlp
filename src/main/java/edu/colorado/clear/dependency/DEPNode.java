@@ -535,23 +535,29 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		return false;
 	}
 	
-	public int[] getSubtreeIdList()
+	public IntOpenHashSet getSubtreeIdSet()
 	{
 		IntOpenHashSet set = new IntOpenHashSet();
 		
-		getSubtreeIdListAux(set, this);
-		int[] list = set.toArray();
-		Arrays.sort(list);
-		
-		return list;
+		getSubtreeIdSetAux(set, this);
+		return set;
 	}
-	
-	private void getSubtreeIdListAux(IntOpenHashSet set, DEPNode curr)
+
+	private void getSubtreeIdSetAux(IntOpenHashSet set, DEPNode curr)
 	{
 		set.add(curr.id);
 		
 		for (DEPArc arc : curr.getDependents())
-			getSubtreeIdListAux(set, arc.getNode());
+			getSubtreeIdSetAux(set, arc.getNode());
+	}
+	
+	public int[] getSubtreeIdArray()
+	{
+		IntOpenHashSet set = getSubtreeIdSet();
+		int[] list = set.toArray();
+		Arrays.sort(list);
+		
+		return list;
 	}
 	
 	public String toStringDEP()

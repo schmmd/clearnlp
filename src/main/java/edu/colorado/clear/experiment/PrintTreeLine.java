@@ -21,7 +21,7 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.run;
+package edu.colorado.clear.experiment;
 
 import java.io.PrintStream;
 
@@ -29,6 +29,7 @@ import org.kohsuke.args4j.Option;
 
 import edu.colorado.clear.constituent.CTReader;
 import edu.colorado.clear.constituent.CTTree;
+import edu.colorado.clear.run.AbstractRun;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 

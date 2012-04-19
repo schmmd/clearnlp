@@ -1,4 +1,4 @@
-package edu.colorado.clear.run;
+package edu.colorado.clear.experiment;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -30,6 +30,7 @@ import edu.colorado.clear.propbank.PBInstance;
 import edu.colorado.clear.propbank.PBLib;
 import edu.colorado.clear.propbank.PBLoc;
 import edu.colorado.clear.reader.AbstractReader;
+import edu.colorado.clear.run.AbstractRun;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 import edu.colorado.clear.util.pair.StringIntPair;
@@ -55,7 +56,7 @@ public class C2DConvert extends AbstractRun
 	@Option(name="-l", usage="language (default: "+AbstractReader.LANG_EN+")", required=false, metaVar="<language>")
 	private String s_language = AbstractReader.LANG_EN;
 	
-	private boolean b_verbs_only = true;
+	private boolean b_verbs_only = false;
 	
 	public C2DConvert() {}
 
@@ -147,7 +148,7 @@ public class C2DConvert extends AbstractRun
 		IntObjectOpenHashMap<List<PBInstance>> map = new IntObjectOpenHashMap<List<PBInstance>>();
 		List<PBInstance> list;
 		
-		for (PBInstance inst : PBLib.getPBInstances(propFile))
+		for (PBInstance inst : PBLib.getPBInstanceList(propFile))
 		{
 			if (map.containsKey(inst.treeId))
 				list = map.get(inst.treeId);
@@ -294,27 +295,6 @@ public class C2DConvert extends AbstractRun
 			if (s_language.equals(AbstractReader.LANG_EN))
 				pred.lemma = inst.roleset.substring(0, inst.roleset.lastIndexOf("."));
 		}
-		
-	//	addMissingRolesets(cTree.getRoot(), dTree);
-	}
-	
-	void addMissingRolesets(CTNode cNode, DEPTree dTree)
-	{
-		if (CTLibEn.isVerb(cNode) && cNode.getParent().isPTag(CTLibEn.PTAG_VP) && !cNode.containsTags(CTLibEn.PTAG_VP))
-		{
-			DEPNode pred  = dTree.get(cNode.getTokenId()+1);
-			String lemma = pred.lemma;
-			
-			if (pred.getFeat(DEPLib.FEAT_PB) == null &&
-				!pred.getDependents().isEmpty() &&
-				!dTree.get(pred.id-1).isPos(CTLibEn.POS_HYPH) &&
-				!(pred.id+1 < dTree.size() && dTree.get(pred.id+1).isPos(CTLibEn.POS_HYPH)) &&
-				!(lemma.equals("'s") || lemma.equals("be") || lemma.equals("become") || lemma.equals("do") || lemma.equals("get") || lemma.equals("go") || lemma.equals("have")))
-				pred.addFeat(DEPLib.FEAT_PB, pred.lemma+".MS");
-		}
-		
-		for (CTNode child : cNode.getChildren())
-			addMissingRolesets(child, dTree);
 	}
 	
 	private void addWordSenses(CTTree cTree, DEPTree dTree, List<StringIntPair> senses)

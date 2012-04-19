@@ -45,7 +45,7 @@ import edu.colorado.clear.util.UTOutput;
  */
 public class LiblinearTrain extends AbstractRun
 {
-	@Option(name="-i", usage="the train file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-i", usage="the trainning file (input; required)", required=true, metaVar="<filename>")
 	private String s_trainFile;
 	
 	@Option(name="-m", usage="the model file (output; required)", required=true, metaVar="<filename>")

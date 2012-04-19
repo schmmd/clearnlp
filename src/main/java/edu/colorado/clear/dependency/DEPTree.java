@@ -391,4 +391,20 @@ public class DEPTree extends ArrayList<DEPNode>
 			}
 		}
 	}
+	
+	public DEPNode getNextPredicate(int prevId)
+	{
+		int i, size = size();
+		DEPNode pred;
+		
+		for (i=prevId+1; i<size; i++)
+		{
+			pred = get(i);
+			
+			if (pred.getFeat(DEPLib.FEAT_PB) != null)
+				return pred;
+		}
+		
+		return null;
+	}
 }
