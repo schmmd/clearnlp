@@ -46,24 +46,26 @@ public class CTNormalize extends AbstractRun
 	private String s_inputDir;
 	@Option(name="-o", usage="the output directory path (required)", required=true, metaVar="<dirpath>")
 	private String s_outputDir;
-	@Option(name="-e", usage="the treefile extension (required)", required=true, metaVar="<extension>")
-	private String s_extension;
+	@Option(name="-ie", usage="the input treefile extension (required)", required=true, metaVar="<extension>")
+	private String s_inputExt;
+	@Option(name="-oe", usage="the output treefile extension (required)", required=true, metaVar="<extension>")
+	private String s_outputExt;
 	
 	public CTNormalize() {}
 	
 	public CTNormalize(String[] args)
 	{
 		initArgs(args);
-		normalize(s_inputDir, s_outputDir, s_extension);
+		normalize(s_inputDir, s_outputDir, s_inputExt, s_outputExt);
 	}
 	
 	/**
 	 * Normalizes indices of constituent trees.
 	 * @param inputDir the directory containing unnormalized tree files.
 	 * @param outputDir the directory to save normalized tree files.
-	 * @param extension the tree file extension (e.g., {@code parse}).
+	 * @param inputExt the tree file extension (e.g., {@code parse}).
 	 */
-	public void normalize(String inputDir, String outputDir, String extension)
+	public void normalize(String inputDir, String outputDir, String inputExt, String outputExt)
 	{
 		CTReader    reader;
 		CTTree      tree;
@@ -75,10 +77,12 @@ public class CTNormalize extends AbstractRun
 		inputDir  += File.separator;
 		outputDir += File.separator;
 		
-		for (String filename : new File(inputDir).list(new FileExtFilter(extension)))
+		int extLength = inputExt.length();
+		
+		for (String filename : new File(inputDir).list(new FileExtFilter(inputExt)))
 		{
 			reader = new CTReader(UTInput.createBufferedFileReader(inputDir + filename));
-			fout   = UTOutput.createPrintBufferedFileStream(outputDir + filename);
+			fout   = UTOutput.createPrintBufferedFileStream(outputDir + filename.substring(0, filename.length()-extLength) + outputExt);
 			
 			while ((tree = reader.nextTree()) != null)
 			{

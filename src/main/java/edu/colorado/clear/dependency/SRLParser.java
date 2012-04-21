@@ -33,23 +33,21 @@ import java.util.regex.Matcher;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 
-import edu.colorado.clear.classification.model.AbstractModel;
 import edu.colorado.clear.classification.model.StringModel;
 import edu.colorado.clear.classification.train.StringTrainSpace;
 import edu.colorado.clear.classification.vector.StringFeatureVector;
 import edu.colorado.clear.engine.AbstractTool;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.feature.xml.SRLFtrXml;
+import edu.colorado.clear.util.map.Prob1DMap;
 import edu.colorado.clear.util.pair.IntIntPair;
 import edu.colorado.clear.util.pair.StringIntPair;
 
 public class SRLParser extends AbstractTool
 {
-	static public final int MODEL_SIZE	= 2; 
+	static public final int MODEL_SIZE	= 2;
 	static public final int MODEL_LEFT	= 0;
 	static public final int MODEL_RIGHT	= 1;
-	static public final int MODEL_DOWN	= 2;
-	static public final int MODEL_UP	= 3;
 	
 	static protected final int PATH_ALL		= 0;
 	static protected final int PATH_UP		= 1;
@@ -61,7 +59,7 @@ public class SRLParser extends AbstractTool
 	static protected final String LB_NO_ARG = "N";
 	
 	protected byte					i_flag;
-	protected SRLFtrXml[]			f_xmls;
+	protected SRLFtrXml				f_xml;
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
 	protected DEPTree				d_tree;
@@ -77,37 +75,56 @@ public class SRLParser extends AbstractTool
 	protected IntOpenHashSet    	s_skip;
 	protected List<String>			l_argns;
 	
+	protected Prob1DMap		m_down, m_up;
+	protected Set<String>	s_down, s_up;
+	
+	/** Constructs a semantic role labeler for collecting. */
+	public SRLParser()
+	{
+		i_flag = FLAG_LEXICA;
+		m_down = new Prob1DMap();
+		m_up   = new Prob1DMap();
+	}
+	
 	/** Constructs a semantic role labeler for training. */
-	public SRLParser(SRLFtrXml[] xmls, StringTrainSpace[] spaces)
+	public SRLParser(SRLFtrXml xml, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
 	{
 		i_flag   = FLAG_TRAIN;
-		f_xmls   = xmls;
+		f_xml    = xml;
 		s_spaces = spaces;
+		s_down   = sDown;
+		s_up     = sUp;
 	}
 	
 	/** Constructs a semantic role labeler for cross-validation. */
-	public SRLParser(SRLFtrXml[] xmls, StringModel[] models)
+	public SRLParser(SRLFtrXml xml, StringModel[] models, Set<String> sDown, Set<String> sUp)
 	{
 		i_flag   = FLAG_PREDICT;
-		f_xmls   = xmls;
+		f_xml    = xml;
 		s_models = models;
+		s_down   = sDown;
+		s_up     = sUp;
 	}
 	
 	/** Constructs a semantic role labeler for predicting. */
-	public SRLParser(SRLFtrXml[] xmls)
+	public SRLParser(SRLFtrXml xml, Set<String> sDown, Set<String> sUp)
 	{
 		i_flag   = FLAG_PREDICT;
-		f_xmls   = xmls;
-		s_models = new StringModel[xmls.length];
+		f_xml    = xml;
+		s_models = new StringModel[MODEL_SIZE];
+		s_down   = sDown;
+		s_up     = sUp;
 	}
 	
 	/** Constructs a semantic role labeler for bootstrapping. */
-	public SRLParser(SRLFtrXml[] xmls, StringModel[] models, StringTrainSpace[] spaces)
+	public SRLParser(SRLFtrXml xml, StringModel[] models, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
 	{
 		i_flag   = FLAG_BOOST;
-		f_xmls   = xmls;
+		f_xml    = xml;
 		s_models = models;
 		s_spaces = spaces;
+		s_down   = sDown;
+		s_up     = sUp;
 	}
 	
 	/** Constructs a semantic role labeler for demonstration. */
@@ -204,6 +221,82 @@ public class SRLParser extends AbstractTool
 			}
 		}
 	}
+	
+	private void collect(DEPTree tree)
+	{
+		DEPNode pred = tree.getNextPredicate(0);
+		DEPNode head;
+		
+		tree.setDependents();
+		
+		while (pred != null)
+		{
+			for (DEPArc arc : pred.getGrandDependents())
+				collectDown(pred, arc.getNode());
+		
+			head = pred.getHead();
+			if (head != null)	collectUp(pred, head.getHead());
+			pred = tree.getNextPredicate(pred.id);
+		}
+	}
+	
+	private void collectDown(DEPNode pred, DEPNode arg)
+	{
+		if (arg.isArgumentOf(pred))
+		{
+			for (String path : getDUPathList(pred, arg.getHead()))
+				m_down.add(path);
+		}
+		
+		for (DEPArc arc : arg.getDependents())
+			collectDown(pred, arc.getNode());
+	}
+	
+	private void collectUp(DEPNode pred, DEPNode head)
+	{
+		if (head == null)	return;
+		
+		for (DEPArc arc : head.getDependents())
+		{
+			if (arc.getNode().isArgumentOf(pred))
+			{
+				for (String path : getDUPathList(head, pred))
+					m_up.add(path);
+				
+				break;
+			}
+		}	
+		
+		collectUp(pred, head.getHead());
+	}
+	
+	private String getDUPath(DEPNode top, DEPNode bottom)
+	{
+		return getPathAux(top, bottom, SRLFtrXml.F_DEPREL, SRLLib.DELIM_PATH_DOWN, true);
+	}
+	
+	private List<String> getDUPathList(DEPNode top, DEPNode bottom)
+	{
+		List<String> paths = new ArrayList<String>();
+		
+		while (bottom != top)
+		{
+			paths.add(getDUPath(top, bottom));
+			bottom = bottom.getHead();
+		}
+		
+		return paths;
+	}
+	
+	public Set<String> getDownSet(int cutoff)
+	{
+		return m_down.toSet(cutoff);
+	}
+	
+	public Set<String> getUpSet(int cutoff)
+	{
+		return m_up.toSet(cutoff);
+	}
 
 	/**
 	 * Returns the number of transitions used for labeling the current dependency tree.
@@ -217,14 +310,27 @@ public class SRLParser extends AbstractTool
 	/** Labels the dependency tree. */
 	public void label(DEPTree tree)
 	{
-		init(tree);
+		if (i_flag == FLAG_LEXICA)
+		{
+			collect(tree);
+			return;
+		}
 		
-		int size = tree.size();
+		init(tree);
+		labelAux();
+		
+		if (i_flag == FLAG_DEMO)
+			f_trans.println();
+	}
+	
+	private void labelAux()
+	{
+		int size = d_tree.size();
 		DEPNode pred;
 		
 		while (i_pred < size)
 		{
-			pred = tree.get(i_pred);
+			pred = d_tree.get(i_pred);
 			n_trans.i1++;
 			
 			s_skip .clear();
@@ -236,20 +342,17 @@ public class SRLParser extends AbstractTool
 
 			do
 			{
-				labelAux(d_lca);
-				d_lca = d_lca.getHead();				
+				labelAux(pred, d_lca);
+				d_lca = d_lca.getHead();
 			}
-			while (d_lca != null);
+			while (d_lca != null && (pred.isDependentOf(d_lca) || s_up.contains(getDUPath(d_lca, pred))));
 			
 			i_pred = getNextPredId(i_pred);
 		}
-		
-		if (i_flag == FLAG_DEMO)
-			f_trans.println();
 	}
 	
 	/** Called by {@link SRLParser#label(DEPTree)}. */
-	private void labelAux(DEPNode head)
+	private void labelAux(DEPNode pred, DEPNode head)
 	{
 		if (!s_skip.contains(head.id))
 		{
@@ -257,22 +360,25 @@ public class SRLParser extends AbstractTool
 			addArgument(getLabel(getDirIndex()));	
 		}
 		
-		labelDown(head.getDependents());
+		labelDown(pred, head.getDependents());
 	}
 	
 	/** Called by {@link SRLParser#labelAux(DEPNode, IntOpenHashSet)}. */
-	private void labelDown(List<DEPArc> arcs)
+	private void labelDown(DEPNode pred, List<DEPArc> arcs)
 	{
+		DEPNode arg;
+		
 		for (DEPArc arc : arcs)
 		{
-			if (!s_skip.contains(arc.getNode().id))
-			{
-				i_arg = arc.getNode().id;
-				addArgument(getLabel(getDirIndex()));
+			arg = arc.getNode();
 			
-				if (i_pred == d_lca.id)
-			//	if (getLabel(MODEL_DOWN).equals(AbstractModel.LABEL_TRUE))
-					labelDown(arc.getNode().getDependents());
+			if (!s_skip.contains(arg.id))
+			{
+				i_arg = arg.id;
+				addArgument(getLabel(getDirIndex()));
+				
+				if (i_pred == d_lca.id && s_down.contains(getDUPath(pred, arg)))
+					labelDown(pred, arg.getDependents());
 			}
 		}
 	}
@@ -284,12 +390,12 @@ public class SRLParser extends AbstractTool
 	
 	private String getLabel(int idx)
 	{
-		StringFeatureVector vector = (i_flag != FLAG_DEMO) ? getFeatureVector(f_xmls[idx]) : null;
+		StringFeatureVector vector = (i_flag != FLAG_DEMO) ? getFeatureVector(f_xml) : null;
 		String label = null;
 		
 		if (i_flag == FLAG_TRAIN)
 		{
-			label = getGoldLabel(idx);
+			label = getGoldArgLabel();
 			s_spaces[idx].addInstance(label, vector);
 		}
 		else if (i_flag == FLAG_PREDICT)
@@ -298,27 +404,13 @@ public class SRLParser extends AbstractTool
 		}
 		else if (i_flag == FLAG_BOOST)
 		{
-			s_spaces[idx].addInstance(getGoldLabel(idx), vector);
+			s_spaces[idx].addInstance(getGoldArgLabel(), vector);
 			label = getAutoLabel(idx, vector);
 		}
 		else // if (i_flag == FLAG_TRANSITION)
-			label = getGoldLabel(idx);
+			label = getGoldArgLabel();
 
 		return label;
-	}
-	
-	/** Called by {@link SRLParser#getLabel(byte)}. */
-	private String getGoldLabel(int idx)
-	{
-		switch (idx)
-		{
-		case MODEL_LEFT : return getGoldArgLabel();
-		case MODEL_RIGHT: return getGoldArgLabel();
-		case MODEL_DOWN : return getGoldDownLabel();
-		case MODEL_UP   : return getGoldUpLabel();
-		}
-		
-		return null;
 	}
 	
 	/** Called by {@link SRLParser#getGoldLabel(byte)}. */
@@ -332,18 +424,6 @@ public class SRLParser extends AbstractTool
 		
 		return LB_NO_ARG;
 	}
-	
-	/** Called by {@link SRLParser#getGoldLabel(byte)}. */
-	private String getGoldDownLabel()
-	{
-		return containsArgument(d_tree.get(i_arg)) ? AbstractModel.LABEL_TRUE : AbstractModel.LABEL_FALSE;
-	}
-	
-	/** Called by {@link SRLParser#getGoldLabel(byte)}. */
-	private String getGoldUpLabel()
-	{
-		return null;
-	}
 
 	/** Called by {@link SRLParser#getLabel(byte)}. */
 	private String getAutoLabel(int idx, StringFeatureVector vector)
@@ -351,27 +431,6 @@ public class SRLParser extends AbstractTool
 		return s_models[idx].predictBest(vector).label;
 	}
 
-	private boolean containsArgument(DEPNode node)
-	{
-		DEPNode dep;
-		
-		for (DEPArc arc : node.getDependents())
-		{
-			dep = arc.getNode();
-			
-			for (StringIntPair p : g_heads[dep.id])
-			{
-				if (p.i == i_pred)
-					return true;
-			}
-			
-			if (containsArgument(dep))
-				return true;
-		}
-		
-		return false;
-	}
-	
 	private void addArgument(String label)
 	{
 		s_skip.add(i_arg);
@@ -461,10 +520,11 @@ public class SRLParser extends AbstractTool
 			
 			switch (field)
 			{
-			case 0: return (node.isDependentOf(pred)) ? token.field : null;
-			case 1: return (pred.isDependentOf(node)) ? token.field : null;
-			case 2: return (pred == d_lca) ? token.field : null;
-			case 3: return (node == d_lca) ? token.field : null;
+			case 0: return (node.isDependentOf(pred))  ? token.field : null;
+			case 1: return (pred.isDependentOf(node))  ? token.field : null;
+			case 2: return (pred.isDependentOf(d_lca)) ? token.field : null;
+			case 3: return (pred == d_lca) ? token.field : null;
+			case 4: return (node == d_lca) ? token.field : null;
 			}
 		}
 		
@@ -478,18 +538,27 @@ public class SRLParser extends AbstractTool
 		
 		if (token.isField(SRLFtrXml.F_DEPREL_SET))
 		{
-			List<DEPArc> deps = node.getDependents();
-			if (deps.isEmpty())	return null;
-			
-			Set<String> set = new HashSet<String>();
-			for (DEPArc arc : deps)	set.add(arc.label);
-			
-			String[] fields = new String[set.size()];
-			set.toArray(fields);
-			return fields;
+			return getDeprelSet(node.getDependents());
+		}
+		else if (token.isField(SRLFtrXml.F_GRAND_DEPREL_SET))
+		{
+			return getDeprelSet(node.getGrandDependents());
 		}
 		
 		return null;
+	}
+	
+	private String[] getDeprelSet(List<DEPArc> deps)
+	{
+		if (deps.isEmpty())	return null;
+		
+		Set<String> set = new HashSet<String>();
+		for (DEPArc arc : deps)	set.add(arc.label);
+		
+		String[] fields = new String[set.size()];
+		set.toArray(fields);
+		
+		return fields;		
 	}
 	
 	private String getDistance(DEPNode node)
@@ -647,4 +716,25 @@ public class SRLParser extends AbstractTool
 		
 		return node;
 	}
+	
+/*	private boolean containsArgument(DEPNode node)
+	{
+		DEPNode dep;
+		
+		for (DEPArc arc : node.getDependents())
+		{
+			dep = arc.getNode();
+			
+			for (StringIntPair p : g_heads[dep.id])
+			{
+				if (p.i == i_pred)
+					return true;
+			}
+			
+			if (containsArgument(dep))
+				return true;
+		}
+		
+		return false;
+	}*/
 }

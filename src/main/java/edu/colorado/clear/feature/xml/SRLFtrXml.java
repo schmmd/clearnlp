@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.util.regex.Pattern;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 /**
@@ -36,8 +37,8 @@ import org.w3c.dom.NodeList;
  */
 public class SRLFtrXml extends AbstractFtrXml
 {
-	static protected final String XML_REGEX_VERB_CHAIN	= "verb-chain";
-	static protected final String XML_REGEX_SUBJECT		= "subject";
+	static private final String  CUTOFF_DOWN = "down";
+	static private final String  CUTOFF_UP   = "up";
 	
 	static public final char S_PREDICAT = 'p';
 	static public final char S_ARGUMENT = 'a';
@@ -54,6 +55,7 @@ public class SRLFtrXml extends AbstractFtrXml
 	static public final String F_DEPREL		= "d";
 	static public final String F_DISTANCE	= "n";
 	static public final String F_DEPREL_SET	= "ds";
+	static public final String F_GRAND_DEPREL_SET = "gds";
 	
 	static public final Pattern P_FEAT		= Pattern.compile("^ft=(.+)$");		
 	static public final Pattern P_BOOLEAN	= Pattern.compile("^b(\\d+)$");
@@ -62,7 +64,9 @@ public class SRLFtrXml extends AbstractFtrXml
 	static public final Pattern P_ARGN 	 	= Pattern.compile("^argn(\\d+)$");
 	
 	static protected final Pattern P_REL	= Pattern.compile(R_H+"|"+R_LMD+"|"+R_RMD+"|"+R_LNS+"|"+R_RNS);
-	static protected final Pattern P_FIELD	= Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_DEPREL+"|"+F_DISTANCE+"|"+F_DEPREL_SET);
+	static protected final Pattern P_FIELD	= Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_DEPREL+"|"+F_DISTANCE+"|"+F_DEPREL_SET+"|"+F_GRAND_DEPREL_SET);
+	
+	private int cutoff_down, cutoff_up;
 	
 	public SRLFtrXml(InputStream fin)
 	{
@@ -74,7 +78,29 @@ public class SRLFtrXml extends AbstractFtrXml
 		super(fin, skipInvisible);
 	}
 	
-	protected void initCutoffMore(NodeList eList) {}
+	protected void initCutoffMore(NodeList eList)
+	{
+		int i, size = eList.getLength();
+		Element eCutoff;
+		
+		for (i=0; i<size; i++)
+		{
+			eCutoff = (Element)eList.item(i);
+			
+			cutoff_down = eCutoff.hasAttribute(CUTOFF_DOWN) ? Integer.parseInt(eCutoff.getAttribute(CUTOFF_DOWN)) : 0;
+			cutoff_up   = eCutoff.hasAttribute(CUTOFF_UP)   ? Integer.parseInt(eCutoff.getAttribute(CUTOFF_UP))   : 0;
+		}
+	}
+	
+	public int getDownCutoff()
+	{
+		return cutoff_down;
+	}
+	
+	public int getUpCutoff()
+	{
+		return cutoff_up;
+	}
 
 	protected void initMore(Document doc) throws Exception {}
 	

@@ -28,7 +28,7 @@ import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.util.UTArray;
 import edu.colorado.clear.util.pair.StringIntPair;
 
-public class C2DConverterEn extends AbstractC2DConverter
+public class EnglishC2DConverter extends AbstractC2DConverter
 {
 	private final String[] a_semTags = {CTLibEn.FTAG_BNF, CTLibEn.FTAG_DIR, CTLibEn.FTAG_EXT, CTLibEn.FTAG_LOC, CTLibEn.FTAG_MNR, CTLibEn.FTAG_PRP, CTLibEn.FTAG_TMP, CTLibEn.FTAG_VOC};
 	private final String[] a_synTags = {CTLibEn.FTAG_ADV, CTLibEn.FTAG_CLF, CTLibEn.FTAG_CLR, CTLibEn.FTAG_DTV, CTLibEn.FTAG_NOM, CTLibEn.FTAG_PUT, CTLibEn.FTAG_PRD, CTLibEn.FTAG_TPC};
@@ -39,7 +39,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 	private Map<CTNode,Deque<CTNode>> m_sbj;
 	private Map<String,Pattern>       m_coord;
 	
-	public C2DConverterEn(HeadRuleMap headrules)
+	public EnglishC2DConverter(HeadRuleMap headrules)
 	{
 		super(headrules);
 		init();
@@ -126,7 +126,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		return cTree.getRoot().getChildrenSize() > 0;
 	}
 	
-	/** Called by {@link C2DConverterEn#mapEmtpyCategories(CTTree)}. */
+	/** Called by {@link EnglishC2DConverter#mapEmtpyCategories(CTTree)}. */
 	private void mapPRO(CTTree cTree, CTNode ec)
 	{
 		CTNode np = ec.getParent();
@@ -148,7 +148,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		}
 	}
 	
-	/** Called by {@link C2DConverterEn#mapEmtpyCategories(CTTree)}. */
+	/** Called by {@link EnglishC2DConverter#mapEmtpyCategories(CTTree)}. */
 	private void mapTrace(CTTree cTree, CTNode ec)
 	{
 		CTNode ante = ec.getAntecedent();
@@ -174,7 +174,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		}
 	}
 	
-	/** Called by {@link C2DConverterEn#mapEmtpyCategories(CTTree)}. */
+	/** Called by {@link EnglishC2DConverter#mapEmtpyCategories(CTTree)}. */
 	private void mapNull(CTTree cTree, CTNode ec)
 	{
 		CTNode np = ec.getParent();
@@ -189,7 +189,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		}
 	}
 	
-	/** Called by {@link C2DConverterEn#mapEmtpyCategories(CTTree)}. */
+	/** Called by {@link EnglishC2DConverter#mapEmtpyCategories(CTTree)}. */
 	private void mapICH(CTTree cTree, CTNode ec)
 	{
 		CTNode parent = ec.getParent();
@@ -240,7 +240,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		}
 	}
 	
-	/** Called by {@link C2DConverterEn#mapPRO(CTTree, CTNode)} and {@link C2DConverterEn#mapNull(CTTree, CTNode)}. */
+	/** Called by {@link EnglishC2DConverter#mapPRO(CTTree, CTNode)} and {@link EnglishC2DConverter#mapNull(CTTree, CTNode)}. */
 	private void relocatePRD(CTNode np, CTNode ec)
 	{
 		CTNode s   = np.getParent();
@@ -432,7 +432,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		return false;
 	}
 	
-	/** Called by {@link C2DConverterEn#findHeadsCoordination(HeadRule, CTNode)}. */
+	/** Called by {@link EnglishC2DConverter#findHeadsCoordination(HeadRule, CTNode)}. */
 	private CTNode findHeadsCoordinationAux(HeadRule rule, CTNode curr, int bId, int eId, CTNode lastHead)
 	{
 		CTNode currHead = (eId - bId == 1) ? curr.getChild(bId) : getHead(rule, curr.getChildren(bId, eId));
@@ -577,7 +577,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		return head;
 	}
 	
-	/** Called by {@link C2DConverterEn#getHead(HeadRule, String, List)}. */
+	/** Called by {@link EnglishC2DConverter#getHead(HeadRule, String, List)}. */
 	private int getHeadFlag(CTNode child)
 	{
 		if (child.c2d.hasHead())
@@ -1092,7 +1092,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		}
 	}
 	
-	/** {@link C2DConverterEn#addDPHeads(DEPTree, CTTree)} */
+	/** {@link EnglishC2DConverter#addDPHeads(DEPTree, CTTree)} */
 	private void addXHeads(DEPTree dTree, CTNode cNode, Deque<CTNode> dq, String label)
 	{
 		DEPNode node = getDPNode(dTree, cNode);
@@ -1108,7 +1108,7 @@ public class C2DConverterEn extends AbstractC2DConverter
 		}
 	}
 	
-	/** {@link C2DConverterEn#addDPHeads(DEPTree, CTTree)} */
+	/** {@link EnglishC2DConverter#addDPHeads(DEPTree, CTTree)} */
 	private void addXChildren(DEPTree dTree, CTNode cHead, Deque<CTNode> dq, String label)
 	{
 		DEPNode head = getDPNode(dTree, cHead);

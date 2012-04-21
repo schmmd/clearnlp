@@ -27,6 +27,7 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.Set;
 
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
@@ -42,6 +43,7 @@ import edu.colorado.clear.feature.xml.SRLFtrXml;
 import edu.colorado.clear.reader.SRLReader;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTXml;
+import edu.colorado.clear.util.pair.Pair;
 
 /**
  * Trains a liblinear model.
@@ -57,12 +59,8 @@ public class SRLTrain extends AbstractRun
 	protected String s_trainDir;
 	@Option(name="-c", usage="the configuration file (input; required)", required=true, metaVar="<filename>")
 	protected String s_configXml;
-	@Option(name="-fc", usage="the feature file for argument classification (input; required)", required=true, metaVar="<filename>")
-	protected String s_featureACXml;
-	@Option(name="-fd", usage="the feature file for down-shift (input; required)", required=true, metaVar="<filename>")
-	protected String s_featureDownXml;
-	@Option(name="-fu", usage="the feature file for up-shift (input; required)", required=true, metaVar="<filename>")
-	protected String s_featureUpXml;
+	@Option(name="-f", usage="the feature file (input; required)", required=true, metaVar="<filename>")
+	protected String s_featureXml;
 	@Option(name="-m", usage="the model file (output; required)", required=true, metaVar="<filename>")
 	protected String s_modelFile;
 	@Option(name="-n", usage="the bootstrapping level (default: 2)", required=false, metaVar="<integer>")
@@ -74,50 +72,44 @@ public class SRLTrain extends AbstractRun
 	{
 		initArgs(args);
 		
-		String[] featureXmls = new String[SRLParser.MODEL_SIZE];
-		featureXmls[SRLParser.MODEL_LEFT]  = s_featureACXml;
-		featureXmls[SRLParser.MODEL_RIGHT] = s_featureACXml;
-		
 		try
 		{
-			run(s_configXml, featureXmls, s_trainDir, s_modelFile, n_boot);	
+			run(s_configXml, s_featureXml, s_trainDir, s_modelFile, n_boot);	
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void run(String configXml, String[] featureXmls, String trainDir, String modelFile, int nBoot) throws Exception
+	private void run(String configXml, String featureXml, String trainDir, String modelFile, int nBoot) throws Exception
 	{
-		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		SRLReader reader  = (SRLReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		Element   eConfig    = UTXml.getDocumentElement(new FileInputStream(configXml));
+		SRLReader reader     = (SRLReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		SRLFtrXml xml        = new SRLFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = getSortedFileList(trainDir);
 		SRLParser parser;
 		
-		SRLFtrXml[] xmls = new SRLFtrXml[featureXmls.length];
+		Pair<Set<String>,Set<String>> p = getDownUpSets(reader, xml, trainFiles, -1);
 		int i;
 		
-		for (i=0; i<xmls.length; i++)
-			xmls[i] = new SRLFtrXml(new FileInputStream(featureXmls[i]));
-
-		parser = getTrainedParser(eConfig, reader, xmls, trainFiles, null, -1);
-		saveModels(modelFile, featureXmls, parser);
+		parser = getTrainedParser(eConfig, reader, xml, trainFiles, null, p.o1, p.o2, -1);
+		saveModels(modelFile, featureXml, parser);
 		
 		for (i=1; i<=nBoot; i++)
 		{
-			parser = getTrainedParser(eConfig, reader, xmls, trainFiles, parser.getModels(), -1);
-			saveModels(modelFile+"."+i, featureXmls, parser);
+			parser = getTrainedParser(eConfig, reader, xml, trainFiles, parser.getModels(), p.o1, p.o2, -1);
+			saveModels(modelFile+"."+i, featureXml, parser);
 		}
 	}
 	
-	public void saveModels(String modelFile, String[] featureXmls, SRLParser parser) throws Exception
+	public void saveModels(String modelFile, String featureXml, SRLParser parser) throws Exception
 	{
 		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
-		int i, size = featureXmls.length;
 		PrintStream fout;
+		int i;
 		
-		for (i=0; i<size; i++)
+		for (i=0; i<SRLParser.MODEL_SIZE; i++)
 		{
 			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE+"."+i));
-			IOUtils.copy(new FileInputStream(featureXmls[i]), zout);
+			IOUtils.copy(new FileInputStream(featureXml), zout);
 			zout.closeArchiveEntry();
 			
 			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL+"."+i));
@@ -130,19 +122,47 @@ public class SRLTrain extends AbstractRun
 		zout.close();
 	}
 	
-	/** @param devId if {@code -1}, train the models using all training files. */
-	public SRLParser getTrainedParser(Element eConfig, SRLReader reader, SRLFtrXml[] xmls, String[] trainFiles, StringModel[] models, int devId) throws Exception
+	public Pair<Set<String>,Set<String>> getDownUpSets(SRLReader reader, SRLFtrXml xml, String[] trainFiles, int devId)
 	{
-		StringTrainSpace[] spaces = new StringTrainSpace[xmls.length];
+		SRLParser parser = new SRLParser();
+		int i, size = trainFiles.length;
+		DEPTree tree;
+		
+		System.out.println("Collecting lexica:");
+		
+		for (i=0; i<size; i++)
+		{
+			if (devId == i)	continue;
+			reader.open(UTInput.createBufferedFileReader(trainFiles[i]));
+			
+			while ((tree = reader.next()) != null)
+				parser.label(tree);
+			
+			System.out.print(".");
+			reader.close();
+		}	System.out.println();
+		
+		Set<String> sDown = parser.getDownSet(xml.getDownCutoff());
+		Set<String> sUp   = parser.getUpSet  (xml.getUpCutoff());
+		System.out.printf("- down-paths: size = %d, cutoff = %d\n", sDown.size(), xml.getDownCutoff());
+		System.out.printf("- up-paths  : size = %d, cutoff = %d\n", sUp  .size(), xml.getUpCutoff());
+		
+		return new Pair<Set<String>, Set<String>>(sDown, sUp);
+	}
+	
+	/** @param devId if {@code -1}, train the models using all training files. */
+	public SRLParser getTrainedParser(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, StringModel[] models, Set<String> sDown, Set<String> sUp, int devId) throws Exception
+	{
+		StringTrainSpace[] spaces = new StringTrainSpace[SRLParser.MODEL_SIZE];
 		int i, size = trainFiles.length;
 		SRLParser parser;
 		DEPTree tree;
 		
 		for (i=0; i<spaces.length; i++)
-			spaces[i] = new StringTrainSpace(false, xmls[i].getLabelCutoff(0), xmls[i].getFeatureCutoff(0));
+			spaces[i] = new StringTrainSpace(false, xml.getLabelCutoff(0), xml.getFeatureCutoff(0));
 		
-		if (models == null)	parser = new SRLParser(xmls, spaces);
-		else				parser = new SRLParser(xmls, models, spaces); 
+		if (models == null)	parser = new SRLParser(xml, spaces, sDown, sUp);
+		else				parser = new SRLParser(xml, models, spaces, sDown, sUp); 
 		
 		System.out.println("Collecting training instances:");
 		
@@ -162,9 +182,9 @@ public class SRLTrain extends AbstractRun
 		models = new StringModel[spaces.length];
 		
 		for (i=0; i<models.length; i++)
-			models[i] = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), spaces[i], 0);
+			models[i] = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), spaces[i], i);
 		
-		return new SRLParser(xmls, models);
+		return new SRLParser(xml, models, sDown, sUp);
 	}
 	
 	static public void main(String[] args)

@@ -219,6 +219,11 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		return d_head.isNode(node);
 	}
 	
+	public boolean isSiblingOf(DEPNode node)
+	{
+		return node.isDependentOf(getHead());
+	}
+	
 	/**
 	 * Returns {@code true} if this node is a descendant of the specific node. 
 	 * @param node the potential ancestor.
@@ -271,6 +276,17 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 	}
 	
 	public boolean containsSHead(DEPNode sHead)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isNode(sHead))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean isArgumentOf(DEPNode sHead)
 	{
 		for (DEPArc arc : s_heads)
 		{

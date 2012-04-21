@@ -11,11 +11,17 @@ public class SRLLib
 	static public final String DELIM_PATH_DOWN	= "|";
 	static public final String DELIM_SUBCAT		= "_";
 	
-	static private Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A|ARG)\\d");
+	static private Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
+	static private Pattern P_ARGM = Pattern.compile("^AM");
 	
 	static public boolean isNumberedArgument(String label)
 	{
 		return P_ARGN.matcher(label).find();
+	}
+	
+	static public boolean isModifier(String label)
+	{
+		return P_ARGM.matcher(label).find();
 	}
 	
 	static public List<List<DEPArc>> getArgumentList(DEPTree tree)

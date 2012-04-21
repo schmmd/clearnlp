@@ -1,7 +1,6 @@
 <!--Feature template for dependency parsing in English -->
 <feature_template>
-	<cutoff label="2" feature="3"/>
-	<regex type="verb-chain" label="^(conj|xcomp|aux)"/>
+	<cutoff label="2" feature="3" down="4" up="0"/>
 
 	<!-- basic features -->
 	<feature n="1" f0="a:f"/>
@@ -30,11 +29,12 @@
 	<feature n="1" f0="a_rns:p"/>
 	<feature n="1" f0="a_rns:m"/>
 
-	<feature n="1" f0="p-1:p"/>
+	<feature n="1" f0="p-1:p" />
 	<feature n="1" f0="p-1:m"/>
-	<feature n="2" f0="p+1:m"   f1="p+1:p"/>
+	<feature n="1" f0="p_lmd:p"/>
+	<feature n="1" f0="p_lmd:m"/>
 	<feature n="2" f0="p_h:m"   f1="p_h:p"/>
-	<feature n="2" f0="p_lmd:m" f1="p_lmd:p"/>
+	<feature n="2" f0="p+1:m"   f1="p+1:p"/>
 	<feature n="2" f0="p_rmd:m" f1="p_rmd:p"/>
 
 	<!-- 2-gram features -->
@@ -46,7 +46,7 @@
 	<feature n="2" f0="a_lmd:m" f1="a:d"/>
 	<feature n="2" f0="a_rmd:p" f1="a:d"/>
 	<feature n="2" f0="a_rmd:m" f1="a:d"/>
-
+	
 	<!-- path features -->
 	<feature n="1" f0="p:ptp0"/>
 	<feature n="2" f0="p:ptd0" f1="p:p"/>
@@ -70,6 +70,7 @@
 	<!-- binary features -->
 	<feature t="b" n="1" f0="a:b0" note="A is a dependent of P"/>
 	<feature t="b" n="1" f0="a:b1" note="P is a dependent of A"/>
-	<feature t="b" n="1" f0="a:b2" note="A is not a dependent but descendent of P" visible="false"/>
-	<feature t="b" n="1" f0="a:b3" note="P is not a dependent but descendent of A" visible="false"/>
+	<feature t="b" n="1" f0="a:b2" note="P is a dependent of LCA" visible="false"/>
+	<feature t="b" n="1" f0="a:b3" note="A is a descendent of P"  visible="false"/>
+	<feature t="b" n="1" f0="a:b4" note="P is a descendent of A"  visible="false"/>
 </feature_template>

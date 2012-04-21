@@ -24,6 +24,7 @@
 package edu.colorado.clear.experiment;
 
 import java.io.FileInputStream;
+import java.util.Set;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
@@ -57,56 +58,51 @@ public class SRLDevelop extends SRLTrain
 	{
 		initArgs(args);
 		
-		String[] featureXmls = new String[SRLParser.MODEL_SIZE];
-		featureXmls[SRLParser.MODEL_LEFT]  = s_featureACXml;
-		featureXmls[SRLParser.MODEL_RIGHT] = s_featureACXml;
-	//	featureXmls[SRLParser.MODEL_DOWN]  = s_featureDownXml;
-		
 		try
 		{
-			run(s_configXml, featureXmls, s_trainDir, s_devDir);	
+			run(s_configXml, s_featureXml, s_trainDir, s_devDir);	
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void run(String configXml, String[] featureXmls, String trainDir, String devDir) throws Exception
+	private void run(String configXml, String featureXml, String trainDir, String devDir) throws Exception
 	{
-		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		SRLReader reader  = (SRLReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		Element   eConfig    = UTXml.getDocumentElement(new FileInputStream(configXml));
+		SRLReader reader     = (SRLReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		SRLFtrXml xml        = new SRLFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = getSortedFileList(trainDir);
-		String[]  devFiles = getSortedFileList(devDir);
+		String[]  devFiles   = getSortedFileList(devDir);
 		
-		SRLFtrXml[] xmls = new SRLFtrXml[featureXmls.length];
+		Pair<Set<String>,Set<String>> p = getDownUpSets(reader, xml, trainFiles, -1);
 		int i;
-		
-		for (i=0; i<xmls.length; i++)
-			xmls[i] = new SRLFtrXml(new FileInputStream(featureXmls[i]));
 		
 		Pair<StringModel[],Double> model = new Pair<StringModel[],Double>(null, 0d);
 		double prevScore;
 		
 		i = 0;
-		develop(eConfig, reader, xmls, trainFiles, devFiles, model, i++);
+		develop(eConfig, reader, xml, trainFiles, devFiles, model, p.o1, p.o2, i++);
 		
 		do
 		{
 			prevScore = model.o2;
-			develop(eConfig, reader, xmls, trainFiles, devFiles, model, i++);
+			develop(eConfig, reader, xml, trainFiles, devFiles, model, p.o1, p.o2, i++);
 		}
 		while (model.o2 > prevScore);
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */
-	protected void develop(Element eConfig, SRLReader reader, SRLFtrXml[] xmls, String[] trainFiles, String[] devFiles, Pair<StringModel[],Double> model, int boost) throws Exception
+	protected void develop(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, String[] devFiles, Pair<StringModel[],Double> model, Set<String> sDown, Set<String> sUp, int boost) throws Exception
 	{
 		IntIntPair gTrans = new IntIntPair(0, 0), lTrans;
 		SRLEval gEval = new SRLEval();
 		StringIntPair[][] gHeads, sHeads;
 		SRLParser parser;
 		DEPTree tree;
-		int i;
+		int i, n, size, N = 10;
+		int[][] spaces = new int[2][N];
+		IntIntPair p;
 		
-		parser = getTrainedParser(eConfig, reader, xmls, trainFiles, model.o1, -1);
+		parser = getTrainedParser(eConfig, reader, xml, trainFiles, model.o1, sDown, sUp, -1);
 		model.o1 = parser.getModels();
 		
 		for (String devFile : devFiles)
@@ -127,6 +123,14 @@ public class SRLDevelop extends SRLTrain
 		//		lEval.evaluate(gHeads, sHeads);
 				gEval.evaluate(gHeads, sHeads);
 				if (i%1000 == 0)	System.out.print(".");
+				
+				size = tree.size();
+				n = (size - 2) / N;
+				if (n > N - 1)	n = N - 1;
+				
+				p = parser.getNumTransitions();
+				spaces[0][n] += p.i1;
+				spaces[1][n] += p.i2;
 			}
 			System.out.println();
 			reader.close();
@@ -139,6 +143,9 @@ public class SRLDevelop extends SRLTrain
 		
 		System.out.printf("# of trans: %5.2f (%d/%d)\n", 100d*gTrans.i2/gTrans.i1, gTrans.i2, gTrans.i1);
 		model.o2 = gEval.getF1(SRLEval.LAS);
+		
+		for (i=0; i<N; i++)
+			System.out.printf("%3d: %5d %5d\n", i, spaces[0][i], spaces[1][i]);
 	}
 	
 	static public void main(String[] args)

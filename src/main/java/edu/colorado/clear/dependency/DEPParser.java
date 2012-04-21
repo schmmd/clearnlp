@@ -13,6 +13,7 @@ public class DEPParser extends AbstractDEPParser
 { 
 	protected StringIntPair[] g_heads;
 	
+	/** Constructs a dependency parser for collecting. */
 	public DEPParser(DEPFtrXml xml)
 	{
 		super(xml);

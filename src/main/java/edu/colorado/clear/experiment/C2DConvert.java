@@ -15,7 +15,7 @@ import edu.colorado.clear.constituent.CTNode;
 import edu.colorado.clear.constituent.CTReader;
 import edu.colorado.clear.constituent.CTTree;
 import edu.colorado.clear.conversion.AbstractC2DConverter;
-import edu.colorado.clear.conversion.C2DConverterEn;
+import edu.colorado.clear.conversion.EnglishC2DConverter;
 import edu.colorado.clear.dependency.DEPFeat;
 import edu.colorado.clear.dependency.DEPLib;
 import edu.colorado.clear.dependency.DEPLibEn;
@@ -73,7 +73,7 @@ public class C2DConvert extends AbstractRun
 		
 		if (s_language.equals(AbstractReader.LANG_EN))
 		{
-			c2d   = new C2DConverterEn(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)));
+			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)));
 			if (dictFile != null)	morph = AbstractRun.getMPAnalyzerEn(dictFile);
 		}
 		
