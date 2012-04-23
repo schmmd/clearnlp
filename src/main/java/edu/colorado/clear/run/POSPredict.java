@@ -37,7 +37,7 @@ import org.w3c.dom.Element;
 
 import edu.colorado.clear.feature.xml.POSFtrXml;
 import edu.colorado.clear.morphology.AbstractMPAnalyzer;
-import edu.colorado.clear.morphology.MPLib;
+import edu.colorado.clear.pos.POSLib;
 import edu.colorado.clear.pos.POSNode;
 import edu.colorado.clear.pos.POSTagger;
 import edu.colorado.clear.reader.AbstractColumnReader;
@@ -183,7 +183,7 @@ public class POSPredict extends AbstractRun
 		double st, et;
 		
 		st = System.currentTimeMillis();
-		MPLib.normalizeForms(nodes);
+		POSLib.normalizeForms(nodes);
 		
 		if (threshold < taggers[0].getCosineSimilarity(nodes))
 			taggers[0].tag(nodes);

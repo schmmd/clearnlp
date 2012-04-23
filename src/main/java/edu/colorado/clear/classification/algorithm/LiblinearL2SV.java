@@ -33,7 +33,7 @@ import edu.colorado.clear.util.UTArray;
 
 /**
  * Liblinear L2-regularized support vector classification algorithm.
- * @since 0.1.0
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class LiblinearL2SV extends AbstractAlgorithm

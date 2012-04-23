@@ -23,6 +23,9 @@
 */
 package edu.colorado.clear.pos;
 
+import edu.colorado.clear.morphology.MPLib;
+import edu.colorado.clear.reader.AbstractReader;
+
 /**
  * Part-of-speech library.
  * @since v0.1
@@ -44,5 +47,17 @@ public class POSLib
 			labels[i] = nodes[i].pos;
 		
 		return labels;
+	}
+	
+	static public void normalizeForms(POSNode[] nodes)
+	{
+		if (!nodes[0].isSimplifiedForm(AbstractReader.DUMMY_TAG))
+			return;
+		
+		for (POSNode node : nodes)
+		{
+			node.simplifiedForm = MPLib.normalizeDigits(node.form);
+			node.lemma = node.simplifiedForm.toLowerCase();
+		}
 	}
 }

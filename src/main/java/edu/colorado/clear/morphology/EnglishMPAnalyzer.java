@@ -37,7 +37,7 @@ import edu.colorado.clear.util.pair.Pair;
 
 /**
  * English morphological analyzer.
- * @since v0.1
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class EnglishMPAnalyzer extends AbstractMPAnalyzer

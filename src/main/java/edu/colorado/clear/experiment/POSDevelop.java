@@ -29,7 +29,6 @@ import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
 import edu.colorado.clear.feature.xml.POSFtrXml;
-import edu.colorado.clear.morphology.MPLib;
 import edu.colorado.clear.pos.POSLib;
 import edu.colorado.clear.pos.POSNode;
 import edu.colorado.clear.pos.POSTagger;
@@ -90,7 +89,7 @@ public class POSDevelop extends POSTrain
 		for (n=0; (nodes = reader.next()) != null; n++)
 		{
 			gold = POSLib.getLabels(nodes);
-			MPLib.normalizeForms(nodes);
+			POSLib.normalizeForms(nodes);
 			
 			if (threshold < taggers[0].getCosineSimilarity(nodes))
 				taggers[0].tag(nodes);

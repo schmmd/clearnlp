@@ -41,7 +41,6 @@ import edu.colorado.clear.classification.vector.StringFeatureVector;
 import edu.colorado.clear.engine.AbstractTool;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.feature.xml.POSFtrXml;
-import edu.colorado.clear.morphology.MPLib;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.reader.AbstractReader;
 import edu.colorado.clear.util.UTInput;
@@ -148,7 +147,7 @@ public class POSTagger extends AbstractTool
 	/** Tags the POS nodes. */
 	public void tag(POSNode[] nodes)
 	{
-		MPLib.normalizeForms(nodes);
+		POSLib.normalizeForms(nodes);
 		
 		if (i_flag == FLAG_LEXICA)
 		{

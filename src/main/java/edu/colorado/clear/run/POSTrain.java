@@ -43,7 +43,6 @@ import com.carrotsearch.hppc.cursors.ObjectCursor;
 import edu.colorado.clear.classification.model.StringModel;
 import edu.colorado.clear.classification.train.StringTrainSpace;
 import edu.colorado.clear.feature.xml.POSFtrXml;
-import edu.colorado.clear.morphology.MPLib;
 import edu.colorado.clear.pos.POSLib;
 import edu.colorado.clear.pos.POSNode;
 import edu.colorado.clear.pos.POSTagger;
@@ -174,7 +173,7 @@ public class POSTrain extends AbstractRun
 			
 			while ((nodes = reader.next()) != null)
 			{
-				MPLib.normalizeForms(nodes);
+				POSLib.normalizeForms(nodes);
 				
 				for (POSNode node : nodes)
 					set.add(node.lemma);

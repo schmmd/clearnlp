@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import edu.colorado.clear.pos.POSNode;
-import edu.colorado.clear.reader.AbstractReader;
 import edu.colorado.clear.util.pair.Pair;
 
 /**
@@ -45,7 +43,8 @@ public class MPLib
 
 	static final protected Pattern PUNCT_ANY	= Pattern.compile("\\p{Punct}");
 	static final protected Pattern PUNCT_ONLY	= Pattern.compile("^\\p{Punct}+$");
-	
+	static final protected Pattern PUNCT_PERIOD	= Pattern.compile("^(\\.|\\?|\\!)+$");
+
 	static final protected Pattern   DIGIT_SPAN	= Pattern.compile("\\d+");
 	static final protected Pattern   DIGIT_ONLY	= Pattern.compile("^\\d+$");
 	static final protected Pattern[] DIGIT_LIKE	= {Pattern.compile("\\d%"), Pattern.compile("\\$\\d"), Pattern.compile("(^|\\d)\\.\\d"), Pattern.compile("\\d,\\d"), Pattern.compile("\\d:\\d"), Pattern.compile("\\d-\\d"), Pattern.compile("\\d\\/\\d")};
@@ -182,36 +181,13 @@ public class MPLib
 		return DIGIT_ONLY.matcher(form).find();
 	}
 	
-	static public void normalizeForms(POSNode[] nodes)
-	{
-		if (!nodes[0].isSimplifiedForm(AbstractReader.DUMMY_TAG))
-			return;
-		
-		for (POSNode node : nodes)
-		{
-			node.simplifiedForm = normalizeDigits(node.form);
-			node.lemma = node.simplifiedForm.toLowerCase();
-		}
-	}
-	
 	static public boolean isPeriodLike(String form)
 	{
-		int size = form.length();
-		
-		if (size > 1 && form.charAt(0) == '/')
-		{
-			int i;	char c;
-			
-			for (i=1; i<size; i++)
-			{
-				c = form.charAt(i);
-				
-				if (c != '.' && c != '?' && c != '!')
-					return false;
-			}
-			
+		if (PUNCT_PERIOD.matcher(form).find())
 			return true;
-		}
+		
+		if (form.length() > 1 && form.charAt(0) == '/')
+			return PUNCT_PERIOD.matcher(form.substring(1)).find();
 		
 		return false;
 	}
