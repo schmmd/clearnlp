@@ -41,6 +41,7 @@ import edu.colorado.clear.dependency.DEPParser;
 import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.feature.xml.DEPFtrXml;
 import edu.colorado.clear.reader.DEPReader;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTXml;
 
@@ -83,7 +84,7 @@ public class DEPTrain extends AbstractRun
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPReader reader = (DEPReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
-		String[]  trainFiles = getSortedFileList(trainDir);
+		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
 		DEPParser parser;
 		int i = 0;
 		

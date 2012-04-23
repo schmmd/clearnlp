@@ -36,6 +36,7 @@ import edu.colorado.clear.dependency.SRLParser;
 import edu.colorado.clear.feature.xml.SRLFtrXml;
 import edu.colorado.clear.reader.SRLReader;
 import edu.colorado.clear.run.SRLTrain;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTXml;
 import edu.colorado.clear.util.pair.IntIntPair;
@@ -70,8 +71,8 @@ public class SRLDevelop extends SRLTrain
 		Element   eConfig    = UTXml.getDocumentElement(new FileInputStream(configXml));
 		SRLReader reader     = (SRLReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		SRLFtrXml xml        = new SRLFtrXml(new FileInputStream(featureXml));
-		String[]  trainFiles = getSortedFileList(trainDir);
-		String[]  devFiles   = getSortedFileList(devDir);
+		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
+		String[]  devFiles   = UTFile.getSortedFileList(devDir);
 		
 		Pair<Set<String>,Set<String>> p = getDownUpSets(reader, xml, trainFiles, -1);
 		int i;

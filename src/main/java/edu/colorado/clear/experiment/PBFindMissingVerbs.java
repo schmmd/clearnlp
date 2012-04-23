@@ -38,6 +38,7 @@ import edu.colorado.clear.constituent.CTLibEn;
 import edu.colorado.clear.constituent.CTNode;
 import edu.colorado.clear.constituent.CTTree;
 import edu.colorado.clear.morphology.AbstractMPAnalyzer;
+import edu.colorado.clear.morphology.EnglishMPAnalyzer;
 import edu.colorado.clear.morphology.MPLibEn;
 import edu.colorado.clear.propbank.PBArg;
 import edu.colorado.clear.propbank.PBInstance;
@@ -62,7 +63,7 @@ public class PBFindMissingVerbs extends AbstractRun
 		initArgs(args);
 		
 		Map<String,List<PBInstance>> map = PBLib.getPBInstanceMap(s_propFile, s_treeDir, false);
-		AbstractMPAnalyzer morph = AbstractRun.getMPAnalyzerEn(s_dictFile);
+		AbstractMPAnalyzer morph = new EnglishMPAnalyzer(s_dictFile);
 		List<List<PBInstance>> lists = new ArrayList<List<PBInstance>>();
 		IntOpenHashSet[] sets = new IntOpenHashSet[4];
 		int i, size = sets.length;

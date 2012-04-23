@@ -24,25 +24,29 @@
 package edu.colorado.clear.morphology;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import edu.colorado.clear.constituent.CTLibEn;
 import edu.colorado.clear.util.pair.Pair;
 
 /**
  * English morphological analyzer.
- * @since 0.1.0
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 {
-	final public String FIELD_DELIM = "_";
+	final public String    FIELD_DELIM = "_";
+	final private String[] POS_TYPES = {CTLibEn.POS_NN, CTLibEn.POS_VB, CTLibEn.POS_JJ, CTLibEn.POS_RB};
 	
 	static final String NOUN_EXC  = "noun.exc";
 	static final String VERB_EXC  = "verb.exc";
@@ -90,6 +94,18 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 	/** Abbreviation replacement rules */
 	HashMap<String,String>         m_abbr_rule;
 	
+	/**
+	 * Constructs an English morphological analyzer from the specific dictionary file.
+	 * @param dictFile the name of a dictionary file.
+	 */
+	public EnglishMPAnalyzer(String dictFile)
+	{
+		try
+		{
+			init(new ZipInputStream(new FileInputStream(dictFile)));
+		}
+		catch (Exception e) {e.printStackTrace();}
+	}
 	
 	/**
 	 * Constructs an English morphological analyzer from the specific input stream. 
@@ -98,7 +114,11 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 	 */
 	public EnglishMPAnalyzer(ZipInputStream inputStream) throws IOException
 	{
-		init(inputStream);
+		try
+		{
+			init(inputStream);
+		}
+		catch (Exception e) {e.printStackTrace();}
 	}
 	
 	/**
@@ -227,24 +247,47 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 		return map;
 	}
 	
-	/**
-	 * Returns the lemma of the specific word-form given its POS tag.
-	 * @param form the word-form to get the lemma for.
-	 * @param pos the POS tag of the word.
+	public List<Pair<String,String>> getLemmas(String form)
+	{
+		List<Pair<String,String>> list = new ArrayList<Pair<String,String>>();
+		String morphem;
+		
+		form = MPLib.normalizeDigits(form);
+		form = form.toLowerCase();
+		
+		for (String pos : POS_TYPES)
+		{
+			morphem = getLemmaAux(form, pos);
+			if (!morphem.equals(form))	list.add(new Pair<String,String>(morphem, pos));
+		}
+		
+		if (list.isEmpty())
+			list.add(new Pair<String,String>(form, CTLibEn.POS_XX));
+		
+		return list;
+	}
+	
+	/* (non-Javadoc)
+	 * @see edu.colorado.clear.morphology.AbstractMPAnalyzer#getLemma(java.lang.String, java.lang.String)
 	 */
 	public String getLemma(String form, String pos)
 	{
 		form = MPLib.normalizeDigits(form);
 		form = form.toLowerCase();
 		
+		return getLemmaAux(form, pos);
+	}
+	
+	private String getLemmaAux(String form, String pos)
+	{
 		// exceptions
 		String morphem = getException(form, pos);
 		if (morphem != null)	return morphem;
-		
+				
 		// base-forms
 		morphem = getBase(form, pos);
 		if (morphem != null)	return morphem;
-		
+				
 		// abbreviations
 		morphem = getAbbreviation(form, pos);
 		if (morphem != null)	return morphem;

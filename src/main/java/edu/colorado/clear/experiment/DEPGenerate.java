@@ -35,6 +35,7 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.feature.xml.DEPFtrXml;
 import edu.colorado.clear.reader.DEPReader;
 import edu.colorado.clear.run.DEPTrain;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 import edu.colorado.clear.util.UTXml;
@@ -54,7 +55,7 @@ public class DEPGenerate extends DEPTrain
 	{
 		initArgs(args);
 		
-		String[] trnFiles = getSortedFileList(s_trainDir);
+		String[] trnFiles = UTFile.getSortedFileList(s_trainDir);
 		int i, size = trnFiles.length;
 		
 		try

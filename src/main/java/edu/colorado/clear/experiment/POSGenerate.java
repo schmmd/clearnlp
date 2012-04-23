@@ -36,6 +36,7 @@ import edu.colorado.clear.pos.POSTagger;
 import edu.colorado.clear.reader.POSReader;
 import edu.colorado.clear.run.POSPredict;
 import edu.colorado.clear.run.POSTrain;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTXml;
 
 public class POSGenerate extends POSTrain
@@ -45,8 +46,8 @@ public class POSGenerate extends POSTrain
 		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader   reader = (POSReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		POSFtrXml      xml = new POSFtrXml(new FileInputStream(featureXml));
-		String[]  trnFiles = getSortedFileList(trnDir);
-		EnglishMPAnalyzer morph = getMPAnalyzerEn(dictFile);
+		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
+		EnglishMPAnalyzer morph = new EnglishMPAnalyzer(dictFile);
 
 		IntOpenHashSet sDev = new IntOpenHashSet();
 		int devId, size = trnFiles.length;

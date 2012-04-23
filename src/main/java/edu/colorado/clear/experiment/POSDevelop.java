@@ -34,6 +34,7 @@ import edu.colorado.clear.pos.POSNode;
 import edu.colorado.clear.pos.POSTagger;
 import edu.colorado.clear.reader.POSReader;
 import edu.colorado.clear.run.POSTrain;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTXml;
 
@@ -65,8 +66,8 @@ public class POSDevelop extends POSTrain
 		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader   reader = (POSReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		POSFtrXml      xml = new POSFtrXml(new FileInputStream(featureXml));
-		String[]  trnFiles = getSortedFileList(trnDir);
-		String[]  devFiles = getSortedFileList(devDir);
+		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
+		String[]  devFiles = UTFile.getSortedFileList(devDir);
 		
 		if (threshold < 0)	threshold = crossValidate(trnFiles, reader, xml, eConfig);
 		POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, null);

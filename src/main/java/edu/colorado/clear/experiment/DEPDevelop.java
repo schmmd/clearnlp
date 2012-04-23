@@ -36,6 +36,7 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.feature.xml.DEPFtrXml;
 import edu.colorado.clear.reader.DEPReader;
 import edu.colorado.clear.run.DEPTrain;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTXml;
 import edu.colorado.clear.util.pair.Pair;
@@ -69,8 +70,8 @@ public class DEPDevelop extends DEPTrain
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPReader reader = (DEPReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
-		String[]  trainFiles = getSortedFileList(trainDir);
-		String[]  devFiles = getSortedFileList(devDir); 
+		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
+		String[]  devFiles = UTFile.getSortedFileList(devDir); 
 		
 		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);
 		double prevScore;	int i = 0;

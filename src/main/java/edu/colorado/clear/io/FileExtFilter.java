@@ -25,15 +25,16 @@ package edu.colorado.clear.io;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.regex.Pattern;
 
 /**
  * File extension filter.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class FileExtFilter implements FilenameFilter
 {
-	private String s_extension;
+	private Pattern p_filename; 
 	
 	/**
 	 * Constructs a file-extension filter.
@@ -41,20 +42,7 @@ public class FileExtFilter implements FilenameFilter
 	 */
 	public FileExtFilter(String extension)
 	{
-		s_extension = extension;
-	}
-	
-	static public String replaceExt(String filename, String newExt)
-	{
-		int idx = filename.lastIndexOf(".");
-		if (idx == -1)	return filename+"."+newExt;
-		
-		return filename.substring(0, idx+1) + newExt;
-	}
-	
-	static public String replaceExt(String filename, String oldExt, String newExt)
-	{
-		return filename.substring(0, filename.length()-oldExt.length()) + newExt;
+		p_filename = Pattern.compile(extension+"$");
 	}
 	
 	/* (non-Javadoc)
@@ -62,6 +50,6 @@ public class FileExtFilter implements FilenameFilter
 	 */
 	public boolean accept(File dir, String name)
 	{
-		return name.endsWith(s_extension); 
+		return p_filename.matcher(name).find(); 
 	}
 }

@@ -23,13 +23,6 @@
 */
 package edu.colorado.clear.run;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.zip.ZipInputStream;
-
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.w3c.dom.Element;
@@ -39,7 +32,6 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 
 import edu.colorado.clear.classification.model.AbstractModel;
 import edu.colorado.clear.classification.train.AbstractTrainSpace;
-import edu.colorado.clear.morphology.EnglishMPAnalyzer;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.reader.AbstractReader;
 import edu.colorado.clear.reader.DAGReader;
@@ -269,25 +261,6 @@ abstract public class AbstractRun
 		return map;
 	}
 	
-	protected String[] getSortedFileList(String fileDir)
-	{
-		List<String> list = new ArrayList<String>();
-		
-		for (String filepath : new File(fileDir).list())
-		{
-			filepath = fileDir + File.separator + filepath;
-			
-			if (new File(filepath).isFile())
-				list.add(filepath);
-		}
-		
-		String[] filelist = new String[list.size()];
-		list.toArray(filelist);
-		Arrays.sort(filelist);
-		
-		return filelist;
-	}
-	
 	protected AbstractModel getModel(Element eTrain, AbstractTrainSpace space, int index)
 	{
 		Element eThreads   = UTXml.getFirstElementByTagName(eTrain, TAG_TRAIN_THREADS); 
@@ -313,22 +286,11 @@ abstract public class AbstractRun
 		return null;
 	}
 	
-	static public AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
+	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
 	{
 		space.build();
 		System.out.println("Liblinear:");
 		System.out.printf("- solver=%d, cost=%f, eps=%f, bias=%f\n", solver, cost, eps, bias);
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
-	}
-	
-	static public EnglishMPAnalyzer getMPAnalyzerEn(String dictFile)
-	{
-		try
-		{
-			return new EnglishMPAnalyzer(new ZipInputStream(new FileInputStream(dictFile)));
-		}
-		catch (Exception e) {e.printStackTrace();}
-		
-		return null;
 	}
 }

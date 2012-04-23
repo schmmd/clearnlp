@@ -28,6 +28,7 @@ import java.io.File;
 import edu.colorado.clear.constituent.CTReader;
 import edu.colorado.clear.constituent.CTTree;
 import edu.colorado.clear.io.FileExtFilter;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 
 public class CompareCTTrees
@@ -43,7 +44,7 @@ public class CompareCTTrees
 		{
 		//	System.out.print(filename1+": ");
 			filename1 = treeDir + File.separator + filename1;
-			filename2 = FileExtFilter.replaceExt(filename1, ext1, ext2);
+			filename2 = UTFile.replaceExtension(filename1, ext1, ext2);
 			reader1   = new CTReader(UTInput.createBufferedFileReader(filename1));
 			reader2   = new CTReader(UTInput.createBufferedFileReader(filename2));
 			

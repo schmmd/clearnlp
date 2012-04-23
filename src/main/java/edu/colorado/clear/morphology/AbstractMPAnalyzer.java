@@ -28,20 +28,33 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.pos.POSNode;
 
 /**
- * English morphological analyzer.
- * @since 0.1.0
+ * Abstract morphological analyzer.
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 abstract public class AbstractMPAnalyzer
 {
+	/**
+	 * Returns the lemma of the specific word-form given its POS tag.
+	 * @param form the word-form.
+	 * @param pos the POS tag of the word.
+	 */
 	abstract public String getLemma(String form, String pos);
 	
+	/**
+	 * Adds lemmas of all word-forms given their POS tags.
+	 * @param nodes the array of POS nodes.
+	 */
 	public void lemmatize(POSNode[] nodes)
 	{
 		for (POSNode node : nodes)
 			node.lemma = getLemma(node.form, node.pos);
 	}
 	
+	/**
+	 * Adds lemmas of all word-forms given their POS tags in the specific dependnecy tree.
+	 * @param tree the dependency tree.
+	 */
 	public void lemmatize(DEPTree tree)
 	{
 		int i, size = tree.size();

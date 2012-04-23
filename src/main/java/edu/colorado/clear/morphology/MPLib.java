@@ -31,7 +31,7 @@ import edu.colorado.clear.util.pair.Pair;
 
 /**
  * Morphology library.
- * @since 0.1.0
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class MPLib

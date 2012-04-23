@@ -37,12 +37,14 @@ import org.w3c.dom.Element;
 
 import edu.colorado.clear.feature.xml.POSFtrXml;
 import edu.colorado.clear.morphology.AbstractMPAnalyzer;
+import edu.colorado.clear.morphology.EnglishMPAnalyzer;
 import edu.colorado.clear.pos.POSLib;
 import edu.colorado.clear.pos.POSNode;
 import edu.colorado.clear.pos.POSTagger;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.reader.POSReader;
 import edu.colorado.clear.util.UTArray;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 import edu.colorado.clear.util.UTXml;
@@ -87,7 +89,7 @@ public class POSPredict extends AbstractRun
 		POSReader reader = (POSReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		
 		Pair<POSTagger[],Double> p = getTaggers(modelFile);
-		AbstractMPAnalyzer morph = (dictFile != null) ? getMPAnalyzerEn(dictFile) : null;
+		AbstractMPAnalyzer morph = (dictFile != null) ? new EnglishMPAnalyzer(dictFile) : null;
 		
 		if (new File(inputPath).isFile())
 		{
@@ -96,7 +98,7 @@ public class POSPredict extends AbstractRun
 		}
 		else
 		{
-			for (String filename : getSortedFileList(inputPath))
+			for (String filename : UTFile.getSortedFileList(inputPath))
 				predict(filename, filename+EXT, reader, p.o1, p.o2, morph);
 		}		
 	}

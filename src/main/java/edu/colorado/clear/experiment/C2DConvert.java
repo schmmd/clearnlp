@@ -45,14 +45,15 @@ import edu.colorado.clear.dependency.DEPLibEn;
 import edu.colorado.clear.dependency.DEPNode;
 import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.headrule.HeadRuleMap;
-import edu.colorado.clear.io.FileExtFilter;
 import edu.colorado.clear.morphology.AbstractMPAnalyzer;
+import edu.colorado.clear.morphology.EnglishMPAnalyzer;
 import edu.colorado.clear.propbank.PBArg;
 import edu.colorado.clear.propbank.PBInstance;
 import edu.colorado.clear.propbank.PBLib;
 import edu.colorado.clear.propbank.PBLoc;
 import edu.colorado.clear.reader.AbstractReader;
 import edu.colorado.clear.run.AbstractRun;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 import edu.colorado.clear.util.pair.StringIntPair;
@@ -96,7 +97,7 @@ public class C2DConvert extends AbstractRun
 		if (s_language.equals(AbstractReader.LANG_EN))
 		{
 			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)));
-			if (dictFile != null)	morph = AbstractRun.getMPAnalyzerEn(dictFile);
+			if (dictFile != null)	morph = new EnglishMPAnalyzer(dictFile);
 		}
 		
 		convertRec(c2d, morph, language, inputPath, parseExt, propExt, senseExt, nameExt, outputExt);
@@ -120,13 +121,13 @@ public class C2DConvert extends AbstractRun
 			
 			try
 			{
-				mProp  = getPBInstances(FileExtFilter.replaceExt(inputPath, propExt));
-				mSense = getWordSenses (FileExtFilter.replaceExt(inputPath, senseExt));
-				mName  = getNames      (FileExtFilter.replaceExt(inputPath, nameExt));
+				mProp  = getPBInstances(UTFile.replaceExtension(inputPath, propExt));
+				mSense = getWordSenses (UTFile.replaceExtension(inputPath, senseExt));
+				mName  = getNames      (UTFile.replaceExtension(inputPath, nameExt));
 			}
 			catch (Exception e) {e.printStackTrace();}
 			
-			PrintStream fout = UTOutput.createPrintBufferedFileStream(FileExtFilter.replaceExt(inputPath, outputExt));
+			PrintStream fout = UTOutput.createPrintBufferedFileStream(UTFile.replaceExtension(inputPath, outputExt));
 			CTReader reader = new CTReader(UTInput.createBufferedFileReader(inputPath));
 			CTTree cTree; DEPTree dTree; int n;
 			List<PBInstance> instances = null;

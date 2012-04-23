@@ -40,6 +40,7 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.feature.xml.DEPFtrXml;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.reader.DEPReader;
+import edu.colorado.clear.util.UTFile;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 import edu.colorado.clear.util.UTXml;
@@ -88,7 +89,7 @@ public class DEPPredict extends AbstractRun
 		}
 		else
 		{
-			for (String filename : getSortedFileList(inputPath))
+			for (String filename : UTFile.getSortedFileList(inputPath))
 				predict(filename, filename+EXT, reader, parser);
 		}		
 	}
