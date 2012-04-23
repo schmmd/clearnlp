@@ -47,16 +47,16 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 {
 	/** The ID of this node (default: {@link DEPLib#NULL_ID}). */
 	public int             id;
+	/** The named entity tag of this node (default: null). */
+	public String          namex;
 	/** The extra features of this node (default: empty). */
-	protected DEPFeat      feats;
+	protected DEPFeat      d_feats;
 	/** The dependency head of this node (default: empty). */
 	protected DEPArc       d_head;
 	/** The list of secondary heads of this node (default: empty). */
 	protected List<DEPArc> x_heads;
 	/** The list of semantic heads of this node (default: empty). */
 	protected List<DEPArc> s_heads;
-	/** The named entity tag of this node (default: null). */
-	public String          namex;
 	/** The sorted list of all dependents of this node (default: empty). */
 	protected List<DEPArc> l_dependents;
 	
@@ -97,17 +97,15 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 	 */
 	public void init(int id, String form, String lemma, String pos, DEPFeat feats)
 	{
-		this.id    = id;
-		this.form  = form;
-		this.lemma = lemma;
-		this.pos   = pos;
-		this.feats = feats;
-		this.namex = AbstractColumnReader.BLANK_COLUMN;
-		
-		d_head  = new DEPArc();
-		x_heads = new ArrayList<DEPArc>();
-		s_heads = new ArrayList<DEPArc>();
-		
+		this.id      = id;
+		this.form    = form;
+		this.lemma   = lemma;
+		this.pos     = pos;
+		d_feats      = feats;
+
+		d_head       = new DEPArc();
+		x_heads      = new ArrayList<DEPArc>();
+		s_heads      = new ArrayList<DEPArc>();
 		l_dependents = new ArrayList<DEPArc>();
 	}
 	
@@ -129,7 +127,7 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 	 */
 	public String getFeat(String key)
 	{
-		return feats.get(key);
+		return d_feats.get(key);
 	}
 	
 	/**
@@ -139,7 +137,7 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 	 */
 	public void addFeat(String key, String value)
 	{
-		feats.put(key, value);
+		d_feats.put(key, value);
 	}
 	
 	/**
@@ -148,7 +146,7 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 	 */
 	public void removeFeat(String key)
 	{
-		feats.remove(key);
+		d_feats.remove(key);
 	}
 	
 	/**
@@ -584,7 +582,7 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		build.append(form);		build.append(DEPReader.DELIM_COLUMN);
 		build.append(lemma);	build.append(DEPReader.DELIM_COLUMN);
 		build.append(pos);		build.append(DEPReader.DELIM_COLUMN);
-		build.append(feats);	build.append(DEPReader.DELIM_COLUMN);
+		build.append(d_feats);	build.append(DEPReader.DELIM_COLUMN);
 		
 		if (hasHead())
 		{

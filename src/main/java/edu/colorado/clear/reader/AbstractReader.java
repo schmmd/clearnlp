@@ -28,7 +28,7 @@ import java.io.IOException;
 
 /**
  * Abstract reader.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 abstract public class AbstractReader<T>
@@ -46,8 +46,8 @@ abstract public class AbstractReader<T>
 	
 	/** The flag for raw-text reader. */
 	static final public String TYPE_RAW = "raw";
-	/** The flag for token reader. */
-	static final public String TYPE_TOK = "tok";
+	/** The flag for sentence reader. */
+	static final public String TYPE_SEN = "sen";
 	/** The flag for part-of-speech reader. */
 	static final public String TYPE_POS = "pos";
 	/** The flag for dependency reader. */
@@ -57,7 +57,7 @@ abstract public class AbstractReader<T>
 	/** The flag for semantic role label reader. */
 	static final public String TYPE_SRL = "srl";
 	
-	/** The dummy tag for all fields. */
+	/** The dummy tag for any field. */
 	static public final String DUMMY_TAG = "_N_";
 	
 	protected BufferedReader f_in;

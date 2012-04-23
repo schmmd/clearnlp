@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * Abstract column reader.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 abstract public class AbstractColumnReader<T> extends AbstractReader<T>

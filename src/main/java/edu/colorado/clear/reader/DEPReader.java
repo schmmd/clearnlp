@@ -30,8 +30,8 @@ import edu.colorado.clear.dependency.DEPNode;
 import edu.colorado.clear.dependency.DEPTree;
 
 /**
- * Dependency reader.
- * @since v0.1
+ * Dependency tree reader.
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class DEPReader extends AbstractColumnReader<DEPTree>
@@ -46,19 +46,29 @@ public class DEPReader extends AbstractColumnReader<DEPTree>
 	
 	/**
 	 * Constructs a dependency reader.
-	 * @param iId the index of the ID field.
-	 * @param iForm the index of the form field.
-	 * @param iLemma the index of the lemma field.
-	 * @param iPos the index of the POS field.
-	 * @param iFeats the index of the feats field.
-	 * @param iHeadId the index of the head ID field.
-	 * @param iDeprel the index of the dependency label field.
+	 * @param iId the column index of the node ID field.
+	 * @param iForm the column index of the word-form field.
+	 * @param iLemma the column index of the lemma field.
+	 * @param iPos the column index of the POS field.
+	 * @param iFeats the column index of the feats field.
+	 * @param iHeadId the column index of the head ID field.
+	 * @param iDeprel the column index of the dependency label field.
 	 */
 	public DEPReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel)
 	{
 		init(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel);
 	}
 	
+	/**
+	 * Initializes column indexes of fields.
+	 * @param iId the column index of the node ID field.
+	 * @param iForm the column index of the word-form field.
+	 * @param iLemma the column index of the lemma field.
+	 * @param iPos the column index of the POS field.
+	 * @param iFeats the column index of the feats field.
+	 * @param iHeadId the column index of the head ID field.
+	 * @param iDeprel the column index of the dependency label field.
+	 */
 	public void init(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel)
 	{
 		i_id     = iId;
@@ -82,14 +92,19 @@ public class DEPReader extends AbstractColumnReader<DEPTree>
 			List<String[]> lines = readLines();
 			if (lines == null)	return null;
 			
-			tree = getDPTree(lines);
+			tree = getDEPTree(lines);
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
 		return tree;
 	}
 	
-	protected DEPTree getDPTree(List<String[]> lines)
+	/**
+	 * Returns a dependency tree from the input lines.
+	 * @param lines the input lines.
+	 * @return a dependency tree from the input lines.
+	 */
+	protected DEPTree getDEPTree(List<String[]> lines)
 	{
 		int id, headId, i, size = lines.size();
 		String form, lemma, pos, deprel;
@@ -98,7 +113,10 @@ public class DEPReader extends AbstractColumnReader<DEPTree>
 		DEPNode node;
 		
 		DEPTree tree = new DEPTree();
-		for (i=0; i<size; i++)	tree.add(new DEPNode());
+		
+		// initialize place holders
+		for (i=0; i<size; i++)
+			tree.add(new DEPNode());
 		
 		for (i=0; i<size; i++)
 		{

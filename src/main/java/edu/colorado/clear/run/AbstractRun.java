@@ -40,10 +40,15 @@ import edu.colorado.clear.reader.POSReader;
 import edu.colorado.clear.reader.SRLReader;
 import edu.colorado.clear.util.UTXml;
 
+/**
+ * Abstract run.
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
 abstract public class AbstractRun
 {
-	static protected final String ENTRY_FEATURE	= "FEATURE";
-	static protected final String ENTRY_MODEL	= "MODEL";
+	static final protected String ENTRY_FEATURE			= "FEATURE";
+	static final protected String ENTRY_MODEL			= "MODEL";
 	
 	static final public String TAG_READER				= "reader";
 	static final public String TAG_READER_TYPE			= "type";
@@ -56,7 +61,8 @@ abstract public class AbstractRun
 	static final public String TAG_TRAIN_ALGORITHM_NAME	= "name";
 	static final public String TAG_TRAIN_THREADS		= "threads";
 	
-	public void initArgs(String[] args)
+	/** Initializes arguments using args4j. */
+	protected void initArgs(String[] args)
 	{
 		CmdLineParser cmd = new CmdLineParser(this);
 		
@@ -73,11 +79,12 @@ abstract public class AbstractRun
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
+	/** @return a reader as specified in the element. */
 	protected AbstractReader<?> getReader(Element eReader)
 	{
 		String type = UTXml.getTrimmedAttribute(eReader, TAG_READER_TYPE);
 		
-		if (type.equals(AbstractReader.TYPE_POS))
+		if      (type.equals(AbstractReader.TYPE_POS))
 			return getPOSReader(eReader);
 		else if (type.equals(AbstractReader.TYPE_DEP))
 			return getDEPReader(eReader);
@@ -106,6 +113,7 @@ abstract public class AbstractRun
 		return new POSReader(iForm, iPos);
 	}
 	
+	/** Called by {@link AbstractRun#getReader(Element)}. */
 	private DEPReader getDEPReader(Element eReader)
 	{
 		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
@@ -147,6 +155,7 @@ abstract public class AbstractRun
 		return new DEPReader(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel);
 	}
 	
+	/** Called by {@link AbstractRun#getReader(Element)}. */
 	private DAGReader getDAGReader(Element eReader)
 	{
 		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
@@ -187,6 +196,7 @@ abstract public class AbstractRun
 		return new DAGReader(iId, iForm, iLemma, iPos, iFeats, iXheads);
 	}
 	
+	/** Called by {@link AbstractRun#getReader(Element)}. */
 	private SRLReader getSRLReader(Element eReader)
 	{
 		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
@@ -244,8 +254,8 @@ abstract public class AbstractRun
 	{
 		NodeList list = eReader.getElementsByTagName(TAG_READER_COLUMN);
 		int i, index, size = list.getLength();
-		String field;
 		Element element;
+		String field;
 		
 		ObjectIntOpenHashMap<String> map = new ObjectIntOpenHashMap<String>();
 		

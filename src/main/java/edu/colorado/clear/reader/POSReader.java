@@ -29,7 +29,7 @@ import edu.colorado.clear.pos.POSNode;
 
 /**
  * Part-of-speech reader.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class POSReader extends AbstractColumnReader<POSNode[]>
@@ -38,11 +38,21 @@ public class POSReader extends AbstractColumnReader<POSNode[]>
 	private int i_pos;
 	
 	/**
-	 * Constructs a part-of-speech reader given both form and POS fields.
-	 * @param iForm the column index of the form field.
-	 * @param iPos the column  index of the POS field.
+	 * Constructs a part-of-speech reader.
+	 * @param iForm the column index of the word-form field.
+	 * @param iPos the column index of the POS field.
 	 */
 	public POSReader(int iForm, int iPos)
+	{
+		init(iForm, iPos);
+	}
+	
+	/**
+	 * Initializes column indexes of fields.
+	 * @param iForm the column index of the form field.
+	 * @param iPos the column index of the POS field.
+	 */
+	public void init(int iForm, int iPos)
 	{
 		i_form = iForm;
 		i_pos  = iPos;

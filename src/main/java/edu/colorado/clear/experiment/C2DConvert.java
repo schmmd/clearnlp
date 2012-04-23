@@ -336,9 +336,12 @@ public class C2DConvert extends AbstractRun
 	{
 		if (names == null)	return;
 		String[] t0, t1;
-		int bIdx, eIdx, i;
+		int bIdx, eIdx, i, size = dTree.size();
 		String ex;
 		DEPNode node;
+		
+		for (i=1; i<size; i++)
+			dTree.get(i).namex = "O";
 		
 		for (String name : names)
 		{

@@ -31,8 +31,8 @@ import edu.colorado.clear.dependency.DEPNode;
 import edu.colorado.clear.dependency.DEPTree;
 
 /**
- * Dependency reader.
- * @since v0.1
+ * Acyclic directed graph reader.
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class DAGReader extends AbstractColumnReader<DEPTree>
@@ -45,20 +45,28 @@ public class DAGReader extends AbstractColumnReader<DEPTree>
 	private int i_xheads;
 	
 	/**
-	 * Constructs a dependency reader.
-	 * @param iId the index of the ID field.
-	 * @param iForm the index of the form field.
-	 * @param iLemma the index of the lemma field.
-	 * @param iPos the index of the POS field.
-	 * @param iFeats the index of the feats field.
-	 * @param iHeadId the index of the head ID field.
-	 * @param iDeprel the index of the dependency label field.
+	 * Constructs an acyclic directed graph reader.
+	 * @param iId the column index of the node ID field.
+	 * @param iForm the column index of the word-form field.
+	 * @param iLemma the column index of the lemma field.
+	 * @param iPos the column index of the POS field.
+	 * @param iFeats the column index of the feats field.
+	 * @param iXheads the column index of the dependency heads field.
 	 */
 	public DAGReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iXheads)
 	{
 		init(iId, iForm, iLemma, iPos, iFeats, iXheads);
 	}
 	
+	/**
+	 * Initializes column indexes of fields.
+	 * @param iId the column index of the node ID field.
+	 * @param iForm the column index of the word-form field.
+	 * @param iLemma the column index of the lemma field.
+	 * @param iPos the column index of the POS field.
+	 * @param iFeats the column index of the feats field.
+	 * @param iXheads the column index of the dependency heads field.
+	 */
 	public void init(int iId, int iForm, int iLemma, int iPos, int iFeats, int iXheads)
 	{
 		i_id     = iId;
@@ -80,14 +88,15 @@ public class DAGReader extends AbstractColumnReader<DEPTree>
 		{
 			List<String[]> lines = readLines();
 			if (lines == null)	return null;
-			tree = getDPGraph(lines);
+			
+			tree = getDAG(lines);
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
 		return tree;
 	}
 	
-	protected DEPTree getDPGraph(List<String[]> lines)
+	protected DEPTree getDAG(List<String[]> lines)
 	{
 		int id, headId, i, size = lines.size();
 		String form, lemma, pos, label;

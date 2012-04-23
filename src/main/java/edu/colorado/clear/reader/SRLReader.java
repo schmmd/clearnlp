@@ -23,7 +23,6 @@
 */
 package edu.colorado.clear.reader;
 
-import java.util.Arrays;
 import java.util.List;
 
 import edu.colorado.clear.dependency.DEPLib;
@@ -31,8 +30,8 @@ import edu.colorado.clear.dependency.DEPNode;
 import edu.colorado.clear.dependency.DEPTree;
 
 /**
- * Dependency reader.
- * @since v0.1
+ * Semantic role reader.
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class SRLReader extends DEPReader
@@ -40,14 +39,15 @@ public class SRLReader extends DEPReader
 	private int i_sheads;
 
 	/**
-	 * Constructs a dependency reader.
-	 * @param iId the index of the ID field.
-	 * @param iForm the index of the form field.
-	 * @param iLemma the index of the lemma field.
-	 * @param iPos the index of the POS field.
-	 * @param iFeats the index of the feats field.
-	 * @param iHeadId the index of the head ID field.
-	 * @param iDeprel the index of the dependency label field.
+	 * Constructs a semantic role reader.
+	 * @param iId the column index of the node ID field.
+	 * @param iForm the column index of the word-form field.
+	 * @param iLemma the column index of the lemma field.
+	 * @param iPos the column index of the POS field.
+	 * @param iFeats the column index of the feats field.
+	 * @param iHeadId the column index of the head ID field.
+	 * @param iDeprel the column index of the dependency label field.
+	 * @param iSheads the column index of the semantic head field.
 	 */
 	public SRLReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSheads)
 	{
@@ -55,6 +55,17 @@ public class SRLReader extends DEPReader
 		i_sheads = iSheads;
 	}
 	
+	/**
+	 * Initializes column indexes of fields.
+	 * @param iId the column index of the node ID field.
+	 * @param iForm the column index of the word-form field.
+	 * @param iLemma the column index of the lemma field.
+	 * @param iPos the column index of the POS field.
+	 * @param iFeats the column index of the feats field.
+	 * @param iHeadId the column index of the head ID field.
+	 * @param iDeprel the column index of the dependency label field.
+	 * @param iSheads the column index of the semantic head field.
+	 */
 	public void init(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSheads)
 	{
 		super.init(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel);
@@ -73,7 +84,7 @@ public class SRLReader extends DEPReader
 			List<String[]> lines = readLines();
 			if (lines == null)	return null;
 			
-			tree = getDPTree(lines);
+			tree = getDEPTree(lines);
 			if (i_sheads >= 0)	setSHeads(lines, tree);
 		}
 		catch (Exception e) {e.printStackTrace();}
@@ -81,6 +92,7 @@ public class SRLReader extends DEPReader
 		return tree;
 	}
 	
+	/** Sets semantic heads of the specific dependency tree given the input lines. */
 	private void setSHeads(List<String[]> lines, DEPTree tree)
 	{
 		int i, headId, size = tree.size();
@@ -90,24 +102,17 @@ public class SRLReader extends DEPReader
 
 		for (i=1; i<size; i++)
 		{
-			try
-			{
-				node  = tree.get(i);
-				heads = lines.get(i-1)[i_sheads];
-				if (heads.equals(AbstractColumnReader.BLANK_COLUMN))	continue;
+			node  = tree.get(i);
+			heads = lines.get(i-1)[i_sheads];
+			if (heads.equals(AbstractColumnReader.BLANK_COLUMN))	continue;
 
-				for (String head : heads.split(DEPLib.DELIM_HEADS))
-				{
-					tmp    = head.split(DEPLib.DELIM_HEADS_KEY);
-					headId = Integer.parseInt(tmp[0]);
-					label  = tmp[1];
-					
-					node.addSHead(tree.get(headId), label);				
-				}
-			}
-			catch (Exception e)
+			for (String head : heads.split(DEPLib.DELIM_HEADS))
 			{
-				System.err.println(Arrays.toString(lines.get(i-1)));
+				tmp    = head.split(DEPLib.DELIM_HEADS_KEY);
+				headId = Integer.parseInt(tmp[0]);
+				label  = tmp[1];
+				
+				node.addSHead(tree.get(headId), label);				
 			}
 		}
 	}
