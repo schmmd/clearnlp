@@ -41,9 +41,8 @@ import edu.colorado.clear.classification.vector.SparseFeatureVector;
 import edu.colorado.clear.classification.vector.StringFeatureVector;
 
 /**
- * String model.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/classification/StringModelTest.java">StringModelTest</a> for the use of this class.
- * @since v0.1
+ * String vector model.
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class StringModel extends AbstractModel

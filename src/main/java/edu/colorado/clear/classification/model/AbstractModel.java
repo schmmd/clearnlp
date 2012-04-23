@@ -38,7 +38,7 @@ import edu.colorado.clear.util.UTArray;
 
 /**
  * Abstract model.
- * @since v0.1
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 abstract public class AbstractModel

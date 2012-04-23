@@ -33,7 +33,7 @@ import edu.colorado.clear.util.UTArray;
 
 /**
  * Liblinear L2-regularized logistic regression algorithm.
- * @since v0.1
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class LiblinearL2LR extends AbstractAlgorithm

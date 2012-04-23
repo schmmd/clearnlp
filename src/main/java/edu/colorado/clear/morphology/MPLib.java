@@ -27,16 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.carrotsearch.hppc.CharOpenHashSet;
-
-import edu.colorado.clear.dependency.DEPNode;
-import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.pos.POSNode;
 import edu.colorado.clear.reader.AbstractReader;
+import edu.colorado.clear.util.pair.Pair;
 
 /**
  * Morphology library.
- * @since v0.1
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class MPLib
@@ -46,23 +43,33 @@ public class MPLib
 	static final protected Pattern URL_DOMAIN_KR = Pattern.compile(".+\\.(co|ac|go|mil|ne|or)\\.kr");
 	static final protected Pattern URL_WEB_EXT   = Pattern.compile(".+\\.(asp|aspx|htm|html|jsp|php|shtml|xml)");
 
-	static final protected char[]   PUNC_ALL_ARRAY		= {'.','!','?',';',':',',','@','#','$','%','^','&','*','(',')','{','}','[',']','<','>','+','-','/','=','~','\\','_','|','"','\'','`'};
-	static final protected char[]   PUNC_BOUNDARY_ARRAY	= {'.','!','?',';',':',',','(',')','{','}','[',']','"','`'};
-	static final protected String[] PUNC_REPEAT_ARRAY	= {".","!","?","-","*","=","~",","};
+	static final protected Pattern PUNCT_ANY	= Pattern.compile("\\p{Punct}");
+	static final protected Pattern PUNCT_ONLY	= Pattern.compile("^\\p{Punct}+$");
 	
-	static final protected Pattern[] DIGIT_LIKE = {Pattern.compile("\\d%"), Pattern.compile("\\$\\d"), Pattern.compile("(^|\\d)\\.\\d"), Pattern.compile("\\d,\\d"), Pattern.compile("\\d:\\d"), Pattern.compile("\\d-\\d"), Pattern.compile("\\d\\/\\d")};
-	static final protected Pattern   DIGITS = Pattern.compile("\\d+");
+	static final protected Pattern   DIGIT_SPAN	= Pattern.compile("\\d+");
+	static final protected Pattern   DIGIT_ONLY	= Pattern.compile("^\\d+$");
+	static final protected Pattern[] DIGIT_LIKE	= {Pattern.compile("\\d%"), Pattern.compile("\\$\\d"), Pattern.compile("(^|\\d)\\.\\d"), Pattern.compile("\\d,\\d"), Pattern.compile("\\d:\\d"), Pattern.compile("\\d-\\d"), Pattern.compile("\\d\\/\\d")};
 	
 	@SuppressWarnings("serial")
-	static final protected List<Pattern> PUNC_REPEAT = new ArrayList<Pattern>(PUNC_REPEAT_ARRAY.length)
+	static final protected List<Pair<Pattern, String>> BRACKET_LIST = new ArrayList<Pair<Pattern,String>>()
 	{{
-		for (String p : PUNC_REPEAT_ARRAY)
-			add(Pattern.compile(String.format("(\\%s)+", p)));
+		add(new Pair<Pattern,String>(Pattern.compile("-LRB-"), "("));
+		add(new Pair<Pattern,String>(Pattern.compile("-RRB-"), ")"));
+		add(new Pair<Pattern,String>(Pattern.compile("-LSB-"), "["));
+		add(new Pair<Pattern,String>(Pattern.compile("-RSB-"), "]"));
+		add(new Pair<Pattern,String>(Pattern.compile("-LCB-"), "{"));
+		add(new Pair<Pattern,String>(Pattern.compile("-RCB-"), "}"));
+		
+		trimToSize();
 	}};
 	
-	static final protected CharOpenHashSet PUNC_ALL = new CharOpenHashSet()
+	@SuppressWarnings("serial")
+	static final protected List<Pair<Pattern, String>> PUNC_REPEAT_LIST = new ArrayList<Pair<Pattern, String>>()
 	{{
-		for (char p : PUNC_ALL_ARRAY)	add(p);
+		final String[] PUNC_REPEAT_ARRAY = {".","!","?","-","*","=","~",","};
+		
+		for (String p : PUNC_REPEAT_ARRAY)
+			add(new Pair<Pattern,String>(Pattern.compile(String.format("(\\%s)+", p)), p));
 	}};
 	
 	/**
@@ -85,95 +92,94 @@ public class MPLib
 	}
 	
 	/**
-	 * Returns {@code true} if the specific character is punctuation.
-	 * @param c the character to be compared.
-	 * @return {@code true} if the specific character is punctuation.
+	 * Reverts coded brackets to their original forms (e.g., from "-LBR-" to "(").
+	 * @param form the word-form.
+	 * @return the reverted form of coded brackets.
 	 */
-	static public boolean isPunctuation(char c)
+	static public String revertBracket(String form)
 	{
-		return PUNC_ALL.contains(c);
+		for (Pair<Pattern,String> p : BRACKET_LIST)
+			form = p.o1.matcher(form).replaceAll(p.o2);
+		
+		return form;
 	}
 	
+	/**
+	 * Collapses redundant punctuation in the specific word-form (e.g., "!!!" -> "!").
+	 * @param form the word-form to be normalized.
+	 * @return normalized word-form.
+	 */
+	static public String normalizePunctuation(String form)
+	{
+		for (Pair<Pattern,String> p : PUNC_REPEAT_LIST)
+			form = p.o1.matcher(form).replaceAll(p.o2);
+		
+		return form;		
+	}
+	
+	/**
+	 * Returns {@code true} if the specific word-form contains only punctuation.
+	 * @param form the word-form to be compared.
+	 * @return {@code true} if the specific word-form contains only punctuation.
+	 */
+	static public boolean containsAnyPunctuation(String form)
+	{
+		return PUNCT_ANY.matcher(form).find();
+	}
+	
+	/**
+	 * Returns {@code true} if the specific word-form contains only punctuation.
+	 * @param form the word-form to be compared.
+	 * @return {@code true} if the specific word-form contains only punctuation.
+	 */
 	static public boolean containsOnlyPunctuation(String form)
+	{
+		return PUNCT_ONLY.matcher(form).find();
+	}
+
+	/**
+	 * Returns {@code true} if the specific word-form contains any of the specified punctuation.
+	 * @param form the word-form.
+	 * @param punctuation the array of punctuation.
+	 * @return {@code true} if the specific word-form contains any of the specified punctuation.
+	 */
+	static public boolean containsAnySpecificPunctuation(String form, char... punctuation)
 	{
 		int i, size = form.length();
 		
 		for (i=0; i<size; i++)
 		{
-			if (!isPunctuation(form.charAt(i)))
-				return false;
+			for (char p : punctuation)
+			{
+				if (form.charAt(i) == p)
+					return true;	
+			}
 		}
 		
-		return true;
+		return false;
 	}
 	
 	/**
-	 * Collapses redundant punctuation in the specific word-form (e.g., "!!! -> !").
+	 * Normalizes all digits to 0.
 	 * @param form the word-form to be normalized.
-	 * @return normalized form.
-	 */
-	static public String normalizePunctuation(String form)
-	{
-		int i, size = PUNC_REPEAT_ARRAY.length;
-		
-		for (i=0; i<size; i++)
-			form = PUNC_REPEAT.get(i).matcher(form).replaceAll(PUNC_REPEAT_ARRAY[i]);
-		
-		return form;		
-	}
-
-	/**
-	 * Normalizes digits.
-	 * @param form the word-form to be normalized.
-	 * @return normalized form.
+	 * @return the normalized form.
 	 */
 	static public String normalizeDigits(String form)
 	{
 		for (Pattern p : DIGIT_LIKE)
 			form = p.matcher(form).replaceAll("0");
 		
-		return DIGITS.matcher(form).replaceAll("0");
+		return DIGIT_SPAN.matcher(form).replaceAll("0");
 	}
 	
-	static public String trimPunctuation(String form)
+	/**
+	 * Returns {@code true} if the specific word-form contains only digits.
+	 * @param form the word-form to be compared.
+	 * @return {@code true} if the specific word-form contains only digits.
+	 */
+	static public boolean containsOnlyDigits(String form)
 	{
-		int bIdx, eIdx, size = form.length();
-		
-		for (bIdx=0; bIdx<size; bIdx++)
-		{
-			if (!isPunctuation(form.charAt(bIdx)))
-				break;
-		}
-		
-		if (bIdx == size)	return form;
-		
-		for (eIdx=size-1; eIdx>bIdx; eIdx--)
-		{
-			if (!isPunctuation(form.charAt(bIdx)))
-				break;
-		}
-		
-		if (bIdx == eIdx)	return form;
-		
-		return form.substring(bIdx, eIdx+1);
-	}
-	
-	static public void lemmatize(AbstractMPAnalyzer morph, POSNode[] nodes)
-	{
-		for (POSNode node : nodes)
-			node.lemma = morph.getLemma(node.form, node.pos);
-	}
-	
-	static public void lemmatize(AbstractMPAnalyzer morph, DEPTree tree)
-	{
-		int i, size = tree.size();
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			node.lemma = morph.getLemma(node.form, node.pos);
-		}
+		return DIGIT_ONLY.matcher(form).find();
 	}
 	
 	static public void normalizeForms(POSNode[] nodes)
@@ -188,7 +194,7 @@ public class MPLib
 		}
 	}
 	
-	static public boolean isPeriod(String form)
+	static public boolean isPeriodLike(String form)
 	{
 		int size = form.length();
 		

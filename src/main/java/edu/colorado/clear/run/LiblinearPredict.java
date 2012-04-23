@@ -36,21 +36,18 @@ import edu.colorado.clear.classification.train.SparseTrainSpace;
 import edu.colorado.clear.classification.train.StringTrainSpace;
 import edu.colorado.clear.classification.vector.SparseFeatureVector;
 import edu.colorado.clear.classification.vector.StringFeatureVector;
-import edu.colorado.clear.constituent.CTReader;
-import edu.colorado.clear.constituent.CTTree;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 import edu.colorado.clear.util.pair.Pair;
 
 /**
- * Normalizes indices of constituent trees.
- * @see CTReader#normalizeIndices(CTTree)
- * @since v0.1
+ * Predicts using a Liblinear model.
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class LiblinearPredict extends AbstractRun
 {
-	@Option(name="-i", usage="the test file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-i", usage="the input file (input; required)", required=true, metaVar="<filename>")
 	private String s_testFile;
 	
 	@Option(name="-o", usage="the output file (output; required)", required=true, metaVar="<filename>")

@@ -36,7 +36,7 @@ import edu.colorado.clear.util.UTInput;
 
 /**
  * Abstract train space.
- * @since v0.1
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 abstract public class AbstractTrainSpace

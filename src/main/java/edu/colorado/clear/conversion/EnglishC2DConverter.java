@@ -23,6 +23,7 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.headrule.HeadRule;
 import edu.colorado.clear.headrule.HeadRuleMap;
 import edu.colorado.clear.headrule.HeadTagSet;
+import edu.colorado.clear.morphology.MPLib;
 import edu.colorado.clear.morphology.MPLibEn;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.util.UTArray;
@@ -1026,7 +1027,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		for (CTNode node : cTree.getTokens())
 		{
 			id    = node.getTokenId() + 1;
-			form  = MPLibEn.revertBracket(node.form);
+			form  = MPLib.revertBracket(node.form);
 			lemma = AbstractColumnReader.BLANK_COLUMN;
 			pos   = node.pTag;
 			

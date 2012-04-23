@@ -192,7 +192,7 @@ public class POSPredict extends AbstractRun
 
 		et = System.currentTimeMillis();
 		
-		if (morph != null)	MPLib.lemmatize(morph, nodes);
+		if (morph != null)	morph.lemmatize(nodes);
 		return et - st;
 	}
 		

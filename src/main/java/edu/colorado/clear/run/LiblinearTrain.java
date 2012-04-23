@@ -39,13 +39,13 @@ import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 
 /**
- * Trains a liblinear model.
- * @since v0.1
+ * Trains a Liblinear model.
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class LiblinearTrain extends AbstractRun
 {
-	@Option(name="-i", usage="the trainning file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-i", usage="the training file (input; required)", required=true, metaVar="<filename>")
 	private String s_trainFile;
 	
 	@Option(name="-m", usage="the model file (output; required)", required=true, metaVar="<filename>")

@@ -36,9 +36,8 @@ import edu.colorado.clear.classification.vector.SparseFeatureVector;
 import edu.colorado.clear.util.UTArray;
 
 /**
- * Integer model.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/classification/SparseModelTest.java">SparseModelTest</a> for the use of this class.
- * @since v0.1
+ * Sparse vector model.
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class SparseModel extends AbstractModel

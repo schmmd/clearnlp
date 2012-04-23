@@ -24,7 +24,6 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.headrule.HeadRuleMap;
 import edu.colorado.clear.io.FileExtFilter;
 import edu.colorado.clear.morphology.AbstractMPAnalyzer;
-import edu.colorado.clear.morphology.MPLib;
 import edu.colorado.clear.propbank.PBArg;
 import edu.colorado.clear.propbank.PBInstance;
 import edu.colorado.clear.propbank.PBLib;
@@ -128,7 +127,7 @@ public class C2DConvert extends AbstractRun
 				}
 				else
 				{
-					if (morph != null)	MPLib.lemmatize(morph, dTree);
+					if (morph != null)	morph.lemmatize(dTree);
 					addRolesets(cTree, dTree, instances);
 					if (mSense != null)	addWordSenses(cTree, dTree, mSense.get(n));
 					if (mName  != null)	addNames(cTree, dTree, mName.get(n));

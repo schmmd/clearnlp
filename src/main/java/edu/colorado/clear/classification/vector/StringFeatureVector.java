@@ -30,8 +30,7 @@ import edu.colorado.clear.classification.train.AbstractTrainSpace;
 
 /**
  * Vector containing string features.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/classification/StringFeatureVectorTest.java">StringFeatureVectorTest</a> for the use of this class.
- * @since v0.1
+ * @since 0.1.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class StringFeatureVector extends AbstractFeatureVector

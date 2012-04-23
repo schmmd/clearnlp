@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -209,7 +209,6 @@ public class CTLibEn implements CTLib
 	/** Punctuation. */
 	static final public String POS_PUNC		= "PUNC";
 	
-	
 	/** The function tag of adverbials. */
 	static final public String FTAG_ADV = "ADV";
 	/** The function tag of benefactives. */
@@ -282,25 +281,25 @@ public class CTLibEn implements CTLib
 	/** The empty category representing null units ({@code *U*}). */
 	static final public String EC_UNIT	= "*U*";
 	
-	/** A regular expression representing pos tags of complemenizers. */
+	/** POS tags of complemenizers. */
 	static final public Pattern RE_COMP_POS  = Pattern.compile("^(WDT|WP.*|WRB)$");
-	/** A regular expression representing word-forms of complemenizers. */
+	/** Lower-cased word-forms of complementizers. */
 	static final public Pattern RE_COMP_FORM = Pattern.compile("^(how|however|that|what|whatever|whatsoever|when|whenever|where|whereby|wherein|whereupon|wherever|which|whichever|whither|who|whoever|whom|whose|why)$");
-	/** A regular expression representing passive empty categories ({@code *|*-\d}). */
+	/** Passive empty categories ({@code *|*-\d}). */
 	static final public Pattern RE_NULL = Pattern.compile("^(\\*|\\*-.+)$");
-	/** WH nodes with antecedents. */
+	/** WH phrases with antecedents. */
 	static final public Pattern RE_COMP_LINK = Pattern.compile("^(WHNP|WHPP|WHADVP)$");
 	/** Complementizers with antecedents. */
 	static final public Pattern RE_COMP_LINK_FORM = Pattern.compile("^(0|that|when|where|whereby|wherein|whereupon|which|who|whom|whose)$");
 	/** A regular expression of identifying ICH|PPA|RNR empty categories. */
 	static final public Pattern RE_ICH_PPA_RNR = Pattern.compile("\\*(ICH|PPA|RNR)\\*.*");
 	
-	static final public Pattern RE_FORM_BE   = Pattern.compile("^(be|been|being|am|is|was|are|were|'m|'s|'re)$");
 	static final public Pattern RE_FORM_HAVE = Pattern.compile("^(have|has|had|having|'ve|'d)$");
 	
 	//	======================== Linking ========================
 	
 	/**
+	 * Fixes some inconsistent function tags.
 	 * Links antecedents of reduced passive nulls ({@code *}) and complementizers.
 	 * @see CTLibEn#linkReducedPassiveNulls(CTTree)
 	 * @see CTLibEn#linkComplementizers(CTTree)	 
@@ -353,7 +352,7 @@ public class CTLibEn implements CTLib
 			return true;
 		
 		if ((tmp = tmp.getFirstChild("+VB.*")) != null)
-			return !RE_FORM_HAVE.matcher(tmp.form.toLowerCase()).find();
+			return !MPLibEn.isHave(tmp.form);
 		
 		return true;
 	}

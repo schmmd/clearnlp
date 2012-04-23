@@ -35,8 +35,8 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntOpenHashSet;
 
 import edu.colorado.clear.conversion.C2DInfo;
+import edu.colorado.clear.morphology.MPLib;
 import edu.colorado.clear.propbank.PBLoc;
-import edu.colorado.clear.util.UTRegex;
 import edu.colorado.clear.util.pair.StringIntPair;
 
 /**
@@ -549,7 +549,7 @@ public class CTNode implements Comparable<CTNode>
 			
 			if (delim.equals("-"))
 			{
-				if (UTRegex.isDigit(tag))
+				if (MPLib.containsOnlyDigits(tag))
 				{
 					if (coIndex == -1)
 						coIndex = Integer.parseInt(tag);
