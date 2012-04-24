@@ -42,6 +42,23 @@ abstract public class AbstractMPAnalyzer
 	abstract public String getLemma(String form, String pos);
 	
 	/**
+	 * Returns a normalized form of the specific word-form.
+	 * @see MPLib#normalizeDigits(String)
+	 * @see MPLib#normalizePunctuation(String)
+	 * @param form the word-form.
+	 * @param toLower if {@code true}, returns a lowercased form.
+	 * @return a normalized form of the specific word-form.
+	 */
+	public String getNormalizedForm(String form, boolean toLower)
+	{
+		form = MPLib.normalizeDigits(form);
+		form = MPLib.normalizePunctuation(form);
+		if (toLower)	form = form.toLowerCase();
+		
+		return form;
+	}
+	
+	/**
 	 * Adds lemmas of all word-forms given their POS tags.
 	 * @param nodes the array of POS nodes.
 	 */
@@ -52,7 +69,7 @@ abstract public class AbstractMPAnalyzer
 	}
 	
 	/**
-	 * Adds lemmas of all word-forms given their POS tags in the specific dependnecy tree.
+	 * Adds lemmas of all word-forms given their POS tags in the dependency tree.
 	 * @param tree the dependency tree.
 	 */
 	public void lemmatize(DEPTree tree)

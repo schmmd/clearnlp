@@ -72,7 +72,7 @@ public class DEPGenerate extends DEPTrain
 	private void run(String configXml, String featureXml, String[] trainFiles, int devId) throws Exception
 	{
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader  reader = (DEPReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		DEPReader  reader = (DEPReader)getReader(eConfig);
 		DEPFtrXml     xml = new DEPFtrXml(new FileInputStream(featureXml));
 		
 		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);

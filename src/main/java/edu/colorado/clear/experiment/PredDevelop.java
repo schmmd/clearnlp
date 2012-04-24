@@ -81,7 +81,7 @@ public class PredDevelop extends AbstractRun
 	private void run(String configXml, String featureXml, String trnFile, String devFile) throws Exception
 	{
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader  reader = (DEPReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		DEPReader  reader = (DEPReader)getReader(eConfig);
 		DEPFtrXml     xml = new DEPFtrXml(new FileInputStream(featureXml));
 		
 		develop(eConfig, reader, xml, trnFile, devFile);

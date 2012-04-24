@@ -141,9 +141,26 @@ public class POSNode
 		StringBuilder build = new StringBuilder();
 		
 		build.append(form);	build.append(AbstractColumnReader.DELIM_COLUMN);
-		build.append(pos);	build.append(AbstractColumnReader.DELIM_COLUMN);
-		build.append(lemma);
+		build.append(pos);
 		
 		return build.toString();
+	}
+	
+	public String toString(boolean includeLemma)
+	{
+		StringBuilder build = new StringBuilder();
+		
+		build.append(form);
+		
+		if (includeLemma)
+		{
+			build.append(AbstractColumnReader.DELIM_COLUMN);
+			build.append(lemma);
+		}
+		
+		build.append(AbstractColumnReader.DELIM_COLUMN);
+		build.append(pos);
+		
+		return build.toString();		
 	}
 }

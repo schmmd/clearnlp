@@ -1,0 +1,16 @@
+<configuration>
+	<reader type="dep">
+		<column index="1" field="id"/>
+		<column index="2" field="form"/>
+		<column index="4" field="lemma"/>
+		<column index="6" field="pos"/>
+		<column index="7" field="feats"/>
+		<column index="8" field="headId"/>
+		<column index="10" field="deprel"/>
+    </reader>
+	<language>en</language>
+	<train>
+		<algorithm name="liblinear" solver="0" cost="0.1" eps="0.1" bias="-1"/>
+		<threads>8</threads>
+	</train>
+</configuration>

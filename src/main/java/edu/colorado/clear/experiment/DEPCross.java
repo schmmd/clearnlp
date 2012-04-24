@@ -76,7 +76,7 @@ public class DEPCross extends AbstractRun
 	
 	DEPTree[][] getDPTrees(Element eConfig, String trnFile)
 	{
-		DEPReader reader = (DEPReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		DEPReader reader = (DEPReader)getReader(eConfig);
 		DEPTree[][] trees = new DEPTree[10][];
 		DEPTree tree;
 		int i, j = 0;

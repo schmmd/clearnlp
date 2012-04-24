@@ -64,7 +64,7 @@ public class POSDevelop extends POSTrain
 	public void run(String configXml, String featureXml, String trnDir, String devDir, double threshold) throws Exception
 	{
 		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader   reader = (POSReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		POSReader   reader = (POSReader)getReader(eConfig);
 		POSFtrXml      xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
 		String[]  devFiles = UTFile.getSortedFileList(devDir);

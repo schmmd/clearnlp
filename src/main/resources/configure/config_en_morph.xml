@@ -1,0 +1,8 @@
+<configuration>
+	<reader type="pos">
+		<column index="1" field="form"/>
+		<column index="2" field="pos"/>
+    </reader>
+	<language>en</language>
+	<morph_dict>/home/choijd/workspace/clearnlp/src/main/resources/model/dict_en-1.1.jar</morph_dict>
+</configuration>

@@ -91,7 +91,7 @@ public class POSTrain extends AbstractRun
 	public void run(String configXml, String featureXml, String trainDir, String modelFile, double threshold) throws Exception
 	{
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader    reader = (POSReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		POSReader    reader = (POSReader)getReader(eConfig);
 		POSFtrXml       xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[] trainFiles = UTFile.getSortedFileList(trainDir);
 		

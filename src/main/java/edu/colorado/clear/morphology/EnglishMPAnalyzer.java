@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -45,8 +47,7 @@ import edu.colorado.clear.util.pair.Pair;
  */
 public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 {
-	final public String    FIELD_DELIM = "_";
-	final private String[] POS_TYPES = {CTLibEn.POS_NN, CTLibEn.POS_VB, CTLibEn.POS_JJ, CTLibEn.POS_RB};
+	final public String FIELD_DELIM = "_";
 	
 	static final String NOUN_EXC  = "noun.exc";
 	static final String VERB_EXC  = "verb.exc";
@@ -64,35 +65,35 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 	static final String ABBR_RULE = "abbr.rule";
 	
 	/** Noun exceptions */
-	HashMap<String,String> m_noun_exc;
+	Map<String,String> m_noun_exc;
 	/** Verb exceptions */
-	HashMap<String,String> m_verb_exc;
+	Map<String,String> m_verb_exc;
 	/** Adjective exceptions */
-	HashMap<String,String> m_adj_exc;
+	Map<String,String> m_adj_exc;
 	/** Adverb exceptions */
-	HashMap<String,String> m_adv_exc;
+	Map<String,String> m_adv_exc;
 	
 	/** Noun base-forms */
-	HashSet<String> s_noun_base;
+	Set<String> s_noun_base;
 	/** Verb base-forms */
-	HashSet<String> s_verb_base;
+	Set<String> s_verb_base;
 	/** Adjective base-forms */
-	HashSet<String> s_adj_base;
+	Set<String> s_adj_base;
 	/** Adverb base-forms */
-	HashSet<String> s_adv_base;
+	Set<String> s_adv_base;
 	/** Ordinal forms */
-	HashSet<String> s_ord_base;
+	Set<String> s_ord_base;
 	/** Cardinal forms */
-	HashSet<String> s_crd_base;
+	Set<String> s_crd_base;
 	
 	/** Noun detachment rules */
-	ArrayList<Pair<String,String>> a_noun_rule;
+	List<Pair<String,String>> a_noun_rule;
 	/** Verb detachment rules */
-	ArrayList<Pair<String,String>> a_verb_rule;
+	List<Pair<String,String>> a_verb_rule;
 	/** Adjective detachment rules */
-	ArrayList<Pair<String,String>> a_adj_rule;
+	List<Pair<String,String>> a_adj_rule;
 	/** Abbreviation replacement rules */
-	HashMap<String,String>         m_abbr_rule;
+	Map<String,String>         m_abbr_rule;
 	
 	/**
 	 * Constructs an English morphological analyzer from the specific dictionary file.
@@ -247,41 +248,22 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 		return map;
 	}
 	
-	public List<Pair<String,String>> getLemmas(String form)
-	{
-		List<Pair<String,String>> list = new ArrayList<Pair<String,String>>();
-		String morphem;
-		
-		form = MPLib.normalizeDigits(form);
-		form = form.toLowerCase();
-		
-		for (String pos : POS_TYPES)
-		{
-			morphem = getLemmaAux(form, pos);
-			if (!morphem.equals(form))	list.add(new Pair<String,String>(morphem, pos));
-		}
-		
-		if (list.isEmpty())
-			list.add(new Pair<String,String>(form, CTLibEn.POS_XX));
-		
-		return list;
-	}
-	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.morphology.AbstractMPAnalyzer#getLemma(java.lang.String, java.lang.String)
-	 */
+	@Override
 	public String getLemma(String form, String pos)
 	{
-		form = MPLib.normalizeDigits(form);
-		form = form.toLowerCase();
-		
+		form = getNormalizedForm(form, true);
 		return getLemmaAux(form, pos);
 	}
 	
+	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
 	private String getLemmaAux(String form, String pos)
 	{
+		// numbers
+		String morphem = getNumber(form, pos);
+		if (morphem != null)	return morphem;
+		
 		// exceptions
-		String morphem = getException(form, pos);
+		morphem = getException(form, pos);
 		if (morphem != null)	return morphem;
 				
 		// base-forms
@@ -293,6 +275,21 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 		if (morphem != null)	return morphem;
 
 		return form;
+	}
+	
+	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
+	private String getNumber(String form, String pos)
+	{
+		if (pos.equals(CTLibEn.POS_CD))
+		{
+			if (s_crd_base.contains(form))
+				return "#crd#";
+			
+			if (form.equals("0st") || form.equals("0nd") || form.equals("0rd") || form.equals("0th") || s_ord_base.contains(form))
+				return "#ord#";
+		}
+		
+		return null;
 	}
 	
 	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */
@@ -317,7 +314,7 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 	}
 	
 	/** Called by {@link EnglishMPAnalyzer#getBase(String, String)}. */
-	private String getBaseAux(String form, HashSet<String> set, ArrayList<Pair<String,String>> rule)
+	private String getBaseAux(String form, Set<String> set, List<Pair<String,String>> rule)
 	{
 		int offset;	String base;
 		

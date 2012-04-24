@@ -18,14 +18,27 @@ public class UTFileTest
 		assertEquals("a.txt", UTFile.replaceExtension("a.txt", "bmp", "jpg"));
 	}
 	
+	@Test
 	public void getSortedFileListTest()
 	{
 		for (String filename : UTFile.getSortedFileList("/home/choijd/"))
 			System.out.println(filename);
 
-		System.out.println();
+		System.out.println("-------------------");
 				
 		for (String filename : UTFile.getSortedFileList("/home/choijd/", "pdf"))
+			System.out.println(filename);
+		
+		System.out.println("-------------------");
+				
+		String[] filelist = UTFile.getInputFileList("/home/choijd/", "pdf");
+		for (String filename : filelist)
+			System.out.println(filename);
+
+		System.out.println("-------------------");
+				
+		filelist = UTFile.getInputFileList(filelist[0], "txt");
+		for (String filename : filelist)
 			System.out.println(filename);
 	}
 }

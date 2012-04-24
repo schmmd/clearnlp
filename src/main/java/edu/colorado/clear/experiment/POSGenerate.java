@@ -44,7 +44,7 @@ public class POSGenerate extends POSTrain
 	public POSGenerate(String configXml, String featureXml, String dictFile, String trnDir, String outDir, double threshold) throws Exception
 	{
 		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader   reader = (POSReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		POSReader   reader = (POSReader)getReader(eConfig);
 		POSFtrXml      xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
 		EnglishMPAnalyzer morph = new EnglishMPAnalyzer(dictFile);

@@ -32,6 +32,9 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 
 import edu.colorado.clear.classification.model.AbstractModel;
 import edu.colorado.clear.classification.train.AbstractTrainSpace;
+import edu.colorado.clear.morphology.AbstractMPAnalyzer;
+import edu.colorado.clear.morphology.DefaultMPAnalyzer;
+import edu.colorado.clear.morphology.EnglishMPAnalyzer;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.reader.AbstractReader;
 import edu.colorado.clear.reader.DAGReader;
@@ -47,8 +50,8 @@ import edu.colorado.clear.util.UTXml;
  */
 abstract public class AbstractRun
 {
-	static final protected String ENTRY_FEATURE			= "FEATURE";
-	static final protected String ENTRY_MODEL			= "MODEL";
+	static final protected String ENTRY_FEATURE	= "FEATURE";
+	static final protected String ENTRY_MODEL	= "MODEL";
 	
 	static final public String TAG_READER				= "reader";
 	static final public String TAG_READER_TYPE			= "type";
@@ -60,6 +63,9 @@ abstract public class AbstractRun
 	static final public String TAG_TRAIN_ALGORITHM		= "algorithm";
 	static final public String TAG_TRAIN_ALGORITHM_NAME	= "name";
 	static final public String TAG_TRAIN_THREADS		= "threads";
+	
+	static final public String TAG_LANGUAGE		= "language";
+	static final public String TAG_MORPH_DICT	= "morph_dict";
 	
 	/** Initializes arguments using args4j. */
 	protected void initArgs(String[] args)
@@ -79,10 +85,16 @@ abstract public class AbstractRun
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	/** @return a reader as specified in the element. */
-	protected AbstractReader<?> getReader(Element eReader)
+	protected String getLanguage(Element eConfig)
 	{
-		String type = UTXml.getTrimmedAttribute(eReader, TAG_READER_TYPE);
+		Element eLanguage = UTXml.getFirstElementByTagName(eConfig, TAG_LANGUAGE);
+		return UTXml.getTrimmedTextContent(eLanguage);
+	}
+	
+	protected AbstractReader<?> getReader(Element eConfig)
+	{
+		Element eReader = UTXml.getFirstElementByTagName(eConfig, TAG_READER);
+		String  type    = UTXml.getTrimmedAttribute(eReader, TAG_READER_TYPE);
 		
 		if      (type.equals(AbstractReader.TYPE_POS))
 			return getPOSReader(eReader);
@@ -94,6 +106,28 @@ abstract public class AbstractRun
 			return getSRLReader(eReader);
 		
 		return null;
+	}
+	
+	/** Called by {@link AbstractRun#getReader(Element)}. */
+	private ObjectIntOpenHashMap<String> getFieldMap(Element eReader)
+	{
+		NodeList list = eReader.getElementsByTagName(TAG_READER_COLUMN);
+		int i, index, size = list.getLength();
+		Element element;
+		String field;
+		
+		ObjectIntOpenHashMap<String> map = new ObjectIntOpenHashMap<String>();
+		
+		for (i=0; i<size; i++)
+		{
+			element = (Element)list.item(i);
+			field   = UTXml.getTrimmedAttribute(element, TAG_READER_COLUMN_FIELD);
+			index   = Integer.parseInt(element.getAttribute(TAG_READER_COLUMN_INDEX));
+			
+			map.put(field, index);
+		}
+		
+		return map;
 	}
 	
 	/** Called by {@link AbstractRun#getReader(Element)}. */
@@ -156,47 +190,6 @@ abstract public class AbstractRun
 	}
 	
 	/** Called by {@link AbstractRun#getReader(Element)}. */
-	private DAGReader getDAGReader(Element eReader)
-	{
-		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
-		
-		int iId		= map.get(AbstractColumnReader.FIELD_ID)	 - 1;
-		int iForm	= map.get(AbstractColumnReader.FIELD_FORM)	 - 1;
-		int iLemma	= map.get(AbstractColumnReader.FIELD_LEMMA)	 - 1;
-		int iPos	= map.get(AbstractColumnReader.FIELD_POS)	 - 1;
-		int iFeats	= map.get(AbstractColumnReader.FIELD_FEATS)	 - 1;
-		int iXheads	= map.get(AbstractColumnReader.FIELD_XHEADS) - 1;
-		
-		if (iId < 0)
-		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
-			System.exit(1);
-		}
-		else if (iForm < 0)
-		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
-			System.exit(1);
-		}
-		else if (iLemma < 0)
-		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
-			System.exit(1);
-		}
-		else if (iPos < 0)
-		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
-			System.exit(1);
-		}
-		else if (iFeats < 0)
-		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
-			System.exit(1);
-		}
-		
-		return new DAGReader(iId, iForm, iLemma, iPos, iFeats, iXheads);
-	}
-	
-	/** Called by {@link AbstractRun#getReader(Element)}. */
 	private SRLReader getSRLReader(Element eReader)
 	{
 		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
@@ -250,25 +243,44 @@ abstract public class AbstractRun
 	}
 	
 	/** Called by {@link AbstractRun#getReader(Element)}. */
-	private ObjectIntOpenHashMap<String> getFieldMap(Element eReader)
+	private DAGReader getDAGReader(Element eReader)
 	{
-		NodeList list = eReader.getElementsByTagName(TAG_READER_COLUMN);
-		int i, index, size = list.getLength();
-		Element element;
-		String field;
+		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
 		
-		ObjectIntOpenHashMap<String> map = new ObjectIntOpenHashMap<String>();
+		int iId		= map.get(AbstractColumnReader.FIELD_ID)	 - 1;
+		int iForm	= map.get(AbstractColumnReader.FIELD_FORM)	 - 1;
+		int iLemma	= map.get(AbstractColumnReader.FIELD_LEMMA)	 - 1;
+		int iPos	= map.get(AbstractColumnReader.FIELD_POS)	 - 1;
+		int iFeats	= map.get(AbstractColumnReader.FIELD_FEATS)	 - 1;
+		int iXheads	= map.get(AbstractColumnReader.FIELD_XHEADS) - 1;
 		
-		for (i=0; i<size; i++)
+		if (iId < 0)
 		{
-			element = (Element)list.item(i);
-			field   = UTXml.getTrimmedAttribute(element, TAG_READER_COLUMN_FIELD);
-			index   = Integer.parseInt(element.getAttribute(TAG_READER_COLUMN_INDEX));
-			
-			map.put(field, index);
+			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
+			System.exit(1);
+		}
+		else if (iForm < 0)
+		{
+			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
+			System.exit(1);
+		}
+		else if (iLemma < 0)
+		{
+			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
+			System.exit(1);
+		}
+		else if (iPos < 0)
+		{
+			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
+			System.exit(1);
+		}
+		else if (iFeats < 0)
+		{
+			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
+			System.exit(1);
 		}
 		
-		return map;
+		return new DAGReader(iId, iForm, iLemma, iPos, iFeats, iXheads);
 	}
 	
 	protected AbstractModel getModel(Element eTrain, AbstractTrainSpace space, int index)
@@ -296,11 +308,35 @@ abstract public class AbstractRun
 		return null;
 	}
 	
-	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
+	/** Called by {@link AbstractRun#getModel(Element, AbstractTrainSpace, int)}. */
+	private AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
 	{
 		space.build();
 		System.out.println("Liblinear:");
 		System.out.printf("- solver=%d, cost=%f, eps=%f, bias=%f\n", solver, cost, eps, bias);
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
+	}
+	
+	protected AbstractMPAnalyzer getMPAnalyzer(Element eConfig)
+	{
+		Element eMorphDict = UTXml.getFirstElementByTagName(eConfig, TAG_MORPH_DICT);
+		String  language   = getLanguage(eConfig);
+		String  morphDict  = UTXml.getTrimmedTextContent(eMorphDict);
+
+		return getMPAnalyzer(language, morphDict);
+	}
+	
+	/**
+	 * Returns a morphological analyzer for the specific language.
+	 * @param language the language.
+	 * @param dictFile the dictionary filename.
+	 * @return a morphological analyzer for the specific language.
+	 */
+	static public AbstractMPAnalyzer getMPAnalyzer(String language, String dictFile)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishMPAnalyzer(dictFile);
+		
+		return new DefaultMPAnalyzer();
 	}
 }

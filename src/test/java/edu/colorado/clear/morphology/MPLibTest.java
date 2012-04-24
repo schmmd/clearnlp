@@ -81,6 +81,10 @@ public class MPLibTest
 		assertEquals("0", MPLib.normalizeDigits(form));
 		form = "A.01";
 		assertEquals("A.0", MPLib.normalizeDigits(form));
+		form = "A:01";
+		assertEquals("A:0", MPLib.normalizeDigits(form));
+		form = "A/01";
+		assertEquals("A/0", MPLib.normalizeDigits(form));
 		form = ".01";
 		assertEquals("0", MPLib.normalizeDigits(form));
 		form = "12.34";
@@ -91,12 +95,8 @@ public class MPLibTest
 		assertEquals("0", MPLib.normalizeDigits(form));
 		form = "12-34-56";
 		assertEquals("0", MPLib.normalizeDigits(form));
-		form = "A:01";
-		assertEquals("A:0", MPLib.normalizeDigits(form));
 		form = "12/34/56";
 		assertEquals("0", MPLib.normalizeDigits(form));
-		form = "A/01";
-		assertEquals("A/0", MPLib.normalizeDigits(form));
 		form = "$10.23,45:67-89/10%";
 		assertEquals("0", MPLib.normalizeDigits(form));
 	}

@@ -24,6 +24,7 @@
 package edu.colorado.clear.pos;
 
 import edu.colorado.clear.morphology.MPLib;
+import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.reader.AbstractReader;
 
 /**
@@ -59,5 +60,18 @@ public class POSLib
 			node.simplifiedForm = MPLib.normalizeDigits(node.form);
 			node.lemma = node.simplifiedForm.toLowerCase();
 		}
+	}
+	
+	static public String toString(POSNode[] nodes, boolean includeLemma)
+	{
+		StringBuilder build = new StringBuilder();
+		
+		for (POSNode node : nodes)
+		{
+			build.append(AbstractColumnReader.DELIM_SENTENCE);
+			build.append(node.toString(includeLemma));
+		}
+		
+		return build.substring(AbstractColumnReader.DELIM_SENTENCE.length());
 	}
 }

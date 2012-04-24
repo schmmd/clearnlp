@@ -82,7 +82,7 @@ public class DEPTrain extends AbstractRun
 	private void run(String configXml, String featureXml, String trainDir, String modelFile, int nBoot) throws Exception
 	{
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader reader = (DEPReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		DEPReader reader = (DEPReader)getReader(eConfig);
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
 		DEPParser parser;

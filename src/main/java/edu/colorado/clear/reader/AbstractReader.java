@@ -52,10 +52,10 @@ abstract public class AbstractReader<T>
 	static final public String TYPE_POS = "pos";
 	/** The flag for dependency reader. */
 	static final public String TYPE_DEP = "dep";
-	/** The flag for directed acyclic graph reader. */
-	static final public String TYPE_DAG = "dag";
 	/** The flag for semantic role label reader. */
 	static final public String TYPE_SRL = "srl";
+	/** The flag for directed acyclic graph reader. */
+	static final public String TYPE_DAG = "dag";
 	
 	/** The dummy tag for any field. */
 	static public final String DUMMY_TAG = "_N_";

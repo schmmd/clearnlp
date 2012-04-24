@@ -86,7 +86,7 @@ public class POSPredict extends AbstractRun
 	public void run(String configXml, String modelFile, String dictFile, String inputPath, String outputFile) throws Exception
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader reader = (POSReader)getReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+		POSReader reader = (POSReader)getReader(eConfig);
 		
 		Pair<POSTagger[],Double> p = getTaggers(modelFile);
 		AbstractMPAnalyzer morph = (dictFile != null) ? new EnglishMPAnalyzer(dictFile) : null;
