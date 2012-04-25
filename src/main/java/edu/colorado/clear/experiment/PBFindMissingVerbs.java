@@ -79,6 +79,9 @@ public class PBFindMissingVerbs extends AbstractRun
 			fst  = list.get(0);
 			tree = fst.getTree();
 			
+		//	if (fst.treePath.startsWith("wb/sel"))
+		//		continue;
+			
 			getPredicateIds(tree, sets);
 			removeExistingPredicates(sets, list);
 
@@ -211,7 +214,8 @@ public class PBFindMissingVerbs extends AbstractRun
 			predId = cur.value;
 			node   = tree.getTerminal(predId);
 			lemma  = morph.getLemma(node.form, node.pTag);
-
+			if (lemma.equals("'s"))	lemma = "be";
+			
 			arg = new PBArg();
 			arg.label = PBLib.SRL_REL;
 			arg.addLoc(new PBLoc(predId, 0));
