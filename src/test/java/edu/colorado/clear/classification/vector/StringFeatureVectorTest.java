@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import edu.colorado.clear.classification.vector.StringFeatureVector;
 
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
 public class StringFeatureVectorTest
 {
 	@Test

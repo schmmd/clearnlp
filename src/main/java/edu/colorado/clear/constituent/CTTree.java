@@ -33,10 +33,9 @@ import edu.colorado.clear.propbank.PBLoc;
 
 /**
  * Constituent tree.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/constituent/CTTreeTest.java">CTTreeTest</a> for the use of this class.
  * @see CTReader
  * @see CTNode 
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class CTTree
@@ -263,6 +262,8 @@ public class CTTree
 	{
 		return mp_nulls.get(coIndex);
 	}
+	
+//	======================== Boolean ========================
 	
 	/**
 	 * Return {@code true} if both the specific terminal ID and height are within the range of this tree.

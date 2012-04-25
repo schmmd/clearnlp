@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import edu.colorado.clear.morphology.MPLib;
 
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
 public class MPLibTest
 {
 	@Test

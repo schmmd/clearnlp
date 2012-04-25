@@ -41,8 +41,7 @@ import edu.colorado.clear.util.pair.StringIntPair;
 
 /**
  * Constituent node.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/constituent/CTNodeTest.java">CTNodeTest</a> for the use of this class.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class CTNode implements Comparable<CTNode>
@@ -75,12 +74,13 @@ public class CTNode implements Comparable<CTNode>
 	
 	/** The information of constituent-to-dependency conversion. */
 	public C2DInfo c2d = null;
+	/** The list of PropBank predicate ID and label pairs. */
 	public List<StringIntPair> pbArgs = null;
 	
 	/**
-	 * Constructs a constituent node.
-	 * @param tags {@link CTNode#pTag}{@code (-}{@link CTNode#s_fTags}{@code )*(-}{@link CTNode#coIndex}{@code ){0,1}(=}{@link CTNode#gapIndex}{@code ){0,1}}.
-	 */
+     * Constructs a constituent node.
+     * @param tags {@link CTNode#pTag}{@code (-}{@link CTNode#s_fTags}{@code )*(-}{@link CTNode#coIndex}{@code ){0,1}(=}{@link CTNode#gapIndex}{@code ){0,1}}.
+     */
 	public CTNode(String tags)
 	{
 		setTags(tags);
@@ -88,10 +88,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Constructs a constituent node with the specific word-form.
-	 * @param tags see the {@code tags} parameter in {@link CTNode#CTNode(String, CTNode)}.
-	 * @param form the word-form of this node.
-	 */
+     * Constructs a constituent node with the specific word-form.
+     * @param tags see the {@code tags} parameter in {@link CTNode#CTNode(String, CTNode)}.
+     * @param form the word-form of this node.
+     */
 	public CTNode(String tags, String form)
 	{
 		this(tags);
@@ -101,10 +101,10 @@ public class CTNode implements Comparable<CTNode>
 //	======================== Getters ========================
 
 	/**
-	 * Returns all tags of this node in the Penn Treebank format.
-	 * See the {@code tags} parameter in {@link CTNode#CTNode(String, CTNode)}.
-	 * @return all tags of this node in the Penn Treebank format.
-	 */
+     * Returns all tags of this node in the Penn Treebank format.
+     * See the {@code tags} parameter in {@link CTNode#CTNode(String, CTNode)}.
+     * @return all tags of this node in the Penn Treebank format.
+     */
 	public String getTags()
 	{
 		StringBuilder build = new StringBuilder();
@@ -133,84 +133,84 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the set of function tags of this node.
-	 * @return the set of function tags of this node.
-	 */
+     * Returns the set of function tags of this node.
+     * @return the set of function tags of this node.
+     */
 	public Set<String> getFTags()
 	{
 		return s_fTags;
 	}
 	
 	/**
-	 * Returns the ID (starting at 0) of this node among other terminal nodes within the tree (default: {@code -1}).
-	 * @return the ID (starting at 0) of this node among other terminal nodes within the tree (default: {@code -1}).
-	 */
+     * Returns the ID (starting at 0) of this node among other terminal nodes within the tree (default: {@code -1}).
+     * @return the ID (starting at 0) of this node among other terminal nodes within the tree (default: {@code -1}).
+     */
 	public int getTerminalId()
 	{
 		return i_terminalId;
 	}
 	
 	/**
-	 * Returns the ID (starting at 0) of this node among other terminal nodes (disregarding empty categories) within the tree (default: {@code -1}).
-	 * @return the ID (starting at 0) of this node among other terminal nodes (disregarding empty categories) within the tree (default: {@code -1}).
-	 */
+     * Returns the ID (starting at 0) of this node among other terminal nodes (disregarding empty categories) within the tree (default: {@code -1}).
+     * @return the ID (starting at 0) of this node among other terminal nodes (disregarding empty categories) within the tree (default: {@code -1}).
+     */
 	public int getTokenId()
 	{
 		return i_tokenId;
 	}
 	
 	/**
-	 * Returns the ID (starting at 0) of this node among its siblings (default: {@code -1}).
-	 * @return the ID (starting at 0) of this node among its siblings (default: {@code -1}).
-	 */
+     * Returns the ID (starting at 0) of this node among its siblings (default: {@code -1}).
+     * @return the ID (starting at 0) of this node among its siblings (default: {@code -1}).
+     */
 	public int getSiblingId()
 	{
 		return i_siblingId;
 	}
 	
 	/**
-	 * Returns the PropBank location of this node (default: {@code null}).
-	 * @return the PropBank location of this node (default: {@code null}).
-	 */
+     * Returns the PropBank location of this node (default: {@code null}).
+     * @return the PropBank location of this node (default: {@code null}).
+     */
 	public PBLoc getPBLoc()
 	{
 		return pb_loc;
 	}
 	
 	/**
-	 * Returns the parent of this node.
-	 * @return the parent of this node.
-	 */
+     * Returns the parent of this node.
+     * @return the parent of this node.
+     */
 	public CTNode getParent()
 	{
 		return parent;
 	}
 	
 	/**
-	 * Returns the antecedent of this node (default: {@code null}).
-	 * @return the antecedent of this node (default: {@code null}).
-	 */
+     * Returns the antecedent of this node (default: {@code null}).
+     * @return the antecedent of this node (default: {@code null}).
+     */
 	public CTNode getAntecedent()
 	{
 		return antecedent;
 	}
 	
 	/**
-	 * Returns a list of all children of this node.
-	 * @return a list of all children of this node.
-	 */
+     * Returns a list of all children of this node.
+     * @return a list of all children of this node.
+     */
 	public List<CTNode> getChildren()
 	{
 		return ls_children;
 	}
 	
 	/**
-	 * Returns an immutable list of sub-children of this node.
-	 * The sublist begins at the specific position and extends to the end.
-	 * @param fstId the ID of the first child (inclusive).
-	 * @return an immutable list of sub-children of this node.
-	 * @throws IndexOutOfBoundsException for an illegal ID.
-	 */
+     * Returns an immutable list of sub-children of this node.
+     * The sublist begins at the specific position and extends to the end.
+     * @param fstId the ID of the first child (inclusive).
+     * @return an immutable list of sub-children of this node.
+     * @throws IndexOutOfBoundsException for an illegal ID.
+     */
 	public List<CTNode> getChildren(int fstId)
 	{
 		return ls_children.subList(fstId, ls_children.size());
@@ -218,22 +218,22 @@ public class CTNode implements Comparable<CTNode>
 	
 	/**
 	 * Returns an immutable list of sub-children of this node.
-	 * The sublist begins and ends at the specific positions.
-	 * @param fstId the ID of the first child (inclusive).
-	 * @param lstId the ID of the last child (exclusive)
-	 * @return an immutable list of sub-children of this node.
-	 * @throws IndexOutOfBoundsException for an illegal ID.
-	 */
+     * The sublist begins and ends at the specific positions.
+     * @param fstId the ID of the first child (inclusive).
+     * @param lstId the ID of the last child (exclusive)
+     * @return an immutable list of sub-children of this node.
+     * @throws IndexOutOfBoundsException for an illegal ID.
+     */
 	public List<CTNode> getChildren(int fstId, int lstId)
 	{
 		return ls_children.subList(fstId, lstId);
 	}
 	
 	/**
-	 * Returns the child of this node at the specific position.
-	 * If such a child does not exists, returns {@code null}.
-	 * @param childId the ID (starting at 0) of the child to be returned.
-	 * @return the child of this node at the specific position.
+	 * 
+	 *
+	 * @param childId 
+	 * @return 
 	 */
 	public CTNode getChild(int childId)
 	{
@@ -241,10 +241,11 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the first child with the specific tags, or {@code null} if there is no such node.
-	 * @param tags see the {@code tags} parameter in {@link CTNode#isTag(String...)}. 
-	 * @return the first child with the specific tags, or {@code null} if there is no such node.
-	 */
+     * Returns the child of this node at the specific position.
+     * If such a child does not exists, returns {@code null}.
+     * @param childId the ID (starting at 0) of the child to be returned.
+     * @return the child of this node at the specific position.
+     */
 	public CTNode getFirstChild(String... tags)
 	{
 		for (CTNode child : ls_children)
@@ -257,9 +258,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the last child with the specific tags, or {@code null} if there is no such node.
-	 * @param tags see the {@code tags} parameter in {@link CTNode#isTag(String...)}. 
-	 * @return the last child with the specific tags, or {@code null} if there is no such node.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
 	public CTNode getLastChild(String... tags)
 	{
@@ -277,16 +279,23 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the first descendant with the specific tags, or {@code null} if there is no such node.
-	 * @param tags see the {@code tags} parameter in {@link CTNode#isTag(String...)}.
-	 * @return the first descendant with the specific tags, or {@code null} if there is no such node.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
 	public CTNode getFirstDescendant(String... tags)
 	{
 		return getFirstDescendantAux(ls_children, tags);
 	}
 	
-	/** Called by {@link CTNode#getFirstDescendant(String...)}. */
+	/**
+	 * 
+	 *
+	 * @param nodes 
+	 * @param tags 
+	 * @return 
+	 */
 	private CTNode getFirstDescendantAux(List<CTNode> nodes, String... tags)
 	{
 		CTNode desc;
@@ -303,9 +312,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the nearest sibling with the specific tags prior to this node , or {@code null} if there is no such node.
-	 * @param tags see the {@code tags} parameter in {@link CTNode#isTag(String...)}.
-	 * @return the nearest sibling with the specific tags prior to this node , or {@code null} if there is no such node.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
 	public CTNode getPrevSibling(String... tags)
 	{
@@ -325,8 +335,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the list of all siblings prior to this node.
-	 * @return the list of all siblings prior to this node.
+	 * 
+	 *
+	 * @return 
 	 */
 	public List<CTNode> getPrevSiblings()
 	{
@@ -334,9 +345,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the nearest sibling with the specific tags following this node, or {@code null} if there is no such node.
-	 * @param tags see the {@code tags} parameter in {@link CTNode#isTag(String...)}.
-	 * @return the nearest sibling with the specific tags following this node, or {@code null} if there is no such node.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
 	public CTNode getNextSibling(String... tags)
 	{
@@ -356,9 +368,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the nearest ancestor with the specific tags, or {@code null} if there is no such node.
-	 * @param tags the {@code tags} parameter in {@link CTNode#isTag(String...)}.
-	 * @return the nearest ancestor with the specific tags, or {@code null} if there is no such node.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
 	public CTNode getNearestAncestor(String... tags)
 	{
@@ -373,23 +386,29 @@ public class CTNode implements Comparable<CTNode>
 		return null;
 	}
 	
-	public CTNode getFirstLowestDescendant(String... tags)
+	/**
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
+	 */
+	public CTNode getFirstChainedDescendant(String... tags)
 	{
-		CTNode desc = this;
+		CTNode desc = this, child;
 		
-		while (desc.containsTags(tags))
-			desc = desc.getFirstChild(tags);
+		while ((child = desc.getFirstChild(tags)) != null)
+			desc = child;
 		
 		return (desc != this) ? desc : null;
 	}
 	
 	/**
-	 * Returns the top ancestor with the specific tags, or {@code null} if there is no such node.
-	 * All ancestors in between must have the same tags.
-	 * @param tags the {@code tags} parameter in {@link CTNode#isTag(String...)}.
-	 * @return Returns the top ancestor with the specific tags, or {@code null} if there is no such node.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
-	public CTNode getTopChainedAncestor(String... tags)
+	public CTNode getHighestChainedAncestor(String... tags)
 	{
 		CTNode curr = this;
 		
@@ -400,9 +419,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the list of empty categories matching the specific regular expression under this node.
-	 * @param regex the regular expression to be matched.
-	 * @return the list of empty categories matching the specific regular expression under this node.
+	 * 
+	 *
+	 * @param regex 
+	 * @return 
 	 */
 	public List<CTNode> getIncludedEmptyCategory(String regex)
 	{
@@ -412,7 +432,13 @@ public class CTNode implements Comparable<CTNode>
 		return list;
 	}
 	
-	/** Called by {@link CTNode#getIncludedEmptyCategory(String)}. */
+	/**
+	 * 
+	 *
+	 * @param curr 
+	 * @param list 
+	 * @param regex 
+	 */
 	private void getIncludedEmptyCategoriesAux(CTNode curr, List<CTNode> list, String regex)
 	{
 		if (curr.isEmptyCategory() && curr.form.matches(regex))
@@ -423,8 +449,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns a list of all sub-terminal nodes under this node.
-	 * @return a list of all sub-terminal nodes under this node.
+	 * 
+	 *
+	 * @return 
 	 */
 	public List<CTNode> getSubTerminals()
 	{
@@ -434,7 +461,12 @@ public class CTNode implements Comparable<CTNode>
 		return terminals;
 	}
 	
-	/** Called by {@link CTNode#getSubTerminals()}. */
+	/**
+	 * 
+	 *
+	 * @param curr 
+	 * @param terminals 
+	 */
 	private void getSubTerminals(CTNode curr, List<CTNode> terminals)
 	{
 		if (curr.isPhrase())
@@ -447,8 +479,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns a list of sub-terminal IDs of this node.
-	 * @return a list of sub-terminal IDs of this node.
+	 * 
+	 *
+	 * @return 
 	 */
 	public IntArrayList getSubTerminalIdList()
 	{
@@ -461,8 +494,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns a set of sub-terminal IDs of this node.
-	 * @return a set of sub-terminal IDs of this node.
+	 * 
+	 *
+	 * @return 
 	 */
 	public IntOpenHashSet getSubTerminalIdSet()
 	{
@@ -475,18 +509,33 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the first terminal node under this node.
-	 * @return the first terminal node under this node.
+	 * 
+	 *
+	 * @return 
 	 */
 	public CTNode getFirstTerminal()
 	{
-		return ls_children.isEmpty() ? this : getSubTerminals().get(0);
-	//	return ls_children.isEmpty() ? null : getSubTerminals().get(0);
+		return getFirstTerminalAux(this);
 	}
 	
 	/**
-	 * Returns the number of children of this node.
-	 * @return the number of children of this node.
+	 * 
+	 *
+	 * @param node 
+	 * @return 
+	 */
+	private CTNode getFirstTerminalAux(CTNode node)
+	{
+		List<CTNode> children = node.getChildren();
+		if (children.isEmpty())	return node;
+		
+		return getFirstTerminalAux(children.get(0));
+	}
+	
+	/**
+	 * 
+	 *
+	 * @return 
 	 */
 	public int getChildrenSize()
 	{
@@ -494,20 +543,21 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the lowest common ancestor between this node and the specific node.
-	 * @param node the node to get the LCA of.
-	 * @return the lowest common ancestor between this node and the specific node.
+	 * 
+	 *
+	 * @param node 
+	 * @return 
 	 */
 	public CTNode getLowestCommonAncestor(CTNode node)
 	{
-		if (this.isDescendentOf(node))	return node;
-		if (node.isDescendentOf(this))	return this;
+		if (this.isDescendantOf(node))	return node;
+		if (node.isDescendantOf(this))	return this;
 		
 		CTNode parent = getParent();
 		
 		while (parent != null)
 		{
-			if (node.isDescendentOf(parent))
+			if (node.isDescendantOf(parent))
 				return parent;
 			
 			parent = parent.getParent();
@@ -519,9 +569,10 @@ public class CTNode implements Comparable<CTNode>
 //	======================== Setters ========================
 	
 	/**
-	 * Assigns {@link CTNode#pTag}, {@link CTNode#s_fTags}, {@link CTNode#coIndex}, and {@link CTNode#gapIndex}.
-	 * @param tags see the {@code tags} parameter in {@link CTNode#CTNode(String, CTNode)}.
-	 */
+ * 
+ *
+ * @param tags 
+ */
 	public void setTags(String tags)
 	{
 		s_fTags = new TreeSet<String>();
@@ -565,36 +616,47 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Adds the specific function tag to the node.
-	 * @param fTag the function tag to be added.
+	 * 
+	 *
+	 * @param fTag 
 	 */
 	public void addFTag(String fTag)
 	{
 		s_fTags.add(fTag);
 	}
 	
+	/**
+	 * 
+	 *
+	 * @param fTags 
+	 */
 	public void addFTags(Collection<String> fTags)
 	{
 		s_fTags.addAll(fTags);
 	}
 	
 	/**
-	 * Removes the specific function tag from this node if exists. 
-	 * @param fTag the function tag to be removed.
+	 * 
+	 *
+	 * @param fTag 
 	 */
 	public void removeFTag(String fTag)
 	{
 		s_fTags.remove(fTag);
 	}
 	
+	/**
+	 * 
+	 */
 	public void removeFTagAll()
 	{
 		s_fTags.clear();
 	}
 	
 	/**
-	 * Sets the antecedent of this node.
-	 * @param ante the antecedent to be set.
+	 * 
+	 *
+	 * @param ante 
 	 */
 	public void setAntecedent(CTNode ante)
 	{
@@ -602,8 +664,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Adds the specific node as the last child of this node.
-	 * @param child the node to be added.
+	 * 
+	 *
+	 * @param child 
 	 */
 	public void addChild(CTNode child)
 	{
@@ -614,11 +677,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Adds a child to the specific location.
-	 * Returns {@code false} if the specific location is out of range.  
-	 * @param index the index of the specific location
-	 * @param child the child to be added.
-	 * @return {@code false} if the specific location is out of range.
+	 * 
+	 *
+	 * @param index 
+	 * @param child 
 	 */
 	public void addChild(int index, CTNode child)
 	{
@@ -629,9 +691,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Sets the specific node as the index'th child of this node.
-	 * @param index the index of the child to be set.
-	 * @param child the node to be set.
+	 * 
+	 *
+	 * @param index 
+	 * @param child 
 	 */
 	public void setChild(int index, CTNode child)
 	{
@@ -642,9 +705,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Removes the index'th child of this node.
-	 * @throws IndexOutOfBoundsException
-	 * @param index the index of the child to be removed.
+	 * 
+	 *
+	 * @param index 
 	 */
 	public void removeChild(int index)
 	{
@@ -656,27 +719,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Removes the specific child from this node.
-	 * @param child the child to be removed.
+	 * 
+	 *
+	 * @param index 
 	 */
-	public void removeChild(CTNode child)
-	{
-		removeChild(ls_children.indexOf(child));
-	}
-	
-	public void resetChildren(Collection<CTNode> children)
-	{
-		ls_children.clear();
-		
-		for (CTNode child : children)
-			addChild(child);
-	}
-	
-	private boolean isChildrenRange(int index)
-	{
-		return 0 <= index && index < ls_children.size();
-	}
-	
 	private void resetSiblingIDs(int index)
 	{
 		int i, size = ls_children.size();
@@ -685,24 +731,47 @@ public class CTNode implements Comparable<CTNode>
 			ls_children.get(i).i_siblingId = i;
 	}
 	
+	/**
+	 * 
+	 *
+	 * @param child 
+	 */
+	public void removeChild(CTNode child)
+	{
+		removeChild(ls_children.indexOf(child));
+	}
+
+	/**
+	 * 
+	 *
+	 * @param children 
+	 */
+	public void resetChildren(Collection<CTNode> children)
+	{
+		ls_children.clear();
+		
+		for (CTNode child : children)
+			addChild(child);
+	}
+	
 //	======================== Booleans ========================
 	
 	/**
-	 * Returns {@code true} if this node's pTag equals to the specific tag.
-	 * @see CTNode#pTag
-	 * @param pTag the phrase or pos tag to be compared.
-	 * @return {@code true} if this node's pTag equals to the specific tag.
-	 */
+ * 
+ *
+ * @param pTag 
+ * @return 
+ */
 	public boolean isPTag(String pTag)
 	{
 		return this.pTag.equals(pTag);
 	}
 	
 	/**
-	 * Returns {@code true} if this node's pTag equals to any of the specific tags.
-	 * @see CTNode#pTag 
-	 * @param pTags the phrase or pos tag to be compared.
-	 * @return {@code true} if this node's pTag equals to any of the specific tags.
+	 * 
+	 *
+	 * @param pTags 
+	 * @return 
 	 */
 	public boolean isPTagAny(String... pTags)
 	{
@@ -716,11 +785,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node's pTag matches to the specific regular expression.
-	 * Note that {@code regex} gets internally wrapped as {@code "^"+regex+"$"}.
-	 * @see CTNode#pTag
-	 * @param regex the regular expression to be compared.
-	 * @return {@code true} if this node's pTag matches to the specific regular expression.
+	 * 
+	 *
+	 * @param regex 
+	 * @return 
 	 */
 	public boolean matchesPTag(String regex)
 	{
@@ -728,10 +796,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node contains only the specific function tag.
-	 * Returns {@code false} if this node contains no function tag.
-	 * @param fTag the function tag to be compared.
-	 * @return {@code true} if this node contains only the specific function tag.
+	 * 
+	 *
+	 * @param fTag 
+	 * @return 
 	 */
 	public boolean isFTag(String fTag)
 	{
@@ -739,10 +807,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if the specific tag is one of this node's function tags.
-	 * @see CTNode#s_fTags
-	 * @param fTag the function tag to be compared.
-	 * @return {@code true} if the specific tag is one of this node's function tags.
+	 * 
+	 *
+	 * @param fTag 
+	 * @return 
 	 */
 	public boolean hasFTag(String fTag)
 	{
@@ -750,10 +818,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if the collection of specific tags is a subset of this node's function tags.
-	 * @see CTNode#s_fTags
-	 * @param fTags the collection of function tags to be compared.
-	 * @return {@code true} if the set of specific tags is a subset of this node's function tags.
+	 * 
+	 *
+	 * @param fTags 
+	 * @return 
 	 */
 	public boolean hasFTagAll(Collection<String> fTags)
 	{
@@ -761,9 +829,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if any of specific tags in the collection is a function tag of this node. 
-	 * @param fTags the collection of function tags to be compared.
-	 * @return {@code true} if any of specific tags in the collection is a function tag of this node.
+	 * 
+	 *
+	 * @param fTags 
+	 * @return 
 	 */
 	public boolean hasFTagAny(Collection<String> fTags)
 	{
@@ -776,6 +845,12 @@ public class CTNode implements Comparable<CTNode>
 		return false;
 	}
 	
+	/**
+	 * 
+	 *
+	 * @param fTags 
+	 * @return 
+	 */
 	public boolean hasFTagAny(String... fTags)
 	{
 		for (String fTag : fTags)
@@ -788,16 +863,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node satisfies all of the specific tags.
-	 * @param tags {@code pTag} | {@code '+'+pRegex} | {@code '-'+fTag}.<br><br>
-	 * {@code pTag}: a phrase or pos tag (unique)<br>
-	 * {@code pRegex}: a regular expression of {@code pTag} (unique)<br>
-	 * {@code fTag}: function tag (multiple)<br><br>
-	 * e.g., {@code isTag("NP","-PRD")}, {@code isTag("+N.*","-PRD","-LOC")}.
-	 * @see CTNode#isPTag(String)
-	 * @see CTNode#matchesPTag(String)
-	 * @see CTNode#hasFTagAll(Collection)
-	 * @return {@code true} if this node satisfies all of the specific tags.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
 	public boolean isTag(String... tags)
 	{
@@ -826,9 +895,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if the word-form of this node equals to the specific form.
-	 * @param form the form to be compared.
-	 * @return {@code true} if the word-form of this node equals to the specific form.
+	 * 
+	 *
+	 * @param form 
+	 * @return 
 	 */
 	public boolean isForm(String form)
 	{
@@ -836,8 +906,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node is a phrase.
-	 * @return {@code true} if this node is a phrase.
+	 * 
+	 *
+	 * @return 
 	 */
 	public boolean isPhrase()
 	{
@@ -845,9 +916,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node is an empty category.
-	 * All empty categories are assumed to have the pos tag of {@link CTLib#POS_NONE}.
-	 * @return {@code true} if this node is an empty category.
+	 * 
+	 *
+	 * @return 
 	 */
 	public boolean isEmptyCategory()
 	{
@@ -855,9 +926,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node contains only an empty category recursively.
-	 * Each sub-phrase must have one and only one child such as {@code (NP (NP (-NONE- *)))}.
-	 * @return {@code true} if this node contains only an empty category recursively.
+	 * 
+	 *
+	 * @return 
 	 */
 	public boolean isEmptyCategoryRec()
 	{
@@ -875,11 +946,12 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node is a descendent of the specific node.
-	 * @param node the node to be compared.
-	 * @return {@code true} if this node is a descendent of the specific node.
+	 * 
+	 *
+	 * @param node 
+	 * @return 
 	 */
-	public boolean isDescendentOf(CTNode node)
+	public boolean isDescendantOf(CTNode node)
 	{
 		CTNode parent = getParent();
 
@@ -895,9 +967,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns {@code true} if this node contains a child with the specific tags.
-	 * @param tags the {@code tags} parameter in {@link CTNode#isTag(String...)}.
-	 * @return {@code true} if this node contains a child with the specific tags.
+	 * 
+	 *
+	 * @param tags 
+	 * @return 
 	 */
 	public boolean containsTags(String... tags)
 	{
@@ -910,14 +983,27 @@ public class CTNode implements Comparable<CTNode>
 		return false;
 	}
 	
+	/**
+	 * 
+	 *
+	 * @param index 
+	 * @return 
+	 */
+	public boolean isChildrenRange(int index)
+	{
+		return 0 <= index && index < ls_children.size();
+	}
+
+	
 //	======================== Strings ========================
 
 	/**
-	 * Returns ordered word-forms of this node's subtree.
-	 * @param includeNulls if {@code true}, include forms of empty categories.
-	 * @param delim the delimiter between forms.
-	 * @return ordered word-forms of this node's subtree.
-	 */
+ * 
+ *
+ * @param includeNulls 
+ * @param delim 
+ * @return 
+ */
 	public String toForms(boolean includeNulls, String delim)
 	{
 		StringBuilder build = new StringBuilder();
@@ -934,9 +1020,8 @@ public class CTNode implements Comparable<CTNode>
 		return build.length() == 0 ? "" : build.substring(delim.length());
 	}
 	
-	/**
-	 * Returns {@link CTNode#toString(boolean...)}, where {@code args = {false, false}}.
-	 * @return {@link CTNode#toString(boolean...)}, where {@code args = {false, false}}.
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
 	 */
 	public String toString()
 	{
@@ -944,11 +1029,10 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the Penn Treebank style constituent node.
-	 * @param args up to two arguments.<br><br>
-	 * if {@code args[0] == true}, include line numbers.<br>
-	 * if {@code args[1] == true}, include antecedent pointers.<br>
-	 * @return the Penn Treebank style constituent node.
+	 * 
+	 *
+	 * @param args 
+	 * @return 
 	 */
 	public String toString(boolean... args)
 	{
@@ -973,8 +1057,9 @@ public class CTNode implements Comparable<CTNode>
 	}
 	
 	/**
-	 * Returns the string representation of this node in one line.
-	 * @return the string representation of this node in one line.
+	 * 
+	 *
+	 * @return 
 	 */
 	public String toStringLine()
 	{
@@ -990,7 +1075,14 @@ public class CTNode implements Comparable<CTNode>
 		return build.toString();
 	}
 	
-	/** Called by {@link CTNode#toString(boolean)}. */
+	/**
+	 * 
+	 *
+	 * @param curr 
+	 * @param lTree 
+	 * @param sTags 
+	 * @param includeAntePointers 
+	 */
 	private void toStringAux(CTNode curr, ArrayList<String> lTree, String sTags, boolean includeAntePointers)
 	{
 		if (curr.isPhrase())
@@ -1018,6 +1110,9 @@ public class CTNode implements Comparable<CTNode>
 		}
 	}
 	
+	/* (non-Javadoc)
+	 * @see java.lang.Comparable#compareTo(java.lang.Object)
+	 */
 	@Override
 	public int compareTo(CTNode node)
 	{

@@ -27,6 +27,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 import edu.colorado.clear.classification.vector.SparseFeatureVector;
 
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
 public class SparseFeatureVectorTest
 {
 	@Test

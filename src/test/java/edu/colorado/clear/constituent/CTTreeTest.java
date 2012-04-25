@@ -21,19 +21,45 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.morphology;
+package edu.colorado.clear.constituent;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import edu.colorado.clear.util.UTInput;
+
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
-public class MPLibEnTest
+public class CTTreeTest
 {
 	@Test
-	public void testIsBe()
+	public void testCTTree()
 	{
-		assertEquals(true , MPLibEn.isBe("'m"));
-		assertEquals(false, MPLibEn.isBe("become"));
+		String filename = "src/test/resources/constituent/CTReaderTest.parse";
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(filename));
+		
+		CTTree tree = reader.nextTree();
+		assertEquals("I pray that I will be allowed *-1 to come to you .", tree.toForms());
+		assertEquals("I_pray_that_I_will_be_allowed_to_come_to_you_.", tree.toForms(false,"_"));
+		
+		CTNode root = tree.getRoot();
+		assertEquals(tree.toString(), root.toString());
+		
+		CTNode node = tree.getNode(0, 1);
+		assertEquals(true, node.isTag("NP", "-SBJ"));
+		node = tree.getTerminal(7);
+		assertEquals("*-1", node.form);
+		node = tree.getToken(7);
+		assertEquals("to", node.form);
+		
+		node = node.getParent();
+		assertEquals("[8, 9, 10, 11]", node.getSubTerminalIdList().toString());
+		
+		tree.setPBLocs();
+		assertEquals("3:1", tree.getCoIndexedAntecedent(1).getPBLoc().toString());
+		assertEquals("[(-NONE- *-1)]", tree.getCoIndexedEmptyCategories(1).toString());
+		
+		assertEquals(true , tree.isRange(0, 3));
+		assertEquals(false, tree.isRange(0, 4));
 	}
 }

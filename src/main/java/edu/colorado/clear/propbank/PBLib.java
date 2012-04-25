@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import edu.colorado.clear.constituent.CTLib;
 import edu.colorado.clear.constituent.CTNode;
 import edu.colorado.clear.constituent.CTReader;
 import edu.colorado.clear.constituent.CTTree;
@@ -117,7 +118,7 @@ public class PBLib
 			for (; treeId < instance.treeId; treeId++)
 				tree = reader.nextTree();
 			
-			if (norm)	reader.normalizeIndices(tree);
+			if (norm)	CTLib.normalizeIndices(tree);
 			tree.setPBLocs();
 			instance.setTree(tree);
 		}

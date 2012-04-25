@@ -23,12 +23,19 @@
 */
 package edu.colorado.clear.constituent;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import com.carrotsearch.hppc.IntIntOpenHashMap;
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
+
 /**
  * Constituent library.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public interface CTLib
+public class CTLib
 {
 	/** The phrase tag of the top node. */
 	static final public String PTAG_TOP = "TOP";
@@ -36,4 +43,117 @@ public interface CTLib
 	static final public String PTAG_X   = "X";
 	/** The pos tag of empty categories. */
 	static final public String POS_NONE = "-NONE-";
+	/** The pos tag of unknown tokens. */
+	static final public String POS_XX	= "XX";
+	
+	/**
+	 * Normalizes co-indices and gap-indices of the specific tree.
+	 * @param tree the tree to be normalized.
+	 */
+	static public void normalizeIndices(CTTree tree)
+	{
+		// retrieve all co-indexes
+		IntObjectOpenHashMap<List<CTNode>> mOrg = new IntObjectOpenHashMap<List<CTNode>>();
+		getCoIndexMap(tree.getRoot(), mOrg);
+		if (mOrg.isEmpty())	return;
+		
+		int[] keys = mOrg.keys().toArray();
+		Arrays.sort(keys);
+		
+		IntIntOpenHashMap mNew = new IntIntOpenHashMap();		
+		int coIndex = 1, last, i;
+		List<CTNode> list;
+		CTNode curr, ec;
+		boolean isAnteFound;
+		
+		for (int key : keys)
+		{
+			list = mOrg.get(key);
+			last = list.size() - 1;
+			isAnteFound = false;
+			
+			for (i=last; i>=0; i--)
+			{
+				curr = list.get(i);
+				
+				if (curr.isEmptyCategoryRec())
+				{
+					ec = curr.getSubTerminals().get(0);
+					
+					if (i == last || isAnteFound || CTLibEn.RE_ICH_PPA_RNR.matcher(ec.form).find() || CTLibEn.containsCoordination(curr.getLowestCommonAncestor(list.get(i+1))))
+						curr.coIndex = -1;
+					else
+						curr.coIndex = coIndex++;
+
+					if (isAnteFound || i > 0)
+						ec.form += "-"+coIndex;
+				}
+				else if (isAnteFound)
+				{
+					curr.coIndex = -1;
+				}
+				else
+				{
+					curr.coIndex = coIndex;
+					mNew.put(key, coIndex);
+					isAnteFound  = true;
+				}
+			}
+			
+			coIndex++;
+		}
+		
+		int[] lastIndex = {coIndex};
+		remapGapIndices(mNew, lastIndex, tree.getRoot());
+	}
+	
+	/** Called by {@link CTReader#normalizeIndices(CTTree)}. */
+	static private void getCoIndexMap(CTNode curr, IntObjectOpenHashMap<List<CTNode>> map)
+	{
+		if (curr.isPhrase())
+		{
+			if (curr.coIndex != -1)
+			{
+				int key = curr.coIndex;
+				List<CTNode> list;
+				
+				if (map.containsKey(key))
+					list = map.get(key);
+				else
+				{
+					list = new ArrayList<CTNode>();
+					map.put(key, list);
+				}
+				
+				list.add(curr);
+			}
+			
+			for (CTNode child : curr.ls_children)
+				getCoIndexMap(child, map);
+		}
+		else if (curr.isEmptyCategory())
+		{
+			if (curr.form.equals("*0*"))
+				curr.form = "0";
+		}
+	}
+	
+	/** Called by {@link CTReader#normalizeIndices(CTTree)}. */
+	static private void remapGapIndices(IntIntOpenHashMap map, int[] lastIndex, CTNode curr)
+	{
+		int gapIndex = curr.gapIndex;
+		
+		if (map.containsKey(gapIndex))
+		{
+			curr.gapIndex = map.get(gapIndex);
+		}
+		else if (gapIndex != -1)
+		{
+			curr.gapIndex = lastIndex[0];
+			map.put(gapIndex, lastIndex[0]++);
+		}
+		
+		for (CTNode child : curr.ls_children)
+			remapGapIndices(map, lastIndex, child);
+	}
 }

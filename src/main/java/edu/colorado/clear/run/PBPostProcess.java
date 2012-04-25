@@ -482,7 +482,7 @@ public class PBPostProcess extends AbstractRun
 						
 						if ((ante = ec.getAntecedent()) != null)
 						{
-							if (ante.isDescendentOf(curr) || pred.isDescendentOf(ante))
+							if (ante.isDescendantOf(curr) || pred.isDescendantOf(ante))
 								lDel.add(new PBLoc(ante.getPBLoc(), ""));
 							else
 								arg.addLoc(new PBLoc(ante.getPBLoc(), ";"));

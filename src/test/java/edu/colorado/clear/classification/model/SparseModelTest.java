@@ -23,8 +23,6 @@
 */
 package edu.colorado.clear.classification.model;
 
-
-
 import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
@@ -40,6 +38,7 @@ import edu.colorado.clear.classification.model.SparseModel;
 import edu.colorado.clear.classification.prediction.StringPrediction;
 import edu.colorado.clear.classification.vector.SparseFeatureVector;
 
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
 public class SparseModelTest
 {
 	@Test

@@ -30,10 +30,10 @@ import edu.colorado.clear.morphology.MPLibEn;
 
 /**
  * Constituent library for English.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class CTLibEn implements CTLib
+public class CTLibEn extends CTLib
 {
 	/** The phrase tag of declarative clauses. */
 	static final public String PTAG_S		= "S";
@@ -181,8 +181,6 @@ public class CTLibEn implements CTLib
 	static final public String POS_WPS		= "WP$";
 	/** The pos tag of wh-adverbs. */
 	static final public String POS_WRB		= "WRB"; 
-	/** The pos tag of unknown tokens. */
-	static final public String POS_XX		= "XX";
 	
 	/** The pos tag of dollar signs. */
 	static final public String POS_DOLLAR	= "$";
@@ -293,23 +291,22 @@ public class CTLibEn implements CTLib
 	static final public Pattern RE_COMP_LINK_FORM = Pattern.compile("^(0|that|when|where|whereby|wherein|whereupon|which|who|whom|whose)$");
 	/** A regular expression of identifying ICH|PPA|RNR empty categories. */
 	static final public Pattern RE_ICH_PPA_RNR = Pattern.compile("\\*(ICH|PPA|RNR)\\*.*");
-	
-	static final public Pattern RE_FORM_HAVE = Pattern.compile("^(have|has|had|having|'ve|'d)$");
-	
-	//	======================== Linking ========================
-	
+
 	/**
-	 * Fixes some inconsistent function tags.
+	 * Fixes inconsistent function tags.
 	 * Links antecedents of reduced passive nulls ({@code *}) and complementizers.
+	 * @see CTLibEn#fixFunctionTags(CTTree)
 	 * @see CTLibEn#linkReducedPassiveNulls(CTTree)
 	 * @see CTLibEn#linkComplementizers(CTTree)	 
 	 */
 	static public void preprocessTree(CTTree tree)
 	{
-		CTLibEn.fixFunctionTags(tree);
-		CTLibEn.linkReducedPassiveNulls(tree);
-		CTLibEn.linkComplementizers(tree);
+		fixFunctionTags(tree);
+		linkReducedPassiveNulls(tree);
+		linkComplementizers(tree);
 	}
+	
+	//	======================== Linking ========================
 	
 	/**
 	 * Returns {@code true} if the specific node represents a passive null ({@code *|*-\d}).
@@ -425,7 +422,7 @@ public class CTLibEn implements CTLib
 				if (list != null) parent = list.get(0);
 			}
 			
-			CTNode vp = parent.getTopChainedAncestor("+"+vpRegex);
+			CTNode vp = parent.getHighestChainedAncestor("+"+vpRegex);
 
 			if (vp.parent.matchesPTag(npRegex) || vp.parent.hasFTag(FTAG_NOM))
 			{
@@ -470,7 +467,7 @@ public class CTLibEn implements CTLib
 		if (RE_COMP_LINK.matcher(curr.pTag).find())
 		{
 			CTNode comp = getComplementizer(curr);
-			CTNode sbar = curr.getTopChainedAncestor(PTAG_SBAR);
+			CTNode sbar = curr.getHighestChainedAncestor(PTAG_SBAR);
 			
 			if (comp != null && sbar != null && !sbar.hasFTag(FTAG_NOM) && RE_COMP_LINK_FORM.matcher(comp.form.toLowerCase()).find())
 			{
@@ -543,25 +540,31 @@ public class CTLibEn implements CTLib
 	
 	//	======================== Booleans ========================
 
+	/**
+	 * Returns {@code true} if the specific node contains coordination.
+	 * @param node the constituent node.
+	 * @return {@code true} if the specific node contains coordination.
+	 */
 	static public boolean containsCoordination(CTNode node)
 	{
 		return containsCoordination(node, node.getChildren());
 	}
 	
 	/**
-	 * Returns {@code true} if this node contains a coordination structure.
-	 * @param node the phrase node.
-	 * @return {@code true} if this node contains a coordination structure.
+	 * Returns {@code true} if the specific list of siblings contains coordination.
+	 * @param parent the parent of all siblings.
+	 * @param siblings the list of siblings.
+	 * @return {@code true} if the specific list of siblings contains coordination.
 	 */
-	static public boolean containsCoordination(CTNode parent, List<CTNode> children)
+	static public boolean containsCoordination(CTNode parent, List<CTNode> siblings)
 	{
 		if (parent.isPTag(CTLibEn.PTAG_UCP))
 			return true;
 		
-		if (parent.isPTagAny(CTLibEn.PTAG_NML, CTLibEn.PTAG_NP) && containsEtc(children))
+		if (parent.isPTagAny(CTLibEn.PTAG_NML, CTLibEn.PTAG_NP) && containsEtc(siblings))
 			return true;
 		
-		for (CTNode child : children)
+		for (CTNode child : siblings)
 		{
 			if (child.isPTagAny(CTLibEn.POS_CC, CTLibEn.PTAG_CONJP))
 				return true;
@@ -570,6 +573,7 @@ public class CTLibEn implements CTLib
 		return false;
 	}
 	
+	/** Called by {@link CTLibEn#containsCoordination(CTNode, List)}. */
 	static private boolean containsEtc(List<CTNode> children)
 	{
 		int i, size = children.size();
@@ -587,6 +591,11 @@ public class CTLibEn implements CTLib
 		return false;
 	}
 	
+	/**
+	 * Returns {@code true} if the specific node is et cetera (e.g., etc).
+	 * @param node the node to be compared.
+	 * @return {@code true} if the specific node is et cetera (e.g., etc).
+	 */
 	static public boolean isEtc(CTNode node)
 	{
 		if (node.hasFTag(CTLibEn.FTAG_ETC))
@@ -699,16 +708,6 @@ public class CTLibEn implements CTLib
 	}
 	
 	/**
-	 * Returns {@code true} if the specific node is a noun phrase.
-	 * @param node the node to be compared.
-	 * @return {@code true} if the specific node is a noun phrase.
-	 */
-	static public boolean isNounPhrase(CTNode node)
-	{
-		return node.isPTagAny(CTLibEn.PTAG_NP, CTLibEn.PTAG_NML, CTLibEn.PTAG_NX, CTLibEn.PTAG_NAC);
-	}
-	
-	/**
 	 * Returns {@code true} if the specific node is a verb.
 	 * @param node the node to be compared.
 	 * @return {@code true} if the specific node is a verb.
@@ -716,6 +715,16 @@ public class CTLibEn implements CTLib
 	static public boolean isVerb(CTNode node)
 	{
 		return MPLibEn.isVerb(node.pTag);
+	}
+	
+	/**
+	 * Returns {@code true} if the specific node is a noun phrase.
+	 * @param node the node to be compared.
+	 * @return {@code true} if the specific node is a noun phrase.
+	 */
+	static public boolean isNounPhrase(CTNode node)
+	{
+		return node.isPTagAny(CTLibEn.PTAG_NP, CTLibEn.PTAG_NML, CTLibEn.PTAG_NX, CTLibEn.PTAG_NAC);
 	}
 	
 	/**
@@ -742,11 +751,19 @@ public class CTLibEn implements CTLib
 	
 	//	======================== function tag manipulation ========================
 
+	/**
+	 * Fixes inconsistent function tags in the specific tree.
+	 * @see CTLibEn#fixSBJ(CTNode)
+	 * @see CTLibEn#fixLGS(CTNode)
+	 * @see CTLibEn#fixCLF(CTNode)
+	 * @param tree the constituent tree.
+	 */
 	static public void fixFunctionTags(CTTree tree)
 	{
 		fixFunctionTagsAux(tree.getRoot());
 	}
 	
+	/** Called by {@link CTLibEn#fixFunctionTags(CTTree)}. */
 	static private void fixFunctionTagsAux(CTNode node)
 	{
 		CTLibEn.fixSBJ(node);
@@ -761,7 +778,7 @@ public class CTLibEn implements CTLib
 	 * If the specific node contains the function tag {@link CTLibEn#FTAG_SBJ} and it is the only child of its parent, moves the tag to its parent.
 	 * @param node the node to be processed.
 	 */
-	static public boolean fixSBJ(CTNode node)
+	static private boolean fixSBJ(CTNode node)
 	{
 		if (node.hasFTag(FTAG_SBJ))
 		{
@@ -784,7 +801,7 @@ public class CTLibEn implements CTLib
 	 * If the specific node contains the function tag {@link CTLibEn#FTAG_LGS} and it is not a prepositional phrase, moves the tag to its parent.
 	 * @param node the node to be processed.
 	 */
-	static public boolean fixLGS(CTNode node)
+	static private boolean fixLGS(CTNode node)
 	{
 		if (node.hasFTag(FTAG_LGS) && !node.isPTag(PTAG_PP))
 		{
@@ -806,7 +823,7 @@ public class CTLibEn implements CTLib
 	 * If the specific node contains the function tag {@link CTLibEn#FTAG_CLF} and it is not a subordinate clause, moves the tag to the subordinate clause.
 	 * @param node the node to be processed.
 	 */
-	static public boolean fixCLF(CTNode node)
+	static private boolean fixCLF(CTNode node)
 	{
 		if (node.hasFTag(FTAG_CLF) && node.matchesPTag("S|SQ|SINV"))
 		{

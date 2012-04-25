@@ -21,19 +21,53 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.morphology;
+package edu.colorado.clear.constituent;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Test;
 
+import edu.colorado.clear.constituent.CTReader;
+import edu.colorado.clear.constituent.CTTree;
+import edu.colorado.clear.util.UTInput;
+
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
-public class MPLibEnTest
+public class CTReaderTest
 {
+	
+	/**
+	 * 
+	 */
 	@Test
-	public void testIsBe()
+	public void testCTReader()
 	{
-		assertEquals(true , MPLibEn.isBe("'m"));
-		assertEquals(false, MPLibEn.isBe("become"));
+		String filename = "src/test/resources/constituent/CTReaderTest.parse"; 
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(filename));
+		CTTree   tree;
+		
+		StringBuilder build = new StringBuilder();
+		List<String>  trees = new ArrayList<String>();
+		String tmp;
+		
+		while ((tree = reader.nextTree()) != null)
+		{
+			tmp = tree.toString();
+			trees.add(tmp);
+			build.append(tmp);
+		}
+
+		reader.close();
+		
+		reader = new CTReader(new BufferedReader(new StringReader(build.toString())));
+
+		for (int i=0; (tree = reader.nextTree()) != null; i++)
+			assertEquals(trees.get(i), tree.toString());
+		
+		reader.close();
 	}
 }

@@ -154,7 +154,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private void mapPRO(CTTree cTree, CTNode ec)
 	{
 		CTNode np = ec.getParent();
-		CTNode vp = np.getParent().getFirstLowestDescendant(CTLibEn.PTAG_VP);
+		CTNode vp = np.getParent().getFirstChainedDescendant(CTLibEn.PTAG_VP);
 		
 		if (vp == null)								// small clauses
 			relocatePRD(np, ec);
@@ -177,7 +177,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	{
 		CTNode ante = ec.getAntecedent();
 		
-		if (ante == null || ec.isDescendentOf(ante))
+		if (ante == null || ec.isDescendantOf(ante))
 			removeCTNode(ec);
 		else if (ante.hasFTag(CTLibEn.FTAG_TPC))
 		{
@@ -192,7 +192,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		}
 		else	// relative clauses
 		{
-			CTNode parent = ante.getTopChainedAncestor(CTLibEn.PTAG_SBAR);
+			CTNode parent = ante.getHighestChainedAncestor(CTLibEn.PTAG_SBAR);
 			if (parent != null)		parent.addFTag(DEPLibEn.DEP_RCMOD);
 			replaceEC(ec, ante);
 		}
@@ -221,7 +221,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		if (ec.form.startsWith(CTLibEn.EC_ICH) && parent.getPrevSibling("+WH.*") != null)
 			removeCTNode(ec);
-		else if (ante == null || ec.isDescendentOf(ante))
+		else if (ante == null || ec.isDescendantOf(ante))
 			removeCTNode(ec);
 		else
 		{

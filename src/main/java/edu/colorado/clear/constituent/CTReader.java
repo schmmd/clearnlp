@@ -27,20 +27,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
-import java.util.List;
 import java.util.StringTokenizer;
-
-import com.carrotsearch.hppc.IntIntOpenHashMap;
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
 
 /**
  * Constituent tree reader.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/constituent/CTReaderTest.java">CTReaderTest</a> for the use of this class.
  * @see CTTree 
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class CTReader
@@ -167,116 +160,5 @@ public class CTReader
 		}
 		
 		return d_tokens.pop();
-	}
-	
-	/**
-	 * Normalizes co-indices and gap-indices of the specific tree.
-	 * @param tree the tree to be normalized.
-	 */
-	public void normalizeIndices(CTTree tree)
-	{
-		// retrieve all co-indexes
-		IntObjectOpenHashMap<List<CTNode>> mOrg = new IntObjectOpenHashMap<List<CTNode>>();
-		getCoIndexMap(tree.getRoot(), mOrg);
-		if (mOrg.isEmpty())	return;
-		
-		int[] keys = mOrg.keys().toArray();
-		Arrays.sort(keys);
-		
-		IntIntOpenHashMap mNew = new IntIntOpenHashMap();		
-		int coIndex = 1, last, i;
-		List<CTNode> list;
-		CTNode curr, ec;
-		boolean isAnteFound;
-		
-		for (int key : keys)
-		{
-			list = mOrg.get(key);
-			last = list.size() - 1;
-			isAnteFound = false;
-			
-			for (i=last; i>=0; i--)
-			{
-				curr = list.get(i);
-				
-				if (curr.isEmptyCategoryRec())
-				{
-					ec = curr.getSubTerminals().get(0);
-					
-					if (i == last || isAnteFound || CTLibEn.RE_ICH_PPA_RNR.matcher(ec.form).find() || CTLibEn.containsCoordination(curr.getLowestCommonAncestor(list.get(i+1))))
-						curr.coIndex = -1;
-					else
-						curr.coIndex = coIndex++;
-
-					if (isAnteFound || i > 0)
-						ec.form += "-"+coIndex;
-				}
-				else if (isAnteFound)
-				{
-					curr.coIndex = -1;
-				}
-				else
-				{
-					curr.coIndex = coIndex;
-					mNew.put(key, coIndex);
-					isAnteFound  = true;
-				}
-			}
-			
-			coIndex++;
-		}
-		
-		int[] lastIndex = {coIndex};
-		remapGapIndices(mNew, lastIndex, tree.getRoot());
-	}
-	
-	/** Called by {@link CTReader#normalizeIndices(CTTree)}. */
-	private void getCoIndexMap(CTNode curr, IntObjectOpenHashMap<List<CTNode>> map)
-	{
-		if (curr.isPhrase())
-		{
-			if (curr.coIndex != -1)
-			{
-				int key = curr.coIndex;
-				List<CTNode> list;
-				
-				if (map.containsKey(key))
-					list = map.get(key);
-				else
-				{
-					list = new ArrayList<CTNode>();
-					map.put(key, list);
-				}
-				
-				list.add(curr);
-			}
-			
-			for (CTNode child : curr.ls_children)
-				getCoIndexMap(child, map);
-		}
-		else if (curr.isEmptyCategory())
-		{
-			if (curr.form.equals("*0*"))
-				curr.form = "0";
-		}
-	}
-	
-	/** Called by {@link CTReader#normalizeIndices(CTTree)}. */
-	private void remapGapIndices(IntIntOpenHashMap map, int[] lastIndex, CTNode curr)
-	{
-		int gapIndex = curr.gapIndex;
-		
-		if (map.containsKey(gapIndex))
-		{
-			curr.gapIndex = map.get(gapIndex);
-		}
-		else if (gapIndex != -1)
-		{
-			curr.gapIndex = lastIndex[0];
-			map.put(gapIndex, lastIndex[0]++);
-		}
-		
-		for (CTNode child : curr.ls_children)
-			remapGapIndices(map, lastIndex, child);
 	}
 }

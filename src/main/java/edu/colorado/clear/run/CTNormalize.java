@@ -28,6 +28,7 @@ import java.io.PrintStream;
 
 import org.kohsuke.args4j.Option;
 
+import edu.colorado.clear.constituent.CTLib;
 import edu.colorado.clear.constituent.CTReader;
 import edu.colorado.clear.constituent.CTTree;
 import edu.colorado.clear.io.FileExtFilter;
@@ -86,7 +87,7 @@ public class CTNormalize extends AbstractRun
 			
 			while ((tree = reader.nextTree()) != null)
 			{
-				reader.normalizeIndices(tree);
+				CTLib.normalizeIndices(tree);
 				fout.println(tree.toString()+"\n");
 			}
 			
