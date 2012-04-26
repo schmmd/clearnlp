@@ -21,54 +21,39 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.propbank;
+package edu.colorado.clear.headrule;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-/**
- * PropBank reader.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class PBReader
+import org.junit.Test;
+
+import edu.colorado.clear.constituent.CTNode;
+import edu.colorado.clear.headrule.HeadTagSet;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class HeadTagSetTest
 {
-	private BufferedReader f_in;
-	
-	/**
-	 * Creates a PropBank reader from the specific reader.
-	 * @param in an input reader, which gets internally wrapped with {@code new LineNumberReader(in)}.
-	 */
-	public PBReader(BufferedReader in)
+	@Test
+	public void testHeadTag()
 	{
-		f_in = in;
-	}
-	
-	/**
-	 * Returns the next instance, or {@code null} if there is no more tree.
-	 * @return the next instance, or {@code null} if there is no more tree.
-	 */
-	public PBInstance nextInstance()
-	{
-		try
-		{
-			String line = f_in.readLine();
-			
-			if (line != null)
-				return new PBInstance(line);
-		}
-		catch (IOException e) {e.printStackTrace();}
+		String[]  tags = {"NN.*","-SBJ","-TPC","NP"};
+		HeadTagSet tag = new HeadTagSet(tags);
+		CTNode    node = new CTNode("NN", null);
 		
-		return null;
-	}
-	
-	/** Closes the current reader. */
-	public void close()
-	{
-		try
-		{
-			f_in.close();
-		}
-		catch (IOException e) {e.printStackTrace();}
+		assertEquals(true, tag.matches(node));
+		
+		node.pTag = "NNS";
+		assertEquals(true, tag.matches(node));
+		
+		node.pTag = "NP";
+		assertEquals(true, tag.matches(node));
+		
+		node.pTag = "S";
+		assertEquals(false, tag.matches(node));
+		
+		node.addFTag("SBJ");
+		assertEquals(true, tag.matches(node));
+		
+		assertEquals("NN.*|NP|-SBJ|-TPC", tag.toString());
 	}
 }

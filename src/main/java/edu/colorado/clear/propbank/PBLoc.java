@@ -25,8 +25,7 @@ package edu.colorado.clear.propbank;
 
 /**
  * PropBank location.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/propbank/PBLocTest.java">PBLocTest</a> for the use of this class.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class PBLoc implements Comparable<PBLoc>

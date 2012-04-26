@@ -35,7 +35,7 @@ import edu.colorado.clear.constituent.CTTree;
  * PropBank instance.
  * @see PBLoc
  * @see PBArg
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class PBInstance implements Comparable<PBInstance>
@@ -104,14 +104,20 @@ public class PBInstance implements Comparable<PBInstance>
 	
 	/**
 	 * Returns the index'th argument of this instance.
+	 * if the index is out-of-range, returns {@code null}.
 	 * @param index the index of the argument to be returned.
 	 * @return the index'th argument of this instance.
 	 */
 	public PBArg getArg(int index)
 	{
-		return l_args.get(index);
+		return (0 <= index && index < l_args.size()) ? l_args.get(index) : null;
 	}
 	
+	/**
+	 * Returns the first argument with the specific PropBank label.
+	 * @param label the PropBank label.
+	 * @return the first argument with the specific PropBank label.
+	 */
 	public PBArg getFirstArg(String label)
 	{
 		for (PBArg arg : l_args)
@@ -157,6 +163,10 @@ public class PBInstance implements Comparable<PBInstance>
 		l_args.removeAll(args);
 	}
 	
+	/**
+	 * Removes all argument with the specific label.
+	 * @param label the PropBank label.
+	 */
 	public void removeArgs(String label)
 	{
 		List<PBArg> remove = new ArrayList<PBArg>();
@@ -202,11 +212,20 @@ public class PBInstance implements Comparable<PBInstance>
 		return tree;
 	}
 	
+	/**
+	 * Returns {@link PBInstance#treePath}+"_"+{@link PBInstance#treeId}+"_"+{@link PBInstance#predId}.
+	 * @return {@link PBInstance#treePath}+"_"+{@link PBInstance#treeId}+"_"+{@link PBInstance#predId}.
+	 */
 	public String getKey()
 	{
 		return getKey(predId);
 	}
 	
+	/**
+	 * Returns {@link PBInstance#treePath}+"_"+{@link PBInstance#treeId}+"_"+{@code PredId}.
+	 * @param predId the predicate ID.
+	 * @return {@link PBInstance#treePath}+"_"+{@link PBInstance#treeId}+"_"+{@code PredId}.
+	 */
 	public String getKey(int predId)
 	{
 		StringBuilder build = new StringBuilder();
@@ -235,9 +254,9 @@ public class PBInstance implements Comparable<PBInstance>
 	 */
 	public boolean isLVNounPredicate(CTTree cTree)
 	{
-		if (!type.endsWith("-n"))	return false;
+		if (!isNounPredicate())	return false;
 		PBArg rel = getFirstArg(PBLib.SRL_REL);
-		if (rel == null)			return false;
+		if (rel == null)		return false;
 		
 		for (PBLoc loc : rel.l_locs)
 		{
@@ -246,6 +265,26 @@ public class PBInstance implements Comparable<PBInstance>
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Returns {@code true} if the predicate of this instance is a verb.
+	 * In other words, the instance type ends with "-v".
+	 * @return {@code true} if the predicate of this instance is a verb.
+	 */
+	public boolean isVerbPredicate()
+	{
+		return type.endsWith("-v");
+	}
+	
+	/**
+	 * Returns {@code true} if the predicate of this instance is a noun.
+	 * In other words, the instance type ends with "-n".
+	 * @return {@code true} if the predicate of this instance is a noun.
+	 */
+	public boolean isNounPredicate()
+	{
+		return type.endsWith("-n");
 	}
 	
 	/* (non-Javadoc)

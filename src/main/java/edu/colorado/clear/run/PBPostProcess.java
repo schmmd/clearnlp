@@ -81,21 +81,30 @@ public class PBPostProcess extends AbstractRun
 	public void postProcess(String propFile, String postFile, String treeDir, boolean norm, String language)
 	{
 		List<PBInstance> instances = PBLib.getPBInstanceList(propFile, treeDir, norm);
+		List<PBInstance> remove = new ArrayList<PBInstance>();
 		mergeLightVerbs(instances);
-		PBArg aDSP;
+		CTTree tree;
+		PBArg  aDSP;
 		
 		for (PBInstance instance : instances)
 		{
-			if (language.equals(AbstractReader.LANG_EN))
-				CTLibEn.preprocessTree(instance.getTree());
+			tree = instance.getTree();
 			
-			if (findMisalignedArgs(instance))	continue;
+			if (language.equals(AbstractReader.LANG_EN))
+				CTLibEn.preprocessTree(tree);
+			
+			if (isSkip(instance, tree))
+			{
+				remove.add(instance);
+				continue;
+			}
+			
 			instance.sortArgs();
 			
 			joinConcatenations(instance);
 			fixCyclicLocs(instance);
 			removeRedundantLocs(instance);
-			if (instance.type.endsWith("-v"))
+			if (instance.isVerbPredicate())
 				fixIllegalPROs(instance);
 			aDSP = getArgDSP(instance);
 			getLinks(instance);
@@ -108,10 +117,23 @@ public class PBPostProcess extends AbstractRun
 			if (aDSP != null)	instance.addArg(aDSP);
 		}
 		
+		instances.removeAll(remove);
+		
 		if (postFile == null)
 			printInstances(instances, treeDir);
 		else
 			PBLib.printPBInstances(instances, postFile);
+	}
+	
+	private boolean isSkip(PBInstance instance, CTTree tree)
+	{
+		if (findMisalignedArgs(instance))
+			return true;
+		
+		if (instance.isVerbPredicate() && tree.getTerminal(instance.predId).getParent().isPTag(CTLibEn.PTAG_PP))
+			return true;
+		
+		return false;
 	}
 	
 	private void mergeLightVerbs(List<PBInstance> instances)
@@ -125,7 +147,7 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBInstance instance : instances)
 		{
-			if (instance.type.endsWith("-v"))
+			if (instance.isVerbPredicate())
 			{
 				if (instance.roleset.endsWith("LV"))
 					lVerbs.add(instance);
@@ -187,8 +209,8 @@ public class PBPostProcess extends AbstractRun
 		String label = null;
 		
 		if (!tree.isRange(instance.predId, 0) ||
-			(instance.type.endsWith("-v") && !tree.getTerminal(instance.predId).pTag.startsWith("VB")) ||
-			(instance.type.endsWith("-n") && !tree.getTerminal(instance.predId).pTag.startsWith("NN")))
+			(instance.isVerbPredicate() && !tree.getTerminal(instance.predId).pTag.startsWith("VB")) ||
+			(instance.isNounPredicate() && !tree.getTerminal(instance.predId).pTag.startsWith("NN")))
 		{
 			label = PBLib.SRL_REL;
 		}

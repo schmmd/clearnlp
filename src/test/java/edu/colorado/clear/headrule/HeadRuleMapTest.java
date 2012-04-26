@@ -21,54 +21,29 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.propbank;
+package edu.colorado.clear.headrule;
+
+import static org.junit.Assert.assertEquals;
 
 import java.io.BufferedReader;
-import java.io.IOException;
+import java.io.StringReader;
 
-/**
- * PropBank reader.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class PBReader
+import org.junit.Test;
+
+import edu.colorado.clear.headrule.HeadRuleMap;
+import edu.colorado.clear.util.UTInput;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class HeadRuleMapTest
 {
-	private BufferedReader f_in;
-	
-	/**
-	 * Creates a PropBank reader from the specific reader.
-	 * @param in an input reader, which gets internally wrapped with {@code new LineNumberReader(in)}.
-	 */
-	public PBReader(BufferedReader in)
+	@Test
+	public void testHeadRule()
 	{
-		f_in = in;
-	}
-	
-	/**
-	 * Returns the next instance, or {@code null} if there is no more tree.
-	 * @return the next instance, or {@code null} if there is no more tree.
-	 */
-	public PBInstance nextInstance()
-	{
-		try
-		{
-			String line = f_in.readLine();
-			
-			if (line != null)
-				return new PBInstance(line);
-		}
-		catch (IOException e) {e.printStackTrace();}
+		String filename = "src/main/resources/headrule/headrule_en_ontonotes.txt";
 		
-		return null;
-	}
-	
-	/** Closes the current reader. */
-	public void close()
-	{
-		try
-		{
-			f_in.close();
-		}
-		catch (IOException e) {e.printStackTrace();}
+		HeadRuleMap map = new HeadRuleMap(UTInput.createBufferedFileReader(filename));
+		String      str = map.toString();
+		
+		assertEquals(str, new HeadRuleMap(new BufferedReader(new StringReader(str))).toString());
 	}
 }

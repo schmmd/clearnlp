@@ -24,6 +24,7 @@
 package edu.colorado.clear.propbank;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,9 +36,8 @@ import edu.colorado.clear.constituent.CTTree;
 
 /**
  * PropBank argument.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/propbank/PBArgTest.java">PBArgTest</a> for the use of this class.
  * @see PBLoc
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class PBArg implements Comparable<PBArg>
@@ -108,12 +108,13 @@ public class PBArg implements Comparable<PBArg>
 	
 	/**
 	 * Returns the index'th location of this argument.
+	 * If the index is out-of-range, returns {@code null}.
 	 * @param index the index of the location to be returned.
 	 * @return the index'th location of this argument.
 	 */
 	public PBLoc getLoc(int index)
 	{
-		return l_locs.get(index);
+		return (0 <= index && index < l_locs.size()) ? l_locs.get(index) : null;
 	}
 	
 	/**
@@ -141,6 +142,35 @@ public class PBArg implements Comparable<PBArg>
 	public List<PBLoc> getLocs()
 	{
 		return l_locs;
+	}
+	
+	/**
+	 * Returns a set of terminal IDs belonging to this argument given the specific tree.
+	 * @param tree the constituent tree.
+	 * @return a set of terminal IDs belonging to this argument.
+	 */
+	public IntOpenHashSet getTerminalIdSet(CTTree tree)
+	{
+		IntOpenHashSet set = new IntOpenHashSet();
+		
+		for (PBLoc loc : l_locs)
+			set.addAll(tree.getNode(loc).getSubTerminalIdSet());
+		
+		return set;
+	}
+	
+	/**
+	 * Returns the sorted list of terminal IDs belonging to this argument give the specific tree.
+	 * @param tree the constituent tree.
+	 * @return the sorted list of terminal IDs belonging to this argument give the specific tree.
+	 */
+	public int[] getSortedTerminalIdList(CTTree tree)
+	{
+		IntOpenHashSet set = getTerminalIdSet(tree);
+		int[] ids = set.toArray();
+		
+		Arrays.sort(ids);
+		return ids;
 	}
 	
 	/**
@@ -243,6 +273,11 @@ public class PBArg implements Comparable<PBArg>
 		return l_locs.isEmpty();
 	}
 	
+	/**
+	 * Returns {@code true} if this argument has the specific location type.
+	 * @param type the type of a location to be found.
+	 * @return {@code true} if this argument has the specific location type.
+	 */
 	public boolean hasType(String type)
 	{
 		for (PBLoc loc : l_locs)
@@ -274,15 +309,5 @@ public class PBArg implements Comparable<PBArg>
 	public int compareTo(PBArg arg)
 	{
 		return getLoc(0).compareTo(arg.getLoc(0));
-	}
-	
-	public IntOpenHashSet getTerminalIdSet(CTTree tree)
-	{
-		IntOpenHashSet set = new IntOpenHashSet();
-		
-		for (PBLoc loc : l_locs)
-			set.addAll(tree.getNode(loc).getSubTerminalIdSet());
-		
-		return set;
 	}
 }

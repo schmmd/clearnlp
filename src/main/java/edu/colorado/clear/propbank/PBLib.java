@@ -33,15 +33,14 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import edu.colorado.clear.constituent.CTLib;
-import edu.colorado.clear.constituent.CTNode;
 import edu.colorado.clear.constituent.CTReader;
 import edu.colorado.clear.constituent.CTTree;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.UTOutput;
 
 /**
- * PropBank argument.
- * @since v0.1
+ * PropBank library.
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class PBLib
@@ -56,8 +55,7 @@ public class PBLib
 	static final public String SRL_LINK_SLC = "LINK-SLC";
 	static final public String SRL_LINK_PRO = "LINK-PRO";
 	static final public String SRL_LINK_PSV = "LINK-PSV";
-	
-	static final public String SRL_C_V = "C-V";
+	static final public String SRL_C_V 		= "C-V";
 	
 	/** The delimiter between terminal ID and height ({@code ":"}). */
 	static final public String DELIM_LOC  = ":";
@@ -67,8 +65,8 @@ public class PBLib
 	static final public String DELIM_INST = " ";
 	/** The location operators ({@code "*&,;"}). */
 	static final public String LOC_TYPES  = "*&,;";
-	
-	static final public Pattern WRONG_ROLESET = Pattern.compile(".*\\.(ER|NN|IE|YY)");
+	/** The pattern of illegal rolesets. */
+	static final public Pattern ILLEGAL_ROLESET = Pattern.compile(".*\\.(ER|NN|IE|YY)");
 	
 	/**
 	 * Returns the sorted list of PropBank instances from the specific file. 
@@ -138,17 +136,17 @@ public class PBLib
 	{
 		Map<String,List<PBInstance>> map = new HashMap<String,List<PBInstance>>();
 		List<PBInstance> list = null;
-		String ckey, pkey = "";
+		String currkey, prevkey = "";
 		
 		for (PBInstance inst : PBLib.getPBInstanceList(propFile, treeDir, norm))
 		{
-			ckey = getTreePathId(inst);
+			currkey = getTreePathId(inst);
 			
-			if (!ckey.equals(pkey))
+			if (!currkey.equals(prevkey))
 			{
 				list = new ArrayList<PBInstance>();
-				pkey = ckey;
-				map.put(ckey, list);
+				prevkey = currkey;
+				map.put(currkey, list);
 			}
 			
 			list.add(inst);
@@ -157,6 +155,7 @@ public class PBLib
 		return map;
 	}
 	
+	/** Called by {@link PBLib#getPBInstanceMap(String, String, boolean)}. */
 	static private String getTreePathId(PBInstance inst)
 	{
 		StringBuilder build = new StringBuilder();
@@ -183,30 +182,14 @@ public class PBLib
 		fout.close();
 	}
 	
-	static public boolean isSame(PBInstance instance, CTTree tree1, CTTree tree2)
-	{
-		if (tree1.getTerminals().size() != tree2.getTerminals().size())
-			return false;
-		
-		CTNode node1, node2;
-		
-		for (PBArg arg : instance.getArgs())
-		{
-			for (PBLoc loc : arg.getLocs())
-			{
-				node1 = tree1.getNode(loc);
-				node2 = tree2.getNode(loc);
-				
-				if (!node1.toForms(false, " ").equals(node2.toForms(false, " ")))
-					return false;
-			}
-		}
-		
-		return true;
-	}
-	
+	/**
+	 * Returns {@code true} if the specific argument is a numbered argument.
+	 * In other words, returns {@code true} if the label of the argument is "ARG#". 
+	 * @param arg the argument to be compared.
+	 * @return {@code true} if the specific argument is a numbered argument.
+	 */
 	static public boolean isNumberedArgument(PBArg arg)
 	{
-		return arg.label.length() == 4 && Character.isDigit(arg.label.charAt(3));
+		return arg.label.length() >= 4 && Character.isDigit(arg.label.charAt(3));
 	}
 }

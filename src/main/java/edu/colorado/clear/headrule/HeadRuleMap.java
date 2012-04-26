@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * Headrule map.
  * @see HeadRule
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 @SuppressWarnings("serial")

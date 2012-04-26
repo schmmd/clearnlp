@@ -35,6 +35,11 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 
 import edu.colorado.clear.util.pair.IntDoublePair;
 
+/**
+ * K-means clustering.
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
 public class Kmeans
 {
 	private final int RAND_SEED = 0;

@@ -23,52 +23,28 @@
 */
 package edu.colorado.clear.propbank;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-/**
- * PropBank reader.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class PBReader
+import org.junit.Test;
+
+import edu.colorado.clear.propbank.PBInstance;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class PBInstanceTest
 {
-	private BufferedReader f_in;
-	
-	/**
-	 * Creates a PropBank reader from the specific reader.
-	 * @param in an input reader, which gets internally wrapped with {@code new LineNumberReader(in)}.
-	 */
-	public PBReader(BufferedReader in)
+	@Test
+	public void testPBArg()
 	{
-		f_in = in;
-	}
-	
-	/**
-	 * Returns the next instance, or {@code null} if there is no more tree.
-	 * @return the next instance, or {@code null} if there is no more tree.
-	 */
-	public PBInstance nextInstance()
-	{
-		try
-		{
-			String line = f_in.readLine();
-			
-			if (line != null)
-				return new PBInstance(line);
-		}
-		catch (IOException e) {e.printStackTrace();}
+		PBInstance instance = new PBInstance("wsj_2100.parse 8 20 gold get-v get.04 ----- 21:2-ARG1 20:0-rel 18:0-ARG0 17:1-ARGM-MNR 18:0*11:1-LINK-PCR 17:1*15:1-LINK-SLC");
+		assertEquals("20:0-rel", instance.getArg(1).toString());
 		
-		return null;
-	}
-	
-	/** Closes the current reader. */
-	public void close()
-	{
-		try
-		{
-			f_in.close();
-		}
-		catch (IOException e) {e.printStackTrace();}
+		instance.sortArgs();
+		assertEquals("wsj_2100.parse 8 20 gold get-v get.04 ----- 11:1*18:0-LINK-PCR 15:1*17:1-LINK-SLC 17:1-ARGM-MNR 18:0-ARG0 20:0-rel 21:2-ARG1", instance.toString());
+		assertEquals(instance.getArg(3), instance.getFirstArg("ARG0"));
+		
+		instance.removeArgs("ARG0");
+		assertEquals("wsj_2100.parse 8 20 gold get-v get.04 ----- 11:1*18:0-LINK-PCR 15:1*17:1-LINK-SLC 17:1-ARGM-MNR 20:0-rel 21:2-ARG1", instance.toString());
+		instance.removeArgs("ARG0");
+		assertEquals("wsj_2100.parse 8 20 gold get-v get.04 ----- 11:1*18:0-LINK-PCR 15:1*17:1-LINK-SLC 17:1-ARGM-MNR 20:0-rel 21:2-ARG1", instance.toString());
 	}
 }

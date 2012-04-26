@@ -78,7 +78,7 @@ public class C2DConvert extends AbstractRun
 	private String s_outputExt = "dep";
 	@Option(name="-l", usage="language (default: "+AbstractReader.LANG_EN+")", required=false, metaVar="<language>")
 	private String s_language = AbstractReader.LANG_EN;
-	
+	@Option(name="-v", usage="if set, add only verb predicates in PropBank", required=false, metaVar="<boolean>")
 	private boolean b_verbs_only = false;
 	
 	public C2DConvert() {}
@@ -86,6 +86,7 @@ public class C2DConvert extends AbstractRun
 	public C2DConvert(String[] args)
 	{
 		initArgs(args);
+		System.out.println(b_verbs_only);
 		convert(s_headruleFile, s_dictFile, s_language, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
 	}
 	
@@ -226,12 +227,12 @@ public class C2DConvert extends AbstractRun
 	
 	private boolean isPBSkip(PBInstance instance, CTTree cTree)
 	{
-		if (PBLib.WRONG_ROLESET.matcher(instance.roleset).find())
+		if (PBLib.ILLEGAL_ROLESET.matcher(instance.roleset).find())
 			return true;
 		
 		if (b_verbs_only)
 		{
-			if (!instance.type.endsWith("-v") && !instance.isLVNounPredicate(cTree))
+			if (!instance.isVerbPredicate() && !instance.isLVNounPredicate(cTree))
 				return true;
 		}
 		

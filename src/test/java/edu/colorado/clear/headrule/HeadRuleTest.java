@@ -21,54 +21,39 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.propbank;
+package edu.colorado.clear.headrule;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-/**
- * PropBank reader.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class PBReader
+import org.junit.Test;
+
+import edu.colorado.clear.constituent.CTNode;
+import edu.colorado.clear.headrule.HeadRule;
+import edu.colorado.clear.headrule.HeadTagSet;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class HeadRuleTest
 {
-	private BufferedReader f_in;
-	
-	/**
-	 * Creates a PropBank reader from the specific reader.
-	 * @param in an input reader, which gets internally wrapped with {@code new LineNumberReader(in)}.
-	 */
-	public PBReader(BufferedReader in)
+	@Test
+	public void testHeadRule()
 	{
-		f_in = in;
-	}
-	
-	/**
-	 * Returns the next instance, or {@code null} if there is no more tree.
-	 * @return the next instance, or {@code null} if there is no more tree.
-	 */
-	public PBInstance nextInstance()
-	{
-		try
-		{
-			String line = f_in.readLine();
-			
-			if (line != null)
-				return new PBInstance(line);
-		}
-		catch (IOException e) {e.printStackTrace();}
+		String tags[][] = {{"NN.*","NP"}, {"VB.*","VP"}}; 
+		HeadRule rule = new HeadRule(HeadRule.DIR_LEFT_TO_RIGHT, tags);
+		CTNode  node1 = new CTNode("NNS", null);
+		CTNode  node2 = new CTNode("VBN", null);
 		
-		return null;
-	}
-	
-	/** Closes the current reader. */
-	public void close()
-	{
-		try
-		{
-			f_in.close();
-		}
-		catch (IOException e) {e.printStackTrace();}
+		assertEquals(false, rule.isRightToLeft());
+
+		HeadTagSet[] headTags = rule.getHeadTags();
+		
+		HeadTagSet headTag = headTags[0];
+		assertEquals(true , headTag.matches(node1));
+		assertEquals(false, headTag.matches(node2));
+		
+		headTag = headTags[1];
+		assertEquals(false, headTag.matches(node1));
+		assertEquals(true , headTag.matches(node2));
+		
+		assertEquals("NN.*|NP;VB.*|VP", rule.toString());
 	}
 }

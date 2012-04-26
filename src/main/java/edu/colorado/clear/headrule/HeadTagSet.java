@@ -31,8 +31,7 @@ import edu.colorado.clear.constituent.CTNode;
 
 /**
  * Head tagset.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/headrule/HeadTagSetTest.java">HeadTagSetTest</a> for the use of this class.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class HeadTagSet

@@ -23,52 +23,30 @@
 */
 package edu.colorado.clear.propbank;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-/**
- * PropBank reader.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class PBReader
+import org.junit.Test;
+
+import edu.colorado.clear.propbank.PBLoc;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class PBLocTest
 {
-	private BufferedReader f_in;
-	
-	/**
-	 * Creates a PropBank reader from the specific reader.
-	 * @param in an input reader, which gets internally wrapped with {@code new LineNumberReader(in)}.
-	 */
-	public PBReader(BufferedReader in)
+	@Test
+	public void testPBLoc()
 	{
-		f_in = in;
-	}
-	
-	/**
-	 * Returns the next instance, or {@code null} if there is no more tree.
-	 * @return the next instance, or {@code null} if there is no more tree.
-	 */
-	public PBInstance nextInstance()
-	{
-		try
-		{
-			String line = f_in.readLine();
-			
-			if (line != null)
-				return new PBInstance(line);
-		}
-		catch (IOException e) {e.printStackTrace();}
+		PBLoc loc1 = new PBLoc(0, 1);
+		PBLoc loc2 = new PBLoc(0, 1, "*");
 		
-		return null;
-	}
-	
-	/** Closes the current reader. */
-	public void close()
-	{
-		try
-		{
-			f_in.close();
-		}
-		catch (IOException e) {e.printStackTrace();}
+		assertEquals( "0:1", loc1.toString());
+		assertEquals("*0:1", loc2.toString());
+		assertEquals(true , loc1.equals(loc2.terminalId, loc2.height));
+		assertEquals(false, loc1.equals(loc2));
+		
+		loc1.set(0, 2);
+		assertEquals(false, loc1.equals(loc2.terminalId, loc2.height));
+		
+		loc2 = new PBLoc("0:3", ",");
+		assertEquals(",0:3", loc2.toString());
 	}
 }

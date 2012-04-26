@@ -23,52 +23,54 @@
 */
 package edu.colorado.clear.propbank;
 
-import java.io.BufferedReader;
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-/**
- * PropBank reader.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class PBReader
+import java.util.Arrays;
+
+import org.junit.Test;
+
+import edu.colorado.clear.constituent.CTReader;
+import edu.colorado.clear.constituent.CTTree;
+import edu.colorado.clear.propbank.PBArg;
+import edu.colorado.clear.propbank.PBLoc;
+import edu.colorado.clear.util.UTInput;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class PBArgTest
 {
-	private BufferedReader f_in;
-	
-	/**
-	 * Creates a PropBank reader from the specific reader.
-	 * @param in an input reader, which gets internally wrapped with {@code new LineNumberReader(in)}.
-	 */
-	public PBReader(BufferedReader in)
+	@Test
+	public void testPBArg()
 	{
-		f_in = in;
-	}
-	
-	/**
-	 * Returns the next instance, or {@code null} if there is no more tree.
-	 * @return the next instance, or {@code null} if there is no more tree.
-	 */
-	public PBInstance nextInstance()
-	{
-		try
-		{
-			String line = f_in.readLine();
-			
-			if (line != null)
-				return new PBInstance(line);
-		}
-		catch (IOException e) {e.printStackTrace();}
+		PBArg arg = new PBArg();
+		arg.label = "ARG";
 		
-		return null;
-	}
-	
-	/** Closes the current reader. */
-	public void close()
-	{
-		try
-		{
-			f_in.close();
-		}
-		catch (IOException e) {e.printStackTrace();}
+		arg.addLoc(new PBLoc(2, 1));
+		arg.addLoc(new PBLoc(2, 1, ";"));
+		arg.addLoc(new PBLoc(0, 1, "*"));
+		arg.addLoc(new PBLoc(0, 1, "&"));
+		arg.addLoc(new PBLoc(0, 0, ","));
+		
+		assertEquals("2:1;2:1*0:1&0:1,0:0-ARG", arg.toString());
+		arg.sortLocs();
+		assertEquals("0:0*0:1&0:1,2:1;2:1-ARG", arg.toString());
+		
+		arg = new PBArg("0:0*0:1&0:2,0:3;0:4-ARGM-TMP");
+		assertEquals(arg.toString(), new PBArg(arg.toString()).toString());
+		
+		assertEquals(true , arg.isLabel("ARGM-TMP"));
+		assertEquals(false, arg.isLabel("ARGM"));
+		
+		assertEquals( "0:0", arg.getLoc(0).toString());
+		assertEquals("*0:1", arg.getLoc(1).toString());
+		assertEquals(null  , arg.getLoc(-1));
+		
+		assertEquals(arg.getLoc(4), arg.getLoc(0,4));
+		
+		String filename = "src/test/resources/constituent/CTReaderTest.parse"; 
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(filename));
+		CTTree   tree   = reader.nextTree();
+		
+		arg = new PBArg("3:1*7:2-ARG1");
+		assertEquals("[3, 7, 8, 9, 10, 11]", Arrays.toString(arg.getSortedTerminalIdList(tree)));
 	}
 }

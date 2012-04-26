@@ -25,9 +25,8 @@ package edu.colorado.clear.headrule;
 
 /**
  * Headrule.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/headrule/HeadRuleTest.java">HeadRuleTest</a> for the use of this class.
  * @see HeadTagSet
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class HeadRule
