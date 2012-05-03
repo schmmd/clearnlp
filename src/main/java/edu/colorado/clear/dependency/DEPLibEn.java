@@ -23,302 +23,147 @@
 */
 package edu.colorado.clear.dependency;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import com.carrotsearch.hppc.IntOpenHashSet;
-
-
+/**
+ * Dependency library for English.
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
 public class DEPLibEn extends DEPLib
 {
-	static public final String DEP_GAP	= "gap";
-	static public final String DEP_REF	= "ref";
-	static public final String DEP_RNR	= "rnr";
-	
-	static public final String DEP_PASS		= "pass";
-	static public final String DEP_AUX		= "aux";
-	static public final String DEP_AUXPASS	= DEP_AUX+DEP_PASS;
-	
-	static public final String DEP_SUBJ			= "subj";
+	static public final String DEP_PASS	= "pass";
+	static public final String DEP_SUBJ	= "subj";
+
+	/** The Stanford dependency label for adjectival complements. */
+	static public final String DEP_ACOMP		= "acomp";
+	/** The Stanford dependency label for adverbial clause modifiers. */
+	static public final String DEP_ADVCL		= "advcl";
+	/** The Stanford dependency label for adverbial modifiers. */
+	static public final String DEP_ADVMOD		= "advmod";
+	/** The Stanford dependency label for agents. */
+	static public final String DEP_AGENT		= "agent";
+	/** The Stanford dependency label for adjectival modifiers. */
+	static public final String DEP_AMOD			= "amod";
+	/** The Stanford dependency label for appositional modifiers. */
+	static public final String DEP_APPOS		= "appos";
+	/** The Stanford dependency label for attributes. */
+	static public final String DEP_ATTR			= "attr";
+	/** The Stanford dependency label for auxiliary verbs. */
+	static public final String DEP_AUX			= "aux";
+	/** The Stanford dependency label for passive auxiliary verbs. */
+	static public final String DEP_AUXPASS		= DEP_AUX+DEP_PASS;
+	/** The Stanford dependency label for coordinating conjunctions. */
+	static public final String DEP_CC			= "cc";
+	/** The Stanford dependency label for clausal complements. */
+	static public final String DEP_CCOMP		= "ccomp";
+	/** The Stanford dependency label for complementizers. */
+	static public final String DEP_COMPLM		= "complm";
+	/** The Stanford dependency label for conjuncts. */
+	static public final String DEP_CONJ			= "conj";
+	/** The Stanford dependency label for clausal subjects. */
 	static public final String DEP_CSUBJ		= "c"+DEP_SUBJ;
-	static public final String DEP_NSUBJ		= "n"+DEP_SUBJ;
-	static public final String DEP_XSUBJ		= "x"+DEP_SUBJ;
+	/** The Stanford dependency label for clausal passive subjects. */
 	static public final String DEP_CSUBJPASS	= DEP_CSUBJ+DEP_PASS;
+	/** The Stanford dependency label for unknown dependencies. */
+	static public final String DEP_DEP  		= "dep";
+	/** The Stanford dependency label for determiners. */
+	static public final String DEP_DET			= "det";
+	/** The Stanford dependency label for direct objects. */
+	static public final String DEP_DOBJ 		= "dobj";
+	/** The Stanford dependency label for expletives. */
+	static public final String DEP_EXPL 		= "expl";
+	/** The Stanford dependency label for indirect objects. */
+	static public final String DEP_IOBJ 		= "iobj";
+	/** The Stanford dependency label for interjections. */
+	static public final String DEP_INTJ			= "intj";
+	/** The Stanford dependency label for markers. */
+	static public final String DEP_MARK			= "mark";
+	/** The Stanford dependency label for meta modifiers. */
+	static public final String DEP_META			= "meta";
+	/** The Stanford dependency label for negation modifiers. */
+	static public final String DEP_NEG			= "neg";
+	/** The Stanford dependency label for infinitival modifiers. */
+	static public final String DEP_INFMOD		= "infmod";
+	/** The Stanford dependency label for noun phrase modifiers. */
+	static public final String DEP_NMOD 		= "nmod";
+	/** The Stanford dependency label for noun compound modifiers. */
+	static public final String DEP_NN			= "nn";
+	/** The Stanford dependency label for noun phrase as adverbial modifiers. */
+	static public final String DEP_NPADVMOD		= "npadvmod";
+	/** The Stanford dependency label for nominal subjects. */
+	static public final String DEP_NSUBJ		= "n"+DEP_SUBJ;
+	/** The Stanford dependency label for nominal passive subjects. */
 	static public final String DEP_NSUBJPASS	= DEP_NSUBJ+DEP_PASS;
-	
-	static public final String DEP_ACOMP		= "acomp";			//
-	static public final String DEP_ADVCL		= "advcl";			//
-	static public final String DEP_ADVMOD		= "advmod";			//
-	static public final String DEP_AGENT		= "agent";			//
-	static public final String DEP_AMOD			= "amod";			//
-	static public final String DEP_APPOS		= "appos";			//
-	static public final String DEP_ATTR			= "attr";			//
-	static public final String DEP_CC			= "cc";				//
-	static public final String DEP_CCOMP		= "ccomp";			//
-	static public final String DEP_COMPLM		= "complm";			
-	static public final String DEP_CONJ			= "conj";			
-	static public final String DEP_DET			= "det";			//
-	static public final String DEP_DOBJ 		= "dobj";			//
-	static public final String DEP_EXPL 		= "expl";			//
-	static public final String DEP_IOBJ 		= "iobj";			//
-	static public final String DEP_INTJ			= "intj";			//
-	static public final String DEP_MARK			= "mark";			
-	static public final String DEP_META			= "meta";			//
-	static public final String DEP_NEG			= "neg";			//
-	static public final String DEP_INFMOD		= "infmod";			//
-	static public final String DEP_NMOD 		= "nmod";			//
-	static public final String DEP_NN			= "nn";				//
-	static public final String DEP_NPADVMOD		= "npadvmod";		//
-	static public final String DEP_NUM			= "num";			//
-	static public final String DEP_NUMBER		= "number";			//
+	/** The Stanford dependency label for numeric modifiers. */
+	static public final String DEP_NUM			= "num";
+	/** The Stanford dependency label for elements of compound numbers. */
+	static public final String DEP_NUMBER		= "number";
+	/** The Stanford dependency label for object predicates. */
 	static public final String DEP_OPRD			= "oprd";
-	static public final String DEP_PARATAXIS 	= "parataxis";		//
-	static public final String DEP_PARTMOD		= "partmod";		//
-	static public final String DEP_PCOMP 		= "pcomp";			//
-	static public final String DEP_POBJ 		= "pobj";			//
-	static public final String DEP_POSS			= "poss";			//
-	static public final String DEP_POSSESSIVE 	= "possessive";	//
-	static public final String DEP_PRECONJ		= "preconj";		//
-	static public final String DEP_PREDET		= "predet";			//
-	static public final String DEP_PREP			= "prep";			//
-	static public final String DEP_PRT 			= "prt";			//
-	static public final String DEP_PUNCT		= "punct";			//
-	static public final String DEP_QUANTMOD		= "quantmod";		//
-	static public final String DEP_RCMOD		= "rcmod";			//
-	static public final String DEP_XCOMP		= "xcomp";			//
+	/** The Stanford dependency label for parataxis. */
+	static public final String DEP_PARATAXIS 	= "parataxis";
+	/** The Stanford dependency label for participial modifiers. */
+	static public final String DEP_PARTMOD		= "partmod";
+	/** The Stanford dependency label for prepositional complements. */
+	static public final String DEP_PCOMP 		= "pcomp";
+	/** The Stanford dependency label for objects of prepositions. */
+	static public final String DEP_POBJ 		= "pobj";
+	/** The Stanford dependency label for possession modifiers. */
+	static public final String DEP_POSS			= "poss";
+	/** The Stanford dependency label for possessive modifiers. */
+	static public final String DEP_POSSESSIVE 	= "possessive";
+	/** The Stanford dependency label for pre-conjuncts. */
+	static public final String DEP_PRECONJ		= "preconj";
+	/** The Stanford dependency label for pre-determiners. */
+	static public final String DEP_PREDET		= "predet";
+	/** The Stanford dependency label for prepositional modifiers. */
+	static public final String DEP_PREP			= "prep";
+	/** The Stanford dependency label for particles. */
+	static public final String DEP_PRT 			= "prt";
+	/** The Stanford dependency label for punctuation. */
+	static public final String DEP_PUNCT		= "punct";
+	/** The Stanford dependency label for quantifier phrase modifiers. */
+	static public final String DEP_QUANTMOD		= "quantmod";
+	/** The Stanford dependency label for relative clause modifiers. */
+	static public final String DEP_RCMOD		= "rcmod";
+	/** The Stanford dependency label for roots. */
+	static public final String DEP_ROOT 		= "root";
+	/** The Stanford dependency label for open clausal modifiers. */
+	static public final String DEP_XCOMP		= "xcomp";
+	/** The Stanford dependency label for open clausal subjects. */
+	static public final String DEP_XSUBJ		= "x"+DEP_SUBJ;
+	/** The secondary dependency label for gapping relations. */
+	static public final String DEP_GAP			= "gap";
+	/** The secondary dependency label for referents. */
+	static public final String DEP_REF			= "ref";
+	/** The secondary dependency label for right node raising. */
+	static public final String DEP_RNR			= "rnr";
 	
-	static public void postProcess(DEPTree tree)
-	{
-		tree.setDependents();
-		devideAdverbialModifiers(tree);
-		appendPassiveLabels(tree);
-		appendObjectLabels(tree);
-	}
-	
-	static private void devideAdverbialModifiers(DEPTree tree)
-	{
-		int i, size = tree.size();
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			if (node.isLabel(DEP_ADVMOD))
-			{
-				String form = node.form.toLowerCase();
-				
-				if (form.equals("never") || form.equals("not") || form.equals("n't") || form.equals("'nt") || form.equals("no"))
-					node.setLabel(DEP_NEG);
-			}
-		}
-	}
-	
-	static private void appendPassiveLabels(DEPTree tree)
-	{
-		Set<String> sbjs = new HashSet<String>();
-		sbjs.add(DEP_CSUBJ);	sbjs.add(DEP_NSUBJ);
-		
-		int i, size = tree.size();
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			if (node.containsDependent(DEPLibEn.DEP_AUXPASS))
-			{
-				for (DEPNode child : node.getDependentsByLabels(sbjs))
-					child.setLabel(child.getLabel()+DEPLibEn.DEP_PASS);
-			}
-		}
-	}
-	
-	static private void appendObjectLabels(DEPTree tree)
-	{
-		int i, size = tree.size();
-		List<DEPNode> list;
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			if ((list = node.getDependentsByLabel(DEPLibEn.DEP_DOBJ)).size() > 1)
-				list.get(0).setLabel(DEPLibEn.DEP_IOBJ);
-		}
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	static public void mergeSheads(DEPTree tree)
-	{
-		Pattern argn = Pattern.compile("(A\\d|C-A\\d|R-A\\d).*");
-		int i, size = tree.size(), xMiss = 0;
-		List<DEPArc> sHeads;
-		DEPNode node, head;
-		String label;
-		DEPArc xArc;
-		
-		for (i=1; i<size; i++)
-			tree.get(i).x_heads.clear();
-		
-		for (i=1; i<size; i++)
-		{
-			node   = tree.get(i);
-			sHeads = node.getSHeads();
-			
-			for (DEPArc sArc : sHeads)
-			{
-				head  = sArc.getNode();
-				label = sArc.getLabel();
-				
-				if (!argn.matcher(label).find())
-					continue;
-				
-				if (head.isDescendentOf(node))
-				{
-					xArc = head.getXHead(node);
-					
-					if (xArc == null)
-						head.addXHead(node, "I-"+label);
-					else
-						xMiss++;
-				}
-				else
-				{
-					xArc = node.getXHead(head);
-					
-					if (xArc == null)
-						node.addXHead(head, label);
-					else if (xArc.getLabel().startsWith("I-"))
-						xArc.setLabel(label);
-					else
-						xMiss++;
-				}
-				
-			/*	if (head.isDescendentOf(node))
-				{
-					xArc = head.getXHead(node);
-					
-					if (xArc == null)
-					{
-						if (label.endsWith(PBLib.SRL_DSP))
-							head.addXHead(node, "AM-DIS");
-						else
-							head.addXHead(node, "I-"+label);
-					}
-					else if (label.endsWith(PBLib.SRL_DIS) || label.endsWith(PBLib.SRL_DSP))
-					{
-						xArc.setLabel("AM-DIS");
-						xCount++;
-					}
-					else if (xArc.getLabel().startsWith("AM") || node.isRoot())
-					{
-						xCount++;
-					}
-					else
-						System.err.println("C: "+node.id+" "+head.id+" "+sArc.getLabel()+"\n"+tree+"\n");
-				}
-				else
-				{
-					xArc = node.getXHead(head);
-					
-					if (xArc == null)
-					{
-						node.addXHead(head, label);
-					}
-					else if (xArc.isLabel("AM-DIS"))
-					{
-						xCount++;
-					}
-					else if (xArc.getLabel().startsWith("I"))
-					{
-						xArc.setLabel(label);
-						xCount++;
-					}
-					else
-						System.err.println("R: "+node.id+" "+head.id+" "+sArc.getLabel()+"\n"+tree+"\n");
-				}*/
-			}
-		}
-		
-		if (xMiss > 0)	System.err.println(tree+"\n");
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			head = node.getHead();		
-					
-			if (node.getXHeads().isEmpty())
-				node.addXHead(head, node.getLabel());
-		}
-	}
-	
-	static public void splitSheads(DEPTree tree)
-	{
-		IntOpenHashSet set = new IntOpenHashSet();
-		int i, size = tree.size();
-		String label, roleset;
-		DEPNode node, head;
-		
-		for (i=1; i<size; i++)
-			tree.get(i).s_heads.clear();
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			for (DEPArc arc : node.x_heads)
-			{
-				label = arc.getLabel();
-								
-				if (Character.isUpperCase(label.charAt(0)))
-				{		
-					head = arc.getNode();
-					
-					if (label.startsWith("I-"))
-					{
-						head.addSHead(node, label.substring(2));
-						set.add(node.id);
-					}
-					else
-					{
-						node.addSHead(head, label);
-						set.add(head.id);
-					}
-				}
-			}
-		}
-		
-		for (i=1; i<size; i++)
-		{
-			node    = tree.get(i);
-			roleset = node.getFeat(DEPLib.FEAT_PB);
-			
-			if (roleset != null)
-			{
-				if (!set.contains(node.id) && !roleset.endsWith("MS"))
-					node.removeFeat(DEPLib.FEAT_PB);
-			}
-			else if (set.contains(node.id))
-				node.addFeat(DEPLib.FEAT_PB, node.lemma+".XX");
-		}
-	}
+	static public final String CONLL_ADV	= "ADV";
+	static public final String CONLL_AMOD	= "AMOD";
+	static public final String CONLL_APPO	= "APPO";
+	static public final String CONLL_COORD	= "COORD";
+	static public final String CONLL_CONJ	= "CONJ";
+	static public final String CONLL_DEP	= "DEP";
+	static public final String CONLL_DTV	= "DTV";
+	static public final String CONLL_EXTR	= "EXTR";
+	static public final String CONLL_IM		= "IM";
+	static public final String CONLL_INTJ	= "INTJ";
+	static public final String CONLL_LGS	= "LGS";
+	static public final String CONLL_LOC	= "LOC";
+	static public final String CONLL_META	= "META";
+	static public final String CONLL_NMOD	= "NMOD";
+	static public final String CONLL_OBJ	= "OBJ";
+	static public final String CONLL_OPRD	= "OPRD";
+	static public final String CONLL_P		= "P";
+	static public final String CONLL_PMOD	= "PMOD";
+	static public final String CONLL_PRD	= "PRD";
+	static public final String CONLL_PRN	= "PRN";
+	static public final String CONLL_PRT	= "PRT";
+	static public final String CONLL_PUT	= "PUT";
+	static public final String CONLL_QMOD	= "QMOD";
+	static public final String CONLL_ROOT	= "ROOT";
+	static public final String CONLL_SBJ	= "SBJ";
+	static public final String CONLL_SUB	= "SUB";
+	static public final String CONLL_VC		= "VC";
+	static public final String CONLL_XCOMP	= "XCOMP";
 }

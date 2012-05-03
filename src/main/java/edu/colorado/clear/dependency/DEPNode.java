@@ -101,6 +101,7 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		this.form    = form;
 		this.lemma   = lemma;
 		this.pos     = pos;
+		this.namex   = AbstractColumnReader.BLANK_COLUMN;
 		d_feats      = feats;
 
 		d_head       = new DEPArc();
@@ -507,27 +508,17 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		return null;
 	}
 	
-	public List<DEPNode> getDependentsByLabel(String label)
+	public List<DEPNode> getDependentsByLabels(String... labels)
 	{
 		List<DEPNode> list = new ArrayList<DEPNode>();
 		
 		for (DEPArc arc : l_dependents)
 		{
-			if (arc.isLabel(label))
-				list.add(arc.getNode());
-		}
-		
-		return list;
-	}
-	
-	public List<DEPNode> getDependentsByLabels(Set<String> labels)
-	{
-		List<DEPNode> list = new ArrayList<DEPNode>();
-		
-		for (DEPArc arc : l_dependents)
-		{
-			if (labels.contains(arc.label))
-				list.add(arc.getNode());
+			for (String label : labels)
+			{
+				if (arc.isLabel(label))
+					list.add(arc.getNode());
+			}
 		}
 		
 		return list;

@@ -29,7 +29,7 @@ import java.io.IOException;
 import org.kohsuke.args4j.Option;
 
 import edu.colorado.clear.dependency.DEPLib;
-import edu.colorado.clear.dependency.SRLEval;
+import edu.colorado.clear.dependency.srl.SRLEval;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.util.UTInput;
 import edu.colorado.clear.util.pair.StringIntPair;

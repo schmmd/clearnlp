@@ -21,94 +21,50 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.conversion;
+package edu.colorado.clear.util;
 
-import edu.colorado.clear.constituent.CTNode;
-import edu.colorado.clear.dependency.DEPFeat;
+import static org.junit.Assert.assertEquals;
 
-/**
- * Constituent to dependency information.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class C2DInfo
+import org.junit.Test;
+
+import edu.colorado.clear.util.UTString;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class UTStringTest
 {
-	CTNode  d_head;
-	CTNode  p_head;
-	String  s_label;
-	DEPFeat d_feats;
-	
-	private boolean b_head;
-	
-	/** Initializes the dependency head of a constituent. */
-	public C2DInfo(CTNode head)
+	@Test
+	public void testUTString()
 	{
-		s_label = null;
-		b_head  = false;
+		String s = "ABC";
+		assertEquals(true, UTString.isAllUpperCase(s));
+		assertEquals(2, UTString.getNumOfCapitalsNotAtBeginning(s));
 		
-		if (head.c2d == null)	// for terminals: head = itself
-		{
-			d_head  = head;
-			p_head  = null;
-			d_feats = new DEPFeat();
-		}
-		else					// for phrases: head = child
-		{
-			d_head = head.c2d.getDependencyHead();
-			p_head = head;
-		}
-	}
-	
-	/** Sets heads for siblings */
-	public void setHead(CTNode head, String label)
-	{
-		d_head.c2d.d_head = head.c2d.getDependencyHead();
-		setLabel(label);
-		b_head = true;
-	}
-	
-	public void setHeadTerminal(CTNode head, String label)
-	{
-		d_head.c2d.d_head = head;
-		setLabel(label);
-		b_head = true;
-	}
-	
-	public boolean hasHead()
-	{
-		return b_head;
-	}
-	
-	public void setLabel(String label)
-	{
-		if (p_head == null)
-			s_label = label;
-		else
-			d_head.c2d.s_label = label;
-	}
-	
-	public String getLabel()
-	{
-		return s_label;
-	}
-	
-	public String putFeat(String key, String value)
-	{
-		return d_head.c2d.d_feats.put(key, value);
-	}
-	
-	public String getFeat(String key)
-	{
-		return d_feats.get(key);
-	}
-	
-	public CTNode getDependencyHead()
-	{
-		return d_head;
-	}
-	
-	public CTNode getPhraseHead()
-	{
-		return p_head;
+		s = "ABc";
+		assertEquals(false, UTString.isAllUpperCase(s));
+		assertEquals(1, UTString.getNumOfCapitalsNotAtBeginning(s));
+		
+		s = "aBC";
+		assertEquals(false, UTString.isAllUpperCase(s));
+		assertEquals(false, UTString.beginsWithUpperCase(s));
+		
+		s = "abc";
+		assertEquals(true , UTString.isAllLowerCase(s));
+		
+		s = "abC";
+		assertEquals(false, UTString.isAllLowerCase(s));
+		
+		s = "Abc";
+		assertEquals(false, UTString.isAllLowerCase(s));
+		assertEquals(false, UTString.containsDigit(s));
+		assertEquals(true , UTString.beginsWithUpperCase(s));
+			assertEquals(0, UTString.getNumOfCapitalsNotAtBeginning(s));
+		
+		s = "1bc";
+		assertEquals(true, UTString.containsDigit(s));
+		s = "a2c";
+		assertEquals(true, UTString.containsDigit(s));
+		s = "ab3";
+		assertEquals(true, UTString.containsDigit(s));
+		
 	}
 }

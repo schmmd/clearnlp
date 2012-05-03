@@ -30,6 +30,11 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.headrule.HeadRule;
 import edu.colorado.clear.headrule.HeadRuleMap;
 
+/**
+ * Abstract constituent to dependency converter.
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
 abstract public class AbstractC2DConverter
 {
 	protected HeadRuleMap m_headrules;

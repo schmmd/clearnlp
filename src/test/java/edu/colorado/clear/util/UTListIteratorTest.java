@@ -23,10 +23,34 @@
 */
 package edu.colorado.clear.util;
 
-import java.util.HashSet;
+import static org.junit.Assert.assertEquals;
 
-@SuppressWarnings("serial")
-public class StringHashSet extends HashSet<String>
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.Test;
+
+import edu.colorado.clear.util.UTListIterator;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class UTListIteratorTest
 {
-
+	@Test
+	public void testUTListIterator()
+	{
+		String[]    array = {"A","B","C","D"};
+		List<String> list = Arrays.asList(array);
+		
+		UTListIterator<String> iter = new UTListIterator<String>(list, false);
+		int i = 0;
+		
+		for (String str : iter)
+			assertEquals(array[i++], str);
+		
+		iter = new UTListIterator<String>(list, true);
+		i = array.length - 1;
+		
+		for (String str : iter)
+			assertEquals(array[i--], str);
+	}
 }

@@ -158,6 +158,7 @@ public class POSPredict extends AbstractRun
 		double sum = 0;
 		POSNode[] nodes;
 		int i, n = 0;
+		int counts[] = {0, 0};
 		
 		System.out.println("Predicting: "+inputFile);
 		reader.open(UTInput.createBufferedFileReader(inputFile));
@@ -165,7 +166,7 @@ public class POSPredict extends AbstractRun
 		
 		for (i=0; (nodes = reader.next()) != null; i++)
 		{
-			sum += predict(nodes, taggers, threshold, morph);
+			sum += predict(nodes, taggers, threshold, morph, counts);
 			n   += nodes.length;
 
 			if (i%1000 == 0)	System.out.print(".");
@@ -178,9 +179,10 @@ public class POSPredict extends AbstractRun
 		
 		System.out.printf("Overall tagging time: %f (sec./%d tokens)\n", sum/1000, n);
 		System.out.printf("Average tagging time: %f (ms/token)\n", sum/n);
+		System.out.printf("General model used  : %f (%d/%d)\n", (double)counts[1]/i, counts[1], i);
 	}
 	
-	static double predict(POSNode[] nodes, POSTagger[] taggers, double threshold, AbstractMPAnalyzer morph)
+	static double predict(POSNode[] nodes, POSTagger[] taggers, double threshold, AbstractMPAnalyzer morph, int[] counts)
 	{
 		double st, et;
 		
@@ -188,9 +190,15 @@ public class POSPredict extends AbstractRun
 		POSLib.normalizeForms(nodes);
 		
 		if (threshold < taggers[0].getCosineSimilarity(nodes))
+		{
 			taggers[0].tag(nodes);
+			counts[0]++;
+		}
 		else
+		{
 			taggers[1].tag(nodes);
+			counts[1]++;
+		}
 
 		et = System.currentTimeMillis();
 		

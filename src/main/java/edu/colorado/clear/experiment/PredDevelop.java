@@ -31,10 +31,10 @@ import org.w3c.dom.Element;
 
 import edu.colorado.clear.classification.model.StringModel;
 import edu.colorado.clear.classification.train.StringTrainSpace;
-import edu.colorado.clear.dependency.DAGEval;
 import edu.colorado.clear.dependency.DEPLib;
 import edu.colorado.clear.dependency.DEPNode;
 import edu.colorado.clear.dependency.DEPTree;
+import edu.colorado.clear.dependency.srl.SRLEval;
 import edu.colorado.clear.engine.PredIdentifier;
 import edu.colorado.clear.feature.xml.DEPFtrXml;
 import edu.colorado.clear.reader.AbstractColumnReader;
@@ -126,7 +126,7 @@ public class PredDevelop extends AbstractRun
 		
 		double precision = 100d * scores[0] / scores[1];
 		double recall    = 100d * scores[0] / scores[2];
-		double f1        = DAGEval.getF1(precision, recall);
+		double f1        = SRLEval.getF1(precision, recall);
 		
 		System.out.printf("P: %5.2f (%d/%d)\n", precision, scores[0], scores[1]);
 		System.out.printf("R: %5.2f (%d/%d)\n", recall   , scores[0], scores[2]);

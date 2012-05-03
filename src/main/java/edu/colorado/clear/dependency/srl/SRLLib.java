@@ -21,94 +21,56 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.conversion;
+package edu.colorado.clear.dependency.srl;
 
-import edu.colorado.clear.constituent.CTNode;
-import edu.colorado.clear.dependency.DEPFeat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
 
-/**
- * Constituent to dependency information.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class C2DInfo
+import edu.colorado.clear.dependency.DEPArc;
+import edu.colorado.clear.dependency.DEPNode;
+import edu.colorado.clear.dependency.DEPTree;
+
+
+public class SRLLib
 {
-	CTNode  d_head;
-	CTNode  p_head;
-	String  s_label;
-	DEPFeat d_feats;
+	static public final String DELIM_PATH_UP	= "^";
+	static public final String DELIM_PATH_DOWN	= "|";
+	static public final String DELIM_SUBCAT		= "_";
 	
-	private boolean b_head;
+	static private Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
+	static private Pattern P_ARGM = Pattern.compile("^AM");
 	
-	/** Initializes the dependency head of a constituent. */
-	public C2DInfo(CTNode head)
+	static public boolean isNumberedArgument(String label)
 	{
-		s_label = null;
-		b_head  = false;
+		return P_ARGN.matcher(label).find();
+	}
+	
+	static public boolean isModifier(String label)
+	{
+		return P_ARGM.matcher(label).find();
+	}
+	
+	static public List<List<DEPArc>> getArgumentList(DEPTree tree)
+	{
+		int i, size = tree.size();
+		List<DEPArc> args;
+		DEPNode node;
 		
-		if (head.c2d == null)	// for terminals: head = itself
+		List<List<DEPArc>> list = new ArrayList<List<DEPArc>>();
+		for (i=0; i<size; i++)	list.add(new ArrayList<DEPArc>());
+		
+		for (i=1; i<size; i++)
 		{
-			d_head  = head;
-			p_head  = null;
-			d_feats = new DEPFeat();
+			node = tree.get(i);
+			
+			for (DEPArc arc : node.getSHeads())
+			{
+				args = list.get(arc.getNode().id);
+				args.add(new DEPArc(node, arc.getLabel()));
+			}
 		}
-		else					// for phrases: head = child
-		{
-			d_head = head.c2d.getDependencyHead();
-			p_head = head;
-		}
-	}
-	
-	/** Sets heads for siblings */
-	public void setHead(CTNode head, String label)
-	{
-		d_head.c2d.d_head = head.c2d.getDependencyHead();
-		setLabel(label);
-		b_head = true;
-	}
-	
-	public void setHeadTerminal(CTNode head, String label)
-	{
-		d_head.c2d.d_head = head;
-		setLabel(label);
-		b_head = true;
-	}
-	
-	public boolean hasHead()
-	{
-		return b_head;
-	}
-	
-	public void setLabel(String label)
-	{
-		if (p_head == null)
-			s_label = label;
-		else
-			d_head.c2d.s_label = label;
-	}
-	
-	public String getLabel()
-	{
-		return s_label;
-	}
-	
-	public String putFeat(String key, String value)
-	{
-		return d_head.c2d.d_feats.put(key, value);
-	}
-	
-	public String getFeat(String key)
-	{
-		return d_feats.get(key);
-	}
-	
-	public CTNode getDependencyHead()
-	{
-		return d_head;
-	}
-	
-	public CTNode getPhraseHead()
-	{
-		return p_head;
+		
+		return list;
 	}
 }

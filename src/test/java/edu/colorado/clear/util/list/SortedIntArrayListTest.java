@@ -21,52 +21,28 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.dependency;
+package edu.colorado.clear.util.list;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Pattern;
+import static org.junit.Assert.assertEquals;
 
+import org.junit.Test;
 
-public class SRLLib
+import edu.colorado.clear.util.list.SortedIntArrayList;
+
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class SortedIntArrayListTest
 {
-	static public final String DELIM_PATH_UP	= "^";
-	static public final String DELIM_PATH_DOWN	= "|";
-	static public final String DELIM_SUBCAT		= "_";
-	
-	static private Pattern P_ARGN = Pattern.compile("^(A|C-A|R-A)\\d");
-	static private Pattern P_ARGM = Pattern.compile("^AM");
-	
-	static public boolean isNumberedArgument(String label)
+	@Test
+	public void test()
 	{
-		return P_ARGN.matcher(label).find();
-	}
-	
-	static public boolean isModifier(String label)
-	{
-		return P_ARGM.matcher(label).find();
-	}
-	
-	static public List<List<DEPArc>> getArgumentList(DEPTree tree)
-	{
-		int i, size = tree.size();
-		List<DEPArc> args;
-		DEPNode node;
+		SortedIntArrayList list = new SortedIntArrayList();
 		
-		List<List<DEPArc>> list = new ArrayList<List<DEPArc>>();
-		for (i=0; i<size; i++)	list.add(new ArrayList<DEPArc>());
+		list.add(3);
+		list.add(1);
+		list.add(4);
+		list.add(2);
+		list.add(5);
 		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			for (DEPArc arc : node.getSHeads())
-			{
-				args = list.get(arc.getNode().id);
-				args.add(new DEPArc(node, arc.getLabel()));
-			}
-		}
-		
-		return list;
+		assertEquals("[1, 2, 3, 4, 5]", list.toString());
 	}
 }

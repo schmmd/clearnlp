@@ -52,32 +52,43 @@ import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.util.UTArray;
 import edu.colorado.clear.util.pair.StringIntPair;
 
+/**
+ * Constituent to dependency converter for English.
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
 public class EnglishC2DConverter extends AbstractC2DConverter
 {
+	static final public byte TYPE_STANFORD = 0;
+	static final public byte TYPE_CONLL    = 1;
+	
 	private final String[] a_semTags = {CTLibEn.FTAG_BNF, CTLibEn.FTAG_DIR, CTLibEn.FTAG_EXT, CTLibEn.FTAG_LOC, CTLibEn.FTAG_MNR, CTLibEn.FTAG_PRP, CTLibEn.FTAG_TMP, CTLibEn.FTAG_VOC};
 	private final String[] a_synTags = {CTLibEn.FTAG_ADV, CTLibEn.FTAG_CLF, CTLibEn.FTAG_CLR, CTLibEn.FTAG_DTV, CTLibEn.FTAG_NOM, CTLibEn.FTAG_PUT, CTLibEn.FTAG_PRD, CTLibEn.FTAG_TPC};
 	private Set<String>    s_semTags;
 	private Set<String>    s_synTags;
 	
 	private Map<CTNode,Deque<CTNode>> m_rnr;
-	private Map<CTNode,Deque<CTNode>> m_sbj;
+	private Map<CTNode,Deque<CTNode>> m_xsbj;
 	private Map<String,Pattern>       m_coord;
 	
-	public EnglishC2DConverter(HeadRuleMap headrules)
+	private byte i_type;
+	
+	public EnglishC2DConverter(HeadRuleMap headrules, byte type)
 	{
 		super(headrules);
-		init();
+		init(type);
 	}
 	
-	private void init()
+	private void init(byte type)
 	{
 		s_semTags = UTArray.toSet(a_semTags);
 		s_synTags = UTArray.toSet(a_synTags);
 
-		m_rnr = new HashMap<CTNode,Deque<CTNode>>();
-		m_sbj = new HashMap<CTNode,Deque<CTNode>>();
-		
+		i_type  = type;
+		m_rnr   = new HashMap<CTNode,Deque<CTNode>>();
+		m_xsbj  = new HashMap<CTNode,Deque<CTNode>>();
 		m_coord = new HashMap<String,Pattern>();
+		
 		m_coord.put(CTLibEn.PTAG_ADJP	, Pattern.compile("^(ADJP|JJ.*|VBN|VBG)$"));
 		m_coord.put(CTLibEn.PTAG_ADVP	, Pattern.compile("^(ADVP|RB.*)$"));
 		m_coord.put(CTLibEn.PTAG_INTJ	, Pattern.compile("^(INTJ|UH)$"));
@@ -99,9 +110,10 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	}
 
 	/**
+	 * Returns the dependency tree converted from the specific constituent tree.
+	 * If the constituent tree contains only empty categories, returns {@code null}.
 	 * @param cTree the constituent tree to convert.
 	 * @return the dependency tree converted from the specific constituent tree.
-	 * If the constituent tree contains only empty categories, returns {@code null}.
 	 */
 	public DEPTree toDEPTree(CTTree cTree)
 	{
@@ -109,13 +121,14 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		if (!mapEmtpyCategories(cTree))	return null;
 		setHeads(cTree.getRoot());
+		
 		return getDPTree(cTree);
 	}
 	
 	private void clearMaps()
 	{
 		m_rnr.clear();
-		m_sbj.clear();
+		m_xsbj.clear();
 	}
 	
 	// ============================= Map empty categories ============================= 
@@ -143,6 +156,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 				continue;
 			else if (CTLibEn.RE_ICH_PPA_RNR.matcher(node.form).find())
 				mapICH(cTree, node);
+			else if (node.form.startsWith(CTLibEn.EC_EXP))
+				reloateEXP(cTree, node);
 			else
 				removeCTNode(node);
 		}
@@ -168,7 +183,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 					mapTrace(cTree, ec);
 			}
 			
-			addXSubject(ec, m_sbj);
+			addXSubject(ec, m_xsbj);
 		}
 	}
 	
@@ -209,7 +224,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			if (np.getNextSibling(CTLibEn.PTAG_VP) == null)
 				relocatePRD(np, ec);
 			else
-				addXSubject(ec, m_sbj);
+				addXSubject(ec, m_xsbj);
 		}
 	}
 	
@@ -280,6 +295,21 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		removeCTNode(ec);
 	}
 	
+	/** Called by {@link EnglishC2DConverter#mapEmtpyCategories(CTTree)}. */
+	private void reloateEXP(CTTree cTree, CTNode ec)
+	{
+		int idx = ec.form.lastIndexOf("-");
+		
+		if (idx != -1)
+		{
+			int coIndex = Integer.parseInt(ec.form.substring(idx+1));
+			CTNode ante = cTree.getCoIndexedAntecedent(coIndex);
+			if (ante != null)	ante.addFTag(DEPLibEn.CONLL_EXTR);
+		}
+		
+		removeCTNode(ec);
+	}
+	
 	/**
 	 * @param ec empty subject.
 	 * @param map key: antecedent, value: list of clauses containing empty subjects.
@@ -305,7 +335,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			}
 		}
 	}
-
+	
 	private void removeCTNode(CTNode node)
 	{
 		CTNode parent = node.getParent();
@@ -377,7 +407,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 				if (isFound)
 				{
 					prevHead = findHeadsCoordinationAux(rule, curr, bId, eId, prevHead);
-					setHeadCoord(node, prevHead, getDPLabel(node, curr, prevHead));
+					setHeadCoord(node, prevHead, getDEPLabel(node, curr, prevHead));
 					if (mainHead == null)	mainHead = prevHead;
 					isFound = false;
 			
@@ -388,7 +418,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 					for (i=bId; i<=eId; i++)
 					{
 						node = curr.getChild(i);
-						setHeadCoord(node, prevHead, getDPLabel(node, curr, prevHead));
+						setHeadCoord(node, prevHead, getDEPLabel(node, curr, prevHead));
 					}
 					
 					bId = eId + 1;
@@ -407,6 +437,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return true;
 	}
 	
+	/** Called by {@link EnglishC2DConverter#findHeadsCoordination(HeadRule, CTNode)}. */
 	private Pattern getConjunctPattern(CTNode curr, int sId, int size)
 	{
 		Pattern rTags = m_coord.get(curr.pTag);
@@ -432,6 +463,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return rTags;
 	}
 	
+	/** Called by {@link EnglishC2DConverter#findHeadsCoordination(HeadRule, CTNode)}. */
 	private boolean isConjunct(CTNode C, CTNode P, Pattern rTags)
 	{
 		if (P.isPTag(CTLibEn.PTAG_SBAR) && C.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_DT))
@@ -534,7 +566,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 					
 					if (vb != null)
 					{
-						sbj.c2d.setHead(vb, getDPLabel(sbj, parent, vb));
+						sbj.c2d.setHead(vb, getDEPLabel(sbj, parent, vb));
 						node.pTag = prd.pTag;
 						node.addFTag(CTLibEn.FTAG_PRD);
 					}
@@ -595,7 +627,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		for (CTNode node : nodes)
 		{
 			if (node != head && !node.c2d.hasHead())
-				node.c2d.setHead(head, getDPLabel(node, parent, head));
+				node.c2d.setHead(head, getDEPLabel(node, parent, head));
 		}
 		
 		return head;
@@ -619,12 +651,22 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return 0;
 	}
 	
+	public String getDEPLabel(CTNode C, CTNode P, CTNode p)
+	{
+		if (i_type == TYPE_STANFORD)
+			return getStanfordLabel(C, P, p);
+		else
+			return getCoNLLLabel(C, P, p);
+	}
+	
+	// ============================= Get Stanford labels ============================= 
+	
 	/**
 	 * @param C the current node.
 	 * @param P the parent of {@code C}.
 	 * @param p the head of {@code P}.
 	 */
-	public String getDPLabel(CTNode C, CTNode P, CTNode p)
+	public String getStanfordLabel(CTNode C, CTNode P, CTNode p)
 	{
 		CTNode c = C.c2d.getPhraseHead();
 		CTNode d = C.c2d.getDependencyHead();
@@ -647,7 +689,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		if (C.isPTag(CTLibEn.PTAG_UCP))
 		{
 			c.addFTags(C.getFTags());
-			return getDPLabel(c, P, p);
+			return getStanfordLabel(c, P, p);
 		}
 		
 		// complements
@@ -656,14 +698,16 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			if (isAcomp(C))	return DEPLibEn.DEP_ACOMP;
 			if ((label = getObjectLabel(C)) != null)	return label;
 			if (isOprd(C))	return DEPLibEn.DEP_OPRD;
+			if (isXcomp(C))	return DEPLibEn.DEP_XCOMP;
+			if (isCcomp(C))	return DEPLibEn.DEP_CCOMP;
 			if ((label = getAuxLabel(C)) != null)		return label;
 		}
 		
-		if (P.isPTagAny(CTLibEn.PTAG_VP, CTLibEn.PTAG_ADJP, CTLibEn.PTAG_ADVP))
+		if (P.isPTagAny(CTLibEn.PTAG_ADJP, CTLibEn.PTAG_ADVP))
 		{
 			if (isXcomp(C))	return DEPLibEn.DEP_XCOMP;
 			if (isCcomp(C))	return DEPLibEn.DEP_CCOMP;
-		}		
+		}
 		
 		if (P.isPTagAny(CTLibEn.PTAG_NML, CTLibEn.PTAG_NP, CTLibEn.PTAG_WHNP))
 		{
@@ -672,17 +716,17 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			if (isCcomp(C))	return DEPLibEn.DEP_CCOMP;
 		}
 		
+		if (isPoss(C, P))
+			return DEPLibEn.DEP_POSS;
+		
 		// simple labels
 		if ((label = getSimpleLabel(C)) != null)
 			return label;
-		
-		if (isPoss(C, P))
-			return DEPLibEn.DEP_POSS;
 			
 		// default
 		if (P.isPTagAny(CTLibEn.PTAG_PP, CTLibEn.PTAG_WHPP))
 		{
-			if (p.getParent() == C.getParent())	// siblings
+			if (p.getParent() == C.getParent())	// p and C are siblings
 			{
 				if (p.getSiblingId() < C.getSiblingId())
 					return getPmodLabel(C);
@@ -1020,20 +1064,150 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return curr.isPTag(CTLibEn.PTAG_RRC) || curr.hasFTag(DEPLibEn.DEP_RCMOD) || (curr.isPTag(CTLibEn.PTAG_SBAR) && curr.containsTags("+WH.*"));
 	}
 	
+	// ============================= Get CoNLL labels =============================
+	
+	/**
+	 * @param C the current node.
+	 * @param P the parent of {@code C}.
+	 * @param p the head of {@code P}.
+	 */
+	public String getCoNLLLabel(CTNode C, CTNode P, CTNode p)
+	{
+		CTNode c = C.c2d.getPhraseHead();
+		CTNode d = C.c2d.getDependencyHead();
+		String label;
+		
+		// function tags
+		if (hasAdverbialTag(C))
+			return DEPLibEn.CONLL_ADV;
+
+		if ((label = getCoNLLFunctionTag(C)) != null)
+			return label;
+		
+		// coordination
+		if (C.isPTag(CTLibEn.PTAG_UCP))
+		{
+			c.addFTags(C.getFTags());
+			return getCoNLLLabel(c, P, p);
+		}
+		
+		// complements
+		if (P.isPTagAny(CTLibEn.PTAG_VP, CTLibEn.PTAG_SINV, CTLibEn.PTAG_SQ))
+		{
+			if (getObjectLabel(C) != null)	return DEPLibEn.CONLL_OBJ;
+			if (isOprd(C))	return DEPLibEn.CONLL_OPRD;
+			if (isXcomp(C))	return DEPLibEn.CONLL_XCOMP;
+			if (isCcomp(C))	return DEPLibEn.CONLL_OBJ;
+			if ((label = getCoNLLAuxLabel(C, p, d)) != null)	return label;
+		}
+		
+		// subordinate conjunctions
+		if (P.isPTag(CTLibEn.PTAG_SBAR) && p.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_TO, CTLibEn.POS_DT))
+			return DEPLibEn.CONLL_SUB;
+	
+		// simple labels
+		if ((label = getCoNLLSimpleLabel(C)) != null)
+			return label;
+		
+		// default
+		if (P.isPTagAny(CTLibEn.PTAG_PP, CTLibEn.PTAG_WHPP))
+			return DEPLibEn.CONLL_PMOD;
+		
+		if (C.isPTag(CTLibEn.PTAG_SBAR) || isXcomp(C) || C.isPTag(CTLibEn.PTAG_PP))
+			return DEPLibEn.CONLL_ADV;
+		
+		if (P.isPTag(CTLibEn.PTAG_QP))
+			return DEPLibEn.CONLL_QMOD;
+		
+		if (P.isPTagAny(CTLibEn.PTAG_NML, CTLibEn.PTAG_NP, CTLibEn.PTAG_NX, CTLibEn.PTAG_WHNP) || CTLibEn.isNoun(p))
+			return DEPLibEn.CONLL_NMOD;
+		
+		if ((P.isPTagAny(CTLibEn.PTAG_ADJP, CTLibEn.PTAG_ADVP, CTLibEn.PTAG_WHADJP, CTLibEn.PTAG_WHADVP) || CTLibEn.isAdjective(p) || CTLibEn.isAdverb(p)))
+			return DEPLibEn.CONLL_AMOD;
+
+		if (c != null)
+		{
+			if ((label = getCoNLLSimpleLabel(c)) != null)
+				return label;
+			
+			if (CTLibEn.isAdverb(d))
+				return DEPLibEn.CONLL_ADV;
+		}
+		
+		return DEPLibEn.CONLL_DEP;
+	}
+	
+	private String getCoNLLFunctionTag(CTNode C)
+	{
+		if (C.hasFTag(CTLibEn.FTAG_SBJ))
+			return DEPLibEn.CONLL_SBJ;
+		
+		if (C.hasFTag(CTLibEn.FTAG_LGS))
+			return DEPLibEn.CONLL_LGS;
+		
+		if (C.hasFTag(CTLibEn.FTAG_DTV))
+			return DEPLibEn.CONLL_DTV;
+		
+		if (C.hasFTag(CTLibEn.FTAG_PRD))
+			return DEPLibEn.CONLL_PRD;
+		
+		if (C.hasFTag(CTLibEn.FTAG_PUT))
+			return DEPLibEn.CONLL_PUT;
+		
+		if (C.hasFTag(DEPLibEn.CONLL_EXTR))
+			return DEPLibEn.CONLL_EXTR;
+		
+		return null;
+	}
+	
+	private String getCoNLLAuxLabel(CTNode C, CTNode p, CTNode d)
+	{
+		CTNode pd = p.c2d.getDependencyHead();
+		
+		if (C.isPTag(CTLibEn.PTAG_VP) || CTLibEn.isVerb(d))
+		{
+			if (pd.isPTag(CTLibEn.POS_TO))
+				return DEPLibEn.CONLL_IM;
+			
+			if (CTLibEn.isVerb(pd))
+				return DEPLibEn.CONLL_VC;
+		}
+		
+		return null;
+	}
+	
+	private String getCoNLLSimpleLabel(CTNode C)
+	{
+		String label;
+		
+		if (CTLibEn.isConjunction(C))
+			return DEPLibEn.CONLL_COORD;
+		
+		if (isPrt(C))
+			return DEPLibEn.DEP_PRT;
+
+		if ((label = getSpecialLabel(C)) != null)
+			return label;
+		
+		return null;
+	}
+	
 	// ============================= Get a dependency tree =============================
 	
 	private DEPTree getDPTree(CTTree cTree)
 	{
-		DEPTree dTree = initDPTree(cTree);
-		
-		if (addDPHeads(dTree, cTree) > 1)
-			System.err.println("Warning: multiple roots exist");
+		DEPTree dTree = initDEPTree(cTree);
+		addDEPHeads(dTree, cTree);
 		
 		if (dTree.containsCycle())
 			System.err.println("Error: cyclic dependencies exist");
 		
+		if (i_type == TYPE_STANFORD)
+			splitStanfordLabels(dTree);
+		else if (i_type == TYPE_CONLL)
+			convertToCoNLLLabels(dTree);
+		
 		addXHeads(dTree);
-		DEPLibEn.postProcess(dTree);
 		addFeats(dTree, cTree, cTree.getRoot());
 		addPBArgs(dTree, cTree);
 		
@@ -1041,7 +1215,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	}
 	
 	/** @return the dependency tree converted from the specific constituent tree without head information. */
-	private DEPTree initDPTree(CTTree cTree)
+	private DEPTree initDEPTree(CTTree cTree)
 	{
 		DEPTree dTree = new DEPTree();
 		String form, lemma, pos;
@@ -1060,8 +1234,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return dTree;
 	}
 	
-	/** @return the number of roots found. */
-	private int addDPHeads(DEPTree dTree, CTTree cTree)
+	/** Adds dependency heads. */
+	private void addDEPHeads(DEPTree dTree, CTTree cTree)
 	{
 		int currId, headId, size = dTree.size(), rootCount = 0;
 		CTNode cNode, ante;
@@ -1076,32 +1250,96 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			
 			if (currId == headId)	// root
 			{
-				dNode.setHead(dTree.get(DEPLib.ROOT_ID), DEPLib.DEP_ROOT);
+				dNode.setHead(dTree.get(DEPLib.ROOT_ID), DEPLibEn.DEP_ROOT);
 				rootCount++;
 			}
 			else
 			{
 				label = cNode.c2d.s_label;
 				
-				if (cNode.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_TO, CTLibEn.POS_DT) && cNode.getParent().isPTag(CTLibEn.PTAG_SBAR) && !label.equals(DEPLibEn.DEP_COMPLM))
+				if (i_type == TYPE_STANFORD && cNode.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_TO, CTLibEn.POS_DT) && cNode.getParent().isPTag(CTLibEn.PTAG_SBAR) && !label.equals(DEPLibEn.DEP_COMPLM))
 					label = DEPLibEn.DEP_MARK;
 				
 				dNode.setHead(dTree.get(headId), label);
 			}
 			
 			if ((ante = cNode.getAntecedent()) != null)
-				dNode.addXHead(getDPNode(dTree, ante), DEPLibEn.DEP_REF);
+				dNode.addXHead(getDEPNode(dTree, ante), DEPLibEn.DEP_REF);
 		}
 		
-		return rootCount;
+		if (rootCount > 1)	System.err.println("Warning: multiple roots exist");
 	}
 	
+	/** Splits certain Stanford dependency labels into finer-grained labels. */
+	private void splitStanfordLabels(DEPTree tree)
+	{
+		int i, size = tree.size();
+		List<DEPNode> list;
+		DEPNode node;
+		String lower;
+
+		tree.setDependents();
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			
+			if (node.isLabel(DEPLibEn.DEP_ADVMOD))
+			{
+				lower = node.form.toLowerCase();
+				
+				if (lower.equals("never") || lower.equals("not") || lower.equals("n't") || lower.equals("'nt") || lower.equals("no"))
+					node.setLabel(DEPLibEn.DEP_NEG);
+			}
+			
+			if (node.containsDependent(DEPLibEn.DEP_AUXPASS))
+			{
+				for (DEPNode child : node.getDependentsByLabels(DEPLibEn.DEP_CSUBJ, DEPLibEn.DEP_NSUBJ))
+					child.setLabel(child.getLabel()+DEPLibEn.DEP_PASS);
+			}
+			
+			if ((list = node.getDependentsByLabels(DEPLibEn.DEP_DOBJ)).size() > 1)
+				list.get(0).setLabel(DEPLibEn.DEP_IOBJ);
+		}
+	}
+	
+	private void convertToCoNLLLabels(DEPTree tree)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			
+			if (node.getLabel().equals(DEPLibEn.DEP_ADVMOD))
+				node.setLabel(DEPLibEn.CONLL_ADV);
+			else if (node.getLabel().equals(DEPLibEn.DEP_APPOS))
+				node.setLabel(DEPLibEn.CONLL_APPO);
+			else if (node.getLabel().equals(DEPLibEn.DEP_CONJ))
+				node.setLabel(DEPLibEn.CONLL_CONJ);
+			else if (node.getLabel().equals(DEPLibEn.DEP_INTJ))
+				node.setLabel(DEPLibEn.CONLL_INTJ);
+			else if (node.getLabel().equals(DEPLibEn.DEP_META))
+				node.setLabel(DEPLibEn.CONLL_META);
+			else if (node.getLabel().equals(DEPLibEn.DEP_PARATAXIS))
+				node.setLabel(DEPLibEn.CONLL_PRN);
+			else if (node.getLabel().equals(DEPLibEn.DEP_PRT))
+				node.setLabel(DEPLibEn.CONLL_PRT);
+			else if (node.getLabel().equals(DEPLibEn.DEP_PUNCT))
+				node.setLabel(DEPLibEn.CONLL_P);
+			else if (node.getLabel().equals(DEPLibEn.DEP_ROOT))
+				node.setLabel(DEPLibEn.CONLL_ROOT);
+		}
+	}
+
+	/** Adds secondary dependency heads. */
 	private void addXHeads(DEPTree dTree)
 	{
-		for (CTNode curr : m_sbj.keySet())
+		for (CTNode curr : m_xsbj.keySet())
 		{
 			if (curr.c2d != null)
-				addXHeads(dTree, curr, m_sbj.get(curr), DEPLibEn.DEP_XSUBJ);
+				addXHeadsAux(dTree, curr, m_xsbj.get(curr), DEPLibEn.DEP_XSUBJ);
 		}
 		
 		for (CTNode curr : m_rnr.keySet())
@@ -1110,41 +1348,56 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 				continue;
 			
 			if (curr.getParent().c2d.getPhraseHead() != curr)
-				addXHeads(dTree, curr, m_rnr.get(curr), DEPLibEn.DEP_RNR);
+				addXHeadsAux(dTree, curr, m_rnr.get(curr), DEPLibEn.DEP_RNR);
 			else
 				addXChildren(dTree, curr, m_rnr.get(curr), DEPLibEn.DEP_RNR);
 		}
 	}
 	
-	/** {@link EnglishC2DConverter#addDPHeads(DEPTree, CTTree)} */
-	private void addXHeads(DEPTree dTree, CTNode cNode, Deque<CTNode> dq, String label)
+	/** Called by {@link EnglishC2DConverter#addDEPHeads(DEPTree, CTTree)} */
+	private void addXHeadsAux(DEPTree dTree, CTNode cNode, Deque<CTNode> dq, String label)
 	{
-		DEPNode node = getDPNode(dTree, cNode);
+		DEPNode node = getDEPNode(dTree, cNode);
 		DEPNode head;
 		
 		for (CTNode cHead : dq)
 		{
-			head = getDPNode(dTree, cHead);
+			head = getDEPNode(dTree, cHead);
 			node.addXHead(head, label);
 			
-			if (label.equals(DEPLibEn.DEP_XSUBJ) && head.isLabel(DEPLibEn.DEP_CCOMP))
-				head.setLabel(DEPLibEn.DEP_XCOMP);
+			if (label.equals(DEPLibEn.DEP_XSUBJ))
+			{
+				if (i_type == TYPE_STANFORD)
+				{
+					if (head.isLabel(DEPLibEn.DEP_CCOMP))
+						head.setLabel(DEPLibEn.DEP_XCOMP);		
+				}
+				else if (i_type == TYPE_CONLL)
+				{
+					if (head.isLabel(DEPLibEn.CONLL_OBJ))
+						head.setLabel(DEPLibEn.CONLL_XCOMP);
+				}
+			}
+			
+		//	if (i_type == TYPE_STANFORD && label.equals(DEPLibEn.DEP_XSUBJ) && head.isLabel(DEPLibEn.DEP_CCOMP))
+		//		head.setLabel(DEPLibEn.DEP_XCOMP);
 		}
 	}
 	
-	/** {@link EnglishC2DConverter#addDPHeads(DEPTree, CTTree)} */
+	/** {@link EnglishC2DConverter#addDEPHeads(DEPTree, CTTree)} */
 	private void addXChildren(DEPTree dTree, CTNode cHead, Deque<CTNode> dq, String label)
 	{
-		DEPNode head = getDPNode(dTree, cHead);
+		DEPNode head = getDEPNode(dTree, cHead);
 		DEPNode node;
 		
 		for (CTNode cNode : dq)
 		{
-			node = getDPNode(dTree, cNode);
+			node = getDEPNode(dTree, cNode);
 			node.addXHead(head, label);			
 		}
 	}
 	
+	/** Add extra features. */
 	private void addFeats(DEPTree dTree, CTTree cTree, CTNode cNode)
 	{
 		CTNode ante;
@@ -1152,8 +1405,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		if (cNode.gapIndex != -1 && cNode.getParent().gapIndex == -1 && (ante = cTree.getCoIndexedAntecedent(cNode.gapIndex)) != null)
 		{
-			DEPNode dNode = getDPNode(dTree, cNode);
-			dNode.addXHead(getDPNode(dTree, ante), DEPLibEn.DEP_GAP);
+			DEPNode dNode = getDEPNode(dTree, cNode);
+			dNode.addXHead(getDEPNode(dTree, ante), DEPLibEn.DEP_GAP);
 		}
 		
 		if ((feat = getFunctionTags(cNode, s_semTags)) != null)
@@ -1166,6 +1419,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			addFeats(dTree, cTree, child);
 	}
 	
+	/** Called by {@link EnglishC2DConverter#addFeats(DEPTree, CTTree, CTNode)}. */
 	private String getFunctionTags(CTNode node, Set<String> sTags)
 	{
 		List<String> tags = new ArrayList<String>();
@@ -1190,6 +1444,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return build.substring(DEPFeat.DELIM_VALUES.length());
 	}
 	
+	// ============================= Add PropBank arguments =============================
+	
 	private void addPBArgs(DEPTree dTree, CTTree cTree)
 	{
 		CTNode root = cTree.getRoot();
@@ -1209,7 +1465,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			DEPNode dNode, sHead;
 			
 			if (cNode.isPhrase())
-				dNode = getDPNode(dTree, cNode);
+				dNode = getDEPNode(dTree, cNode);
 			else
 				dNode = dTree.get(cNode.getTokenId()+1);
 			
@@ -1315,7 +1571,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		}
 	}
 	
-	private DEPNode getDPNode(DEPTree dTree, CTNode cNode)
+	private DEPNode getDEPNode(DEPTree dTree, CTNode cNode)
 	{
 		return dTree.get(cNode.c2d.getDependencyHead().getTokenId() + 1);
 	}

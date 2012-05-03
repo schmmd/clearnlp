@@ -21,7 +21,7 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package edu.colorado.clear.dependency;
+package edu.colorado.clear.dependency.srl;
 
 import java.io.BufferedReader;
 import java.io.PrintStream;
@@ -36,6 +36,10 @@ import com.carrotsearch.hppc.IntOpenHashSet;
 import edu.colorado.clear.classification.model.StringModel;
 import edu.colorado.clear.classification.train.StringTrainSpace;
 import edu.colorado.clear.classification.vector.StringFeatureVector;
+import edu.colorado.clear.dependency.DEPArc;
+import edu.colorado.clear.dependency.DEPLib;
+import edu.colorado.clear.dependency.DEPNode;
+import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.engine.AbstractTool;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.feature.xml.SRLFtrXml;
@@ -553,7 +557,7 @@ public class SRLParser extends AbstractTool
 		if (deps.isEmpty())	return null;
 		
 		Set<String> set = new HashSet<String>();
-		for (DEPArc arc : deps)	set.add(arc.label);
+		for (DEPArc arc : deps)	set.add(arc.getLabel());
 		
 		String[] fields = new String[set.size()];
 		set.toArray(fields);

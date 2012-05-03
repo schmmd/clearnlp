@@ -23,24 +23,30 @@
 */
 package edu.colorado.clear.dependency;
 
-
+/**
+ * Dependency library.
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
 public class DEPLib
 {
+	/** The node ID of an artificial root. */
 	static public final int ROOT_ID =  0;
+	/** The node ID of a null node. */
 	static public final int NULL_ID = -1;
 
 	/** A dummy tag for the root node. */
 	static public final String ROOT_TAG = "_R_";
-	/** The dependency label representing roots. */
-	static public final String DEP_ROOT = "root";
-	/** The dependency label representing unknown dependencies. */
-	static public final String DEP_DEP  = "dep";
-	
+	/** The feat-key of semantic function tags. */
 	static public final String FEAT_SEM	= "sem";
+	/** The feat-key of syntactic function tags. */
 	static public final String FEAT_SYN	= "syn";
+	/** The feat-key of propbank rolesets. */
 	static public final String FEAT_PB	= "pb";
+	/** The feat-key of word senses. */
 	static public final String FEAT_WS	= "ws";
-
+	/** The delimiter between secondary/semantic heads. */
 	static public final String DELIM_HEADS     = ";";
+	/** The delimiter between head ID and label pairs. */
 	static public final String DELIM_HEADS_KEY = ":";
 }

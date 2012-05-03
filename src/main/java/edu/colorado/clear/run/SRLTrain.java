@@ -38,7 +38,7 @@ import org.w3c.dom.Element;
 import edu.colorado.clear.classification.model.StringModel;
 import edu.colorado.clear.classification.train.StringTrainSpace;
 import edu.colorado.clear.dependency.DEPTree;
-import edu.colorado.clear.dependency.SRLParser;
+import edu.colorado.clear.dependency.srl.SRLParser;
 import edu.colorado.clear.feature.xml.SRLFtrXml;
 import edu.colorado.clear.reader.SRLReader;
 import edu.colorado.clear.util.UTFile;
