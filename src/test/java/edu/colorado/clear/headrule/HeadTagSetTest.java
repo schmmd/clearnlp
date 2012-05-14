@@ -34,7 +34,7 @@ import edu.colorado.clear.headrule.HeadTagSet;
 public class HeadTagSetTest
 {
 	@Test
-	public void testHeadTag()
+	public void testHeadTagSet()
 	{
 		String[]  tags = {"NN.*","-SBJ","-TPC","NP"};
 		HeadTagSet tag = new HeadTagSet(tags);

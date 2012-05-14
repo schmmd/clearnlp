@@ -1336,6 +1336,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	/** Adds secondary dependency heads. */
 	private void addXHeads(DEPTree dTree)
 	{
+		dTree.initXHeads();
+		
 		for (CTNode curr : m_xsbj.keySet())
 		{
 			if (curr.c2d != null)
@@ -1452,6 +1454,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		if (root.pbArgs != null)
 		{
+			dTree.initSHeads();
 			initPBArgs(dTree, cTree, root);
 			arrangePBArgs(dTree);
 			relabelArgNs(dTree);

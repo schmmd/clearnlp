@@ -37,7 +37,7 @@ import edu.colorado.clear.util.UTInput;
 public class HeadRuleMapTest
 {
 	@Test
-	public void testHeadRule()
+	public void testHeadRuleMap()
 	{
 		String filename = "src/main/resources/headrule/headrule_en_ontonotes.txt";
 		

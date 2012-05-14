@@ -95,7 +95,7 @@ public class SRLDevelop extends SRLTrain
 	protected void develop(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, String[] devFiles, Pair<StringModel[],Double> model, Set<String> sDown, Set<String> sUp, int boost) throws Exception
 	{
 		IntIntPair gTrans = new IntIntPair(0, 0), lTrans;
-		SRLEval gEval = new SRLEval();
+		SRLEval gEval = new SRLEval(), lEval;
 		StringIntPair[][] gHeads, sHeads;
 		SRLParser parser;
 		DEPTree tree;
@@ -109,7 +109,7 @@ public class SRLDevelop extends SRLTrain
 		for (String devFile : devFiles)
 		{
 			reader.open(UTInput.createBufferedFileReader(devFile));
-		//	lEval = new SRLEval();
+			lEval = new SRLEval();
 			
 			System.out.println("Predicting: "+devFile);
 			for (i=0; (tree = reader.next()) != null; i++)
@@ -121,7 +121,7 @@ public class SRLDevelop extends SRLTrain
 				gTrans.i2 += lTrans.i2;
 				sHeads = tree.getSHeads();
 				
-		//		lEval.evaluate(gHeads, sHeads);
+				lEval.evaluate(gHeads, sHeads);
 				gEval.evaluate(gHeads, sHeads);
 				if (i%1000 == 0)	System.out.print(".");
 				
@@ -136,7 +136,7 @@ public class SRLDevelop extends SRLTrain
 			System.out.println();
 			reader.close();
 			
-		//	lEval.printOverall();
+			lEval.printOverall();
 		}
 		
 		System.out.println("Total");

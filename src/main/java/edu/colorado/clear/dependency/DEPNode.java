@@ -39,8 +39,7 @@ import edu.colorado.clear.reader.DEPReader;
 
 /**
  * Dependency node.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/dependency/DPNodeTest.java">DPNodeTest</a> for the use of this class.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class DEPNode extends POSNode implements Comparable<DEPNode>
@@ -62,7 +61,7 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 	
 	/**
 	 * Constructs a null dependency node.
-	 * Calls {@link DEPNode#initNull()}.
+	 * The ID of this node is set to {@link DEPLib#NULL_ID}.
 	 */
 	public DEPNode()
 	{
@@ -92,8 +91,6 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 	 * @param lemma the lemma of the word-form.
 	 * @param pos the part-of-speech tag of this node.
 	 * @param feats the extra features of this node.
-	 * @param headId the ID of the head of this node.
-	 * @param s the dependency label of this node to its head.
 	 */
 	public void init(int id, String form, String lemma, String pos, DEPFeat feats)
 	{
@@ -103,16 +100,12 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		this.pos     = pos;
 		this.namex   = AbstractColumnReader.BLANK_COLUMN;
 		d_feats      = feats;
-
 		d_head       = new DEPArc();
-		x_heads      = new ArrayList<DEPArc>();
-		s_heads      = new ArrayList<DEPArc>();
-		l_dependents = new ArrayList<DEPArc>();
 	}
 	
 	/**
-	 * Returns {@code true} if this node is an artifical root.
-	 * @return {@code true} if this node is an artifical root.
+	 * Returns {@code true} if this node is an artificial root.
+	 * @return {@code true} if this node is an artificial root.
 	 */
 	public boolean isRoot()
 	{
@@ -218,11 +211,6 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		return d_head.isNode(node);
 	}
 	
-	public boolean isSiblingOf(DEPNode node)
-	{
-		return node.isDependentOf(getHead());
-	}
-	
 	/**
 	 * Returns {@code true} if this node is a descendant of the specific node. 
 	 * @param node the potential ancestor.
@@ -241,6 +229,110 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		return false;
 	}
 	
+	// -------------------------- Dependent relations -------------------------- 
+	
+	/**
+	 * Returns a list of this node's dependents.
+	 * @return a list of this node's dependents.
+	 */
+	public List<DEPArc> getDependents()
+	{
+		return l_dependents;
+	}
+	
+	/**
+	 * Returns a list of this node's grand dependents.
+	 * @return a list of this node's grand dependents.
+	 */
+	public List<DEPArc> getGrandDependents()
+	{
+		List<DEPArc> list = new ArrayList<DEPArc>();
+		
+		for (DEPArc arc : l_dependents)
+			list.addAll(arc.getNode().getDependents());
+	
+		return list;
+	}
+	
+	/** @param depth > 0. */
+	public List<DEPArc> getDescendents(int depth)
+	{
+		List<DEPArc> list = new ArrayList<DEPArc>();
+		
+		getDescendentsAux(this, list, depth-1);
+		return list;
+	}
+	
+	public void getDescendentsAux(DEPNode curr, List<DEPArc> list, int depth)
+	{
+		List<DEPArc> deps = curr.getDependents();
+		list.addAll(deps);
+		
+		if (depth == 0)	return;
+		
+		for (DEPArc arc : deps)
+			getDescendentsAux(arc.getNode(), list, depth-1);
+	}
+	
+	public List<DEPNode> getDependentsByLabels(String... labels)
+	{
+		List<DEPNode> list = new ArrayList<DEPNode>();
+		
+		for (DEPArc arc : l_dependents)
+		{
+			for (String label : labels)
+			{
+				if (arc.isLabel(label))
+					list.add(arc.getNode());
+			}
+		}
+		
+		return list;
+	}
+	
+	void addDependent(DEPNode node, String label)
+	{
+		l_dependents.add(new DEPArc(node, label));
+	}
+	
+	public boolean containsDependent(String label)
+	{
+		for (DEPArc node : l_dependents)
+		{
+			if (node.isLabel(label))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public IntOpenHashSet getSubtreeIdSet()
+	{
+		IntOpenHashSet set = new IntOpenHashSet();
+		
+		getSubtreeIdSetAux(set, this);
+		return set;
+	}
+
+	private void getSubtreeIdSetAux(IntOpenHashSet set, DEPNode curr)
+	{
+		set.add(curr.id);
+		
+		for (DEPArc arc : curr.getDependents())
+			getSubtreeIdSetAux(set, arc.getNode());
+	}
+	
+	public int[] getSubtreeIdArray()
+	{
+		IntOpenHashSet set = getSubtreeIdSet();
+		int[] list = set.toArray();
+		Arrays.sort(list);
+		
+		return list;
+	}
+	
+	
+	
 	public List<DEPArc> getSHeads()
 	{
 		return s_heads;
@@ -257,6 +349,36 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		}
 		
 		return sHeads;
+	}
+	
+	public Set<DEPNode> getArgumentCandidateSet(int depth, boolean includeSelf)
+	{
+		Set<DEPNode> set = new HashSet<DEPNode>();
+		
+		for (DEPArc arc : getDescendents(depth))
+			set.add(arc.getNode());
+		
+		DEPNode head = getHead();
+				
+		if (head != null)
+		{
+			for (DEPArc arc : head.getGrandDependents())
+				set.add(arc.getNode());
+					
+			do
+			{
+				for (DEPArc arc : head.getDependents())
+					set.add(arc.getNode());
+							
+				head = head.getHead();
+			}
+			while (head != null);
+		}
+		
+		if (includeSelf)	set.add   (this);
+		else				set.remove(this);
+		
+		return set;
 	}
 	
 	public void addSHead(DEPNode head, String label)
@@ -411,159 +533,7 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		return false;
 	}
 	
-	public List<DEPArc> getDependents()
-	{
-		return l_dependents;
-	}
 	
-	public List<DEPArc> getGrandDependents()
-	{
-		List<DEPArc> list = new ArrayList<DEPArc>();
-		
-		for (DEPArc arc : l_dependents)
-			list.addAll(arc.getNode().getDependents());
-	
-		return list;
-	}
-	
-	/** @param depth > 0. */
-	public List<DEPArc> getDescendents(int depth)
-	{
-		List<DEPArc> list = new ArrayList<DEPArc>();
-		
-		getDescendentsAux(this, list, depth-1);
-		return list;
-	}
-	
-	public void getDescendentsAux(DEPNode curr, List<DEPArc> list, int depth)
-	{
-		List<DEPArc> deps = curr.getDependents();
-		list.addAll(deps);
-		
-		if (depth == 0)	return;
-		
-		for (DEPArc arc : deps)
-			getDescendentsAux(arc.getNode(), list, depth-1);
-	}
-	
-	public Set<DEPNode> getArgumentCandidateSet(int depth, boolean includeSelf)
-	{
-		Set<DEPNode> set = new HashSet<DEPNode>();
-		
-		for (DEPArc arc : getDescendents(depth))
-			set.add(arc.getNode());
-		
-		DEPNode head = getHead();
-				
-		if (head != null)
-		{
-			for (DEPArc arc : head.getGrandDependents())
-				set.add(arc.getNode());
-					
-			do
-			{
-				for (DEPArc arc : head.getDependents())
-					set.add(arc.getNode());
-							
-				head = head.getHead();
-			}
-			while (head != null);
-		}
-		
-		if (includeSelf)	set.add   (this);
-		else				set.remove(this);
-		
-		return set;
-	}
-	
-	public DEPNode getLeftNearestDependent()
-	{
-		DEPArc arc;
-		int i;
-		
-		for (i=l_dependents.size()-1; i>=0; i--)
-		{
-			arc = l_dependents.get(i);
-			
-			if (arc.getNode().id < id)
-				return arc.getNode();
-		}
-		
-		return null;
-	}
-	
-	public DEPNode getRightNearestDependent()
-	{
-		int i, size = l_dependents.size();
-		DEPArc arc;
-		
-		for (i=0; i<size; i++)
-		{
-			arc = l_dependents.get(i);
-			
-			if (arc.getNode().id > id)
-				return arc.getNode();
-		}
-		
-		return null;
-	}
-	
-	public List<DEPNode> getDependentsByLabels(String... labels)
-	{
-		List<DEPNode> list = new ArrayList<DEPNode>();
-		
-		for (DEPArc arc : l_dependents)
-		{
-			for (String label : labels)
-			{
-				if (arc.isLabel(label))
-					list.add(arc.getNode());
-			}
-		}
-		
-		return list;
-	}
-	
-	void addDependent(DEPNode node, String label)
-	{
-		l_dependents.add(new DEPArc(node, label));
-	}
-	
-	public boolean containsDependent(String label)
-	{
-		for (DEPArc node : l_dependents)
-		{
-			if (node.isLabel(label))
-				return true;
-		}
-		
-		return false;
-	}
-	
-	public IntOpenHashSet getSubtreeIdSet()
-	{
-		IntOpenHashSet set = new IntOpenHashSet();
-		
-		getSubtreeIdSetAux(set, this);
-		return set;
-	}
-
-	private void getSubtreeIdSetAux(IntOpenHashSet set, DEPNode curr)
-	{
-		set.add(curr.id);
-		
-		for (DEPArc arc : curr.getDependents())
-			getSubtreeIdSetAux(set, arc.getNode());
-	}
-	
-	public int[] getSubtreeIdArray()
-	{
-		IntOpenHashSet set = getSubtreeIdSet();
-		int[] list = set.toArray();
-		Arrays.sort(list);
-		
-		return list;
-	}
 	
 	public String toStringDEP()
 	{

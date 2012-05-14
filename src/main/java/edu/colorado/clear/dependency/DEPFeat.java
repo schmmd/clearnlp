@@ -30,11 +30,9 @@ import java.util.List;
 
 import edu.colorado.clear.reader.DEPReader;
 
-
 /**
  * Dependency feature map.
- * See <a target="_blank" href="http://code.google.com/p/clearnlp/source/browse/trunk/src/edu/colorado/clear/test/dependency/DPFeatTest.java">DPFeatTest</a> for the use of this class.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 @SuppressWarnings("serial")

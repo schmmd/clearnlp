@@ -40,14 +40,14 @@ import edu.colorado.clear.dependency.DEPArc;
 import edu.colorado.clear.dependency.DEPLib;
 import edu.colorado.clear.dependency.DEPNode;
 import edu.colorado.clear.dependency.DEPTree;
-import edu.colorado.clear.engine.AbstractTool;
+import edu.colorado.clear.engine.AbstractEngine;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.feature.xml.SRLFtrXml;
 import edu.colorado.clear.util.map.Prob1DMap;
 import edu.colorado.clear.util.pair.IntIntPair;
 import edu.colorado.clear.util.pair.StringIntPair;
 
-public class SRLParser extends AbstractTool
+public class SRLParser extends AbstractEngine
 {
 	static public final int MODEL_SIZE	= 2;
 	static public final int MODEL_LEFT	= 0;

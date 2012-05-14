@@ -159,13 +159,29 @@ public class DEPTree extends ArrayList<DEPNode>
 			node.s_heads.clear();
 	}
 	
+	public void initSHeads()
+	{
+		int i, size = size();
+		
+		for (i=0; i<size; i++)
+			get(i).s_heads = new ArrayList<DEPArc>();
+	}
+	
+	public void initXHeads()
+	{
+		int i, size = size();
+		
+		for (i=0; i<size; i++)
+			get(i).x_heads = new ArrayList<DEPArc>();
+	}
+	
 	public void setDependents()
 	{
 		int i, size = size();
 		DEPNode node, head;
 		
 		for (i=0; i<size; i++)
-			get(i).l_dependents.clear();
+			get(i).l_dependents = new ArrayList<DEPArc>();
 		
 		for (i=1; i<size; i++)
 		{

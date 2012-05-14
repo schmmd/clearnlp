@@ -27,7 +27,7 @@ import edu.colorado.clear.reader.AbstractReader;
 
 /**
  * Dependency arc.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class DEPArc implements Comparable<DEPArc>
@@ -68,6 +68,10 @@ public class DEPArc implements Comparable<DEPArc>
 		return node;
 	}
 	
+	/**
+	 * Set the linking node to the specific node.
+	 * @param node the node to be set.
+	 */
 	public void setNode(DEPNode node)
 	{
 		this.node = node;
@@ -102,11 +106,21 @@ public class DEPArc implements Comparable<DEPArc>
 		this.label = label;
 	}
 	
+	/**
+	 * Returns {@code true} if the specific node is its linking node.
+	 * @param node the node to be compared.
+	 * @return {@code true} if the specific node is its linking node.
+	 */
 	public boolean isNode(DEPNode node)
 	{
 		return this.node == node;
 	}
 	
+	/**
+	 * Returns {@code true} if the specific label is its label.
+	 * @param label the label to be compared.
+	 * @return {@code true} if the specific label is its label.
+	 */
 	public boolean isLabel(String label)
 	{
 		return this.label.equals(label);

@@ -99,6 +99,8 @@ public class SRLReader extends DEPReader
 		String heads, label;
 		String[] tmp;
 		DEPNode node;
+		
+		tree.initSHeads();
 
 		for (i=1; i<size; i++)
 		{
