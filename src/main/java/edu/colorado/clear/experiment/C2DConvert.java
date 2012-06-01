@@ -88,7 +88,6 @@ public class C2DConvert extends AbstractRun
 	public C2DConvert(String[] args)
 	{
 		initArgs(args);
-		System.out.println(b_verbs_only);
 		convert(s_headruleFile, i_type, s_dictFile, s_language, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
 	}
 	

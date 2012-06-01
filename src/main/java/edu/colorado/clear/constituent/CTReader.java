@@ -128,6 +128,16 @@ public class CTReader
 		System.err.println("Error: brackets mismatch - starting line "+startLine);
 		return null;
 	}
+	
+	public CTTree nextTree(int treeId)
+	{
+		CTTree tree = null;
+		
+		for (int i=0; i<=treeId; i++)
+			tree = nextTree();
+		
+		return tree;
+	}
 
 	/** @return if exists ? next token : null. */
 	private String nextToken()

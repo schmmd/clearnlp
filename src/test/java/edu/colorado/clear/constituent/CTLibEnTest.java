@@ -33,7 +33,7 @@ import edu.colorado.clear.util.UTInput;
 public class CTLibEnTest
 {
 	@Test
-	public void testCTReaderEn()
+	public void testCTLibEn()
 	{
 		String filename = "src/test/resources/constituent/CTLibEnTest.parse";
 		CTReader reader = new CTReader(UTInput.createBufferedFileReader(filename));

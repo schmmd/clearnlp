@@ -229,23 +229,11 @@ public class CTNode implements Comparable<CTNode>
 		return ls_children.subList(fstId, lstId);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param childId 
-	 * @return 
-	 */
 	public CTNode getChild(int childId)
 	{
 		return (0 <= childId && childId < ls_children.size()) ? ls_children.get(childId) : null;
 	}
 	
-	/**
-     * Returns the child of this node at the specific position.
-     * If such a child does not exists, returns {@code null}.
-     * @param childId the ID (starting at 0) of the child to be returned.
-     * @return the child of this node at the specific position.
-     */
 	public CTNode getFirstChild(String... tags)
 	{
 		for (CTNode child : ls_children)
@@ -257,12 +245,6 @@ public class CTNode implements Comparable<CTNode>
 		return null;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public CTNode getLastChild(String... tags)
 	{
 		CTNode child;	int i;
@@ -278,24 +260,24 @@ public class CTNode implements Comparable<CTNode>
 		return null;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
+	public List<CTNode> getAllChildren(String... tags)
+	{
+		List<CTNode> list = new ArrayList<CTNode>();
+		
+		for (CTNode child : ls_children)
+		{
+			if (child.isTag(tags))
+				list.add(child);
+		}
+		
+		return list;
+	}
+	
 	public CTNode getFirstDescendant(String... tags)
 	{
 		return getFirstDescendantAux(ls_children, tags);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param nodes 
-	 * @param tags 
-	 * @return 
-	 */
 	private CTNode getFirstDescendantAux(List<CTNode> nodes, String... tags)
 	{
 		CTNode desc;
@@ -311,12 +293,6 @@ public class CTNode implements Comparable<CTNode>
 		return null;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public CTNode getPrevSibling(String... tags)
 	{
 		if (parent == null) return null;
@@ -334,22 +310,11 @@ public class CTNode implements Comparable<CTNode>
 		return null;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public List<CTNode> getPrevSiblings()
 	{
 		return (parent != null) ? parent.getChildren(0, this.i_siblingId) : new ArrayList<CTNode>(0);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public CTNode getNextSibling(String... tags)
 	{
 		if (parent == null) return null;
@@ -367,12 +332,6 @@ public class CTNode implements Comparable<CTNode>
 		return null;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public CTNode getNearestAncestor(String... tags)
 	{
 		CTNode curr = this;
@@ -386,12 +345,6 @@ public class CTNode implements Comparable<CTNode>
 		return null;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public CTNode getFirstChainedDescendant(String... tags)
 	{
 		CTNode desc = this, child;
@@ -402,12 +355,6 @@ public class CTNode implements Comparable<CTNode>
 		return (desc != this) ? desc : null;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public CTNode getHighestChainedAncestor(String... tags)
 	{
 		CTNode curr = this;
@@ -418,12 +365,6 @@ public class CTNode implements Comparable<CTNode>
 		return (curr == this) ? null : curr;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param regex 
-	 * @return 
-	 */
 	public List<CTNode> getIncludedEmptyCategory(String regex)
 	{
 		List<CTNode> list = new ArrayList<CTNode>();
@@ -432,13 +373,6 @@ public class CTNode implements Comparable<CTNode>
 		return list;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param curr 
-	 * @param list 
-	 * @param regex 
-	 */
 	private void getIncludedEmptyCategoriesAux(CTNode curr, List<CTNode> list, String regex)
 	{
 		if (curr.isEmptyCategory() && curr.form.matches(regex))
@@ -448,11 +382,6 @@ public class CTNode implements Comparable<CTNode>
 			getIncludedEmptyCategoriesAux(child, list, regex);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public List<CTNode> getSubTerminals()
 	{
 		List<CTNode> terminals = new ArrayList<CTNode>();
@@ -461,12 +390,6 @@ public class CTNode implements Comparable<CTNode>
 		return terminals;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param curr 
-	 * @param terminals 
-	 */
 	private void getSubTerminals(CTNode curr, List<CTNode> terminals)
 	{
 		if (curr.isPhrase())
@@ -478,11 +401,6 @@ public class CTNode implements Comparable<CTNode>
 			terminals.add(curr);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public IntArrayList getSubTerminalIdList()
 	{
 		IntArrayList list = new IntArrayList();
@@ -493,11 +411,6 @@ public class CTNode implements Comparable<CTNode>
 		return list;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public IntOpenHashSet getSubTerminalIdSet()
 	{
 		IntOpenHashSet set = new IntOpenHashSet();
@@ -508,22 +421,11 @@ public class CTNode implements Comparable<CTNode>
 		return set;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public CTNode getFirstTerminal()
 	{
 		return getFirstTerminalAux(this);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param node 
-	 * @return 
-	 */
 	private CTNode getFirstTerminalAux(CTNode node)
 	{
 		List<CTNode> children = node.getChildren();
@@ -532,22 +434,11 @@ public class CTNode implements Comparable<CTNode>
 		return getFirstTerminalAux(children.get(0));
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public int getChildrenSize()
 	{
 		return ls_children.size();
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param node 
-	 * @return 
-	 */
 	public CTNode getLowestCommonAncestor(CTNode node)
 	{
 		if (this.isDescendantOf(node))	return node;
@@ -568,11 +459,6 @@ public class CTNode implements Comparable<CTNode>
 	
 //	======================== Setters ========================
 	
-	/**
- * 
- *
- * @param tags 
- */
 	public void setTags(String tags)
 	{
 		s_fTags = new TreeSet<String>();
@@ -615,59 +501,31 @@ public class CTNode implements Comparable<CTNode>
 		}
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTag 
-	 */
 	public void addFTag(String fTag)
 	{
 		s_fTags.add(fTag);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTags 
-	 */
 	public void addFTags(Collection<String> fTags)
 	{
 		s_fTags.addAll(fTags);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTag 
-	 */
 	public void removeFTag(String fTag)
 	{
 		s_fTags.remove(fTag);
 	}
 	
-	/**
-	 * 
-	 */
 	public void removeFTagAll()
 	{
 		s_fTags.clear();
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param ante 
-	 */
 	public void setAntecedent(CTNode ante)
 	{
 		antecedent = ante;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param child 
-	 */
 	public void addChild(CTNode child)
 	{
 		child.parent = this;
@@ -676,12 +534,6 @@ public class CTNode implements Comparable<CTNode>
 		ls_children.add(child);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param index 
-	 * @param child 
-	 */
 	public void addChild(int index, CTNode child)
 	{
 		ls_children.add(index, child);
@@ -690,12 +542,6 @@ public class CTNode implements Comparable<CTNode>
 		resetSiblingIDs(index);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param index 
-	 * @param child 
-	 */
 	public void setChild(int index, CTNode child)
 	{
 		ls_children.set(index, child).parent = null;
@@ -704,11 +550,6 @@ public class CTNode implements Comparable<CTNode>
 		child.i_siblingId = index;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param index 
-	 */
 	public void removeChild(int index)
 	{
 		if (!isChildrenRange(index))
@@ -718,11 +559,6 @@ public class CTNode implements Comparable<CTNode>
 		resetSiblingIDs(index);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param index 
-	 */
 	private void resetSiblingIDs(int index)
 	{
 		int i, size = ls_children.size();
@@ -731,21 +567,11 @@ public class CTNode implements Comparable<CTNode>
 			ls_children.get(i).i_siblingId = i;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param child 
-	 */
 	public void removeChild(CTNode child)
 	{
 		removeChild(ls_children.indexOf(child));
 	}
 
-	/**
-	 * 
-	 *
-	 * @param children 
-	 */
 	public void resetChildren(Collection<CTNode> children)
 	{
 		ls_children.clear();
@@ -756,23 +582,11 @@ public class CTNode implements Comparable<CTNode>
 	
 //	======================== Booleans ========================
 	
-	/**
- * 
- *
- * @param pTag 
- * @return 
- */
 	public boolean isPTag(String pTag)
 	{
 		return this.pTag.equals(pTag);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param pTags 
-	 * @return 
-	 */
 	public boolean isPTagAny(String... pTags)
 	{
 		for (String pTag : pTags)
@@ -784,56 +598,26 @@ public class CTNode implements Comparable<CTNode>
 		return false;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param regex 
-	 * @return 
-	 */
 	public boolean matchesPTag(String regex)
 	{
 		return pTag.matches("^"+regex+"$");
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTag 
-	 * @return 
-	 */
 	public boolean isFTag(String fTag)
 	{
 		return (s_fTags.size() == 1) && (s_fTags.contains(fTag)); 
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTag 
-	 * @return 
-	 */
 	public boolean hasFTag(String fTag)
 	{
 		return s_fTags.contains(fTag);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTags 
-	 * @return 
-	 */
 	public boolean hasFTagAll(Collection<String> fTags)
 	{
 		return this.s_fTags.containsAll(fTags);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTags 
-	 * @return 
-	 */
 	public boolean hasFTagAny(Collection<String> fTags)
 	{
 		for (String fTag : fTags)
@@ -845,12 +629,6 @@ public class CTNode implements Comparable<CTNode>
 		return false;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param fTags 
-	 * @return 
-	 */
 	public boolean hasFTagAny(String... fTags)
 	{
 		for (String fTag : fTags)
@@ -862,12 +640,6 @@ public class CTNode implements Comparable<CTNode>
 		return false;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public boolean isTag(String... tags)
 	{
 		String      pTag  = null;
@@ -894,42 +666,21 @@ public class CTNode implements Comparable<CTNode>
 		       hasFTagAll(fTags);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param form 
-	 * @return 
-	 */
 	public boolean isForm(String form)
 	{
 		return this.form != null && this.form.equals(form);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public boolean isPhrase()
 	{
 		return !ls_children.isEmpty();
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public boolean isEmptyCategory()
 	{
 		return pTag.equals(CTLib.POS_NONE);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public boolean isEmptyCategoryRec()
 	{
 		CTNode curr = this;
@@ -945,12 +696,6 @@ public class CTNode implements Comparable<CTNode>
 		return curr.isEmptyCategory();
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param node 
-	 * @return 
-	 */
 	public boolean isDescendantOf(CTNode node)
 	{
 		CTNode parent = getParent();
@@ -966,12 +711,6 @@ public class CTNode implements Comparable<CTNode>
 		return false;
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param tags 
-	 * @return 
-	 */
 	public boolean containsTags(String... tags)
 	{
 		for (CTNode child : ls_children)
@@ -997,13 +736,6 @@ public class CTNode implements Comparable<CTNode>
 	
 //	======================== Strings ========================
 
-	/**
- * 
- *
- * @param includeNulls 
- * @param delim 
- * @return 
- */
 	public String toForms(boolean includeNulls, String delim)
 	{
 		StringBuilder build = new StringBuilder();
@@ -1028,12 +760,6 @@ public class CTNode implements Comparable<CTNode>
 		return toString(false, false);
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param args 
-	 * @return 
-	 */
 	public String toString(boolean... args)
 	{
 		boolean includeLineNumbers  = (args.length > 0) ? args[0] : false;
@@ -1056,11 +782,6 @@ public class CTNode implements Comparable<CTNode>
 		return build.toString();
 	}
 	
-	/**
-	 * 
-	 *
-	 * @return 
-	 */
 	public String toStringLine()
 	{
 		ArrayList<String> lTree = new ArrayList<String>();
@@ -1075,14 +796,6 @@ public class CTNode implements Comparable<CTNode>
 		return build.toString();
 	}
 	
-	/**
-	 * 
-	 *
-	 * @param curr 
-	 * @param lTree 
-	 * @param sTags 
-	 * @param includeAntePointers 
-	 */
 	private void toStringAux(CTNode curr, ArrayList<String> lTree, String sTags, boolean includeAntePointers)
 	{
 		if (curr.isPhrase())
@@ -1110,9 +823,6 @@ public class CTNode implements Comparable<CTNode>
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Comparable#compareTo(java.lang.Object)
-	 */
 	@Override
 	public int compareTo(CTNode node)
 	{

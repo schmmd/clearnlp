@@ -69,6 +69,17 @@ public class UTFile
 	}
 	
 	/**
+	 * Returns the basename of the specific filepath (e.g., wsj/00/wsj_0001.mrg -> wsj_0001.mrg). 
+	 * @param filepath the filepath to get the basename from.
+	 * @return the basename of the specific filepath (e.g., wsj/00/wsj_0001.mrg -> wsj_0001.mrg).
+	 */
+	static public String getBasename(String filepath)
+	{
+		int idx = filepath.lastIndexOf(File.separator);
+		return filepath.substring(idx+1);
+	}
+	
+	/**
 	 * Returns the sorted list of all filenames in the specific directory.
 	 * @see UTFile#getSortedFileList(String, String)
 	 * @param fileDir the directory to retrieve filenames from.

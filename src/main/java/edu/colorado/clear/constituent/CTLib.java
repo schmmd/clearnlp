@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIntOpenHashMap;
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 
@@ -155,5 +156,57 @@ public class CTLib
 		
 		for (CTNode child : curr.ls_children)
 			remapGapIndices(map, lastIndex, child);
+	}
+	
+	/**
+	 * Returns mappings between tokens in the specific constituent trees.
+	 * Indexes of the list represent the indexes of tokens in the source tree.
+	 * Items of the list represent index-mappings of tokens in in the target trees.
+	 * @param tree1 the source constituent tree.
+	 * @param tree2 the target constituent tree.
+	 * @return mappings between tokens in the specific constituent trees.
+	 */
+	static public IntArrayList[] getTokenMapList(CTTree tree1, CTTree tree2)
+	{
+		List<CTNode> tokens1 = tree1.getTokens();
+		List<CTNode> tokens2 = tree2.getTokens();
+		int size1 = tokens1.size(), size2 = tokens2.size(), tId1, tId2, len1, len2;
+		IntArrayList[] map = new IntArrayList[size1];
+		String form1, form2;
+		
+		for (tId1=0; tId1<size1; tId1++)
+			map[tId1] = new IntArrayList();
+		
+		for (tId1=0,tId2=0; tId1 < size1; tId1++,tId2++)
+		{
+			form1 = tokens1.get(tId1).form;
+			form2 = tokens2.get(tId2).form;
+			len1  = form1.length();
+			len2  = form2.length();
+			
+			if (len1 < len2)
+			{
+				while (form1.length() < len2 && ++tId1 < size1)
+				{
+					form1 += tokens1.get(tId1).form;
+					map[tId1-1].add(tId2);
+				}
+			}
+			else if (len1 > len2)
+			{
+				while (len1 > form2.length() && ++tId2 < size2)
+				{
+					form2 += tokens2.get(tId2).form;
+					map[tId1].add(tId2-1);
+				}
+			}
+			
+			if (form1.equals(form2))
+				map[tId1].add(tId2);
+			else
+				return null;
+		}
+		
+		return map;
 	}
 }

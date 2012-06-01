@@ -102,5 +102,22 @@ public class UTXml
 		build.append(">");
 		
 		return build.toString();
-	}	
+	}
+	
+	static public String getTemplate(String element, String contents, String indent, String... attributes)
+	{
+		StringBuilder build = new StringBuilder();
+		
+		build.append(indent);
+		build.append(UTXml.startsElement(false, element, attributes));
+		build.append("\n");
+		
+		build.append(contents);
+		build.append("\n");
+		
+		build.append(indent);
+		build.append(UTXml.endsElement(element));
+		
+		return build.toString();
+	}
 }

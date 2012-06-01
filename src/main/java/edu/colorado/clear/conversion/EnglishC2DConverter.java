@@ -539,6 +539,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			if (snd.c2d.hasHead())	continue;
 			
 			if ((snd.isPTagAny(CTLibEn.PTAG_NP, CTLibEn.PTAG_NML) && !hasAdverbialTag(snd)) ||
+				(snd.hasFTagAny(CTLibEn.FTAG_HLN, CTLibEn.FTAG_TTL)) ||
 				(snd.isPTag(CTLibEn.PTAG_RRC) && snd.containsTags(CTLibEn.PTAG_NP, "-"+CTLibEn.FTAG_PRD)))
 			{
 				snd.c2d.setHead(fst, DEPLibEn.DEP_APPOS);
@@ -746,7 +747,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		if (P.isPTag(CTLibEn.PTAG_QP))
 		{
-			if (C.isPTag(CTLibEn.POS_CD))
+			if (C.isPTagAny(CTLibEn.POS_CD))
 				return DEPLibEn.DEP_NUMBER;
 			else
 				return DEPLibEn.DEP_QUANTMOD;
@@ -1045,13 +1046,20 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private boolean isInfMod(CTNode curr)
 	{
 		CTNode vp = curr.isPTag(CTLibEn.PTAG_VP) ? curr : curr.getFirstDescendant(CTLibEn.PTAG_VP);
-	
+		
 		if (vp != null)
 		{
-			CTNode vp2;
+			CTNode vc = vp.getFirstChild(CTLibEn.PTAG_VP);
 			
-			if (CTLibEn.containsCoordination(vp, vp.getChildren()) && (vp2 = vp.getFirstChild(CTLibEn.PTAG_VP)) != null)
-				vp = vp2;
+			while (vc != null)
+			{
+				vp = vc;
+				
+				if (vp.getPrevSibling(CTLibEn.POS_TO) != null)
+					return true;
+				
+				vc = vp.getFirstChild(CTLibEn.PTAG_VP);
+			}
 			
 			return vp.containsTags(CTLibEn.POS_TO);
 		}
