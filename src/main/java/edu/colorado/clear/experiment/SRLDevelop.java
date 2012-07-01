@@ -94,34 +94,34 @@ public class SRLDevelop extends SRLTrain
 	/** @param devId if {@code -1}, train the models using all training files. */
 	protected void develop(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, String[] devFiles, Pair<StringModel[],Double> model, Set<String> sDown, Set<String> sUp, int boost) throws Exception
 	{
-		IntIntPair gTrans = new IntIntPair(0, 0), lTrans;
-		SRLEval gEval = new SRLEval();
+		SRLEval lEval, gEval = new SRLEval();
 		StringIntPair[][] gHeads, sHeads;
 		SRLParser parser;
 		DEPTree tree;
 		int i, n, size, N = 10;
 		int[][] spaces = new int[2][N];
-		IntIntPair p;
+		IntIntPair p, lArgs, gArgs = new IntIntPair(0, 0);
 		
 		parser = getTrainedParser(eConfig, reader, xml, trainFiles, model.o1, sDown, sUp, -1);
 		model.o1 = parser.getModels();
+	//	PrintStream fout;
 		
 		for (String devFile : devFiles)
 		{
 			reader.open(UTInput.createBufferedFileReader(devFile));
-		//	lEval = new SRLEval();
+	//		fout  = UTOutput.createPrintBufferedFileStream(devFile+".labeled."+boost);
+			lEval = new SRLEval();
+			lArgs = new IntIntPair(0, 0);
 			
 			System.out.println("Predicting: "+devFile);
+
 			for (i=0; (tree = reader.next()) != null; i++)
 			{
 				gHeads = tree.getSHeads();
 				parser.label(tree);
-				lTrans = parser.getNumTransitions();
-				gTrans.i1 += lTrans.i1;
-				gTrans.i2 += lTrans.i2;
 				sHeads = tree.getSHeads();
 				
-		//		lEval.evaluate(gHeads, sHeads);
+				lEval.evaluate(gHeads, sHeads);
 				gEval.evaluate(gHeads, sHeads);
 				if (i%1000 == 0)	System.out.print(".");
 				
@@ -132,18 +132,30 @@ public class SRLDevelop extends SRLTrain
 				p = parser.getNumTransitions();
 				spaces[0][n] += p.i1;
 				spaces[1][n] += p.i2;
+				
+				p = parser.getArgCoverage(gHeads);
+				lArgs.i1 += p.i1;
+				lArgs.i2 += p.i2;
+				
+	//			fout.println(tree.toStringSRL()+"\n");
 			}
+			
 			System.out.println();
 			reader.close();
+	//		fout.close();
+
+			gArgs.i1 += lArgs.i1;
+			gArgs.i2 += lArgs.i2;
 			
-		//	lEval.printOverall();
+			System.out.printf("Coverage: %5d %5d = %f\n", lArgs.i1, lArgs.i2, 100d*lArgs.i1/lArgs.i2);
+			lEval.printOverall();
 		}
 		
-		System.out.println("Total");
+		System.out.println("Average");
 		gEval.printOverall();
-		
-		System.out.printf("# of trans: %5.2f (%d/%d)\n", 100d*gTrans.i2/gTrans.i1, gTrans.i2, gTrans.i1);
 		model.o2 = gEval.getF1(SRLEval.LAS);
+		
+		System.out.printf("Coverage: %5d %5d = %f\n", gArgs.i1, gArgs.i2, 100d*gArgs.i1/gArgs.i2);
 		
 		for (i=0; i<N; i++)
 			System.out.printf("%3d: %5d %5d\n", i, spaces[0][i], spaces[1][i]);

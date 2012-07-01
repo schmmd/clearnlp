@@ -36,8 +36,6 @@ import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
 import edu.colorado.clear.feature.xml.POSFtrXml;
-import edu.colorado.clear.morphology.AbstractMPAnalyzer;
-import edu.colorado.clear.morphology.EnglishMPAnalyzer;
 import edu.colorado.clear.pos.POSLib;
 import edu.colorado.clear.pos.POSNode;
 import edu.colorado.clear.pos.POSTagger;
@@ -67,8 +65,6 @@ public class POSPredict extends AbstractRun
 	private String s_configXml;
 	@Option(name="-m", usage="the model file (input; required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
-	@Option(name="-d", usage="the dictionary file for English lemmatization (default: null)", required=false, metaVar="<filename>")
-	private String s_dictFile = null;
 	
 	public POSPredict() {}
 	
@@ -78,28 +74,27 @@ public class POSPredict extends AbstractRun
 		
 		try
 		{
-			run(s_configXml, s_modelFile, s_dictFile, s_inputPath, s_outputFile);	
+			run(s_configXml, s_modelFile, s_inputPath, s_outputFile);	
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configXml, String modelFile, String dictFile, String inputPath, String outputFile) throws Exception
+	public void run(String configXml, String modelFile, String inputPath, String outputFile) throws Exception
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader reader = (POSReader)getReader(eConfig);
 		
 		Pair<POSTagger[],Double> p = getTaggers(modelFile);
-		AbstractMPAnalyzer morph = (dictFile != null) ? new EnglishMPAnalyzer(dictFile) : null;
 		
 		if (new File(inputPath).isFile())
 		{
 			if (outputFile == null)	outputFile = inputPath + EXT;
-			predict(inputPath, outputFile, reader, p.o1, p.o2, morph);	
+			predict(inputPath, outputFile, reader, p.o1, p.o2);	
 		}
 		else
 		{
 			for (String filename : UTFile.getSortedFileList(inputPath))
-				predict(filename, filename+EXT, reader, p.o1, p.o2, morph);
+				predict(filename, filename+EXT, reader, p.o1, p.o2);
 		}		
 	}
 	
@@ -153,7 +148,7 @@ public class POSPredict extends AbstractRun
 		return new Pair<POSTagger[],Double>(taggers, threshold);
 	}
 	
-	static public void predict(String inputFile, String outputFile, POSReader reader, POSTagger[] taggers, double threshold, AbstractMPAnalyzer morph) 
+	static public void predict(String inputFile, String outputFile, POSReader reader, POSTagger[] taggers, double threshold) 
 	{
 		double sum = 0;
 		POSNode[] nodes;
@@ -166,7 +161,7 @@ public class POSPredict extends AbstractRun
 		
 		for (i=0; (nodes = reader.next()) != null; i++)
 		{
-			sum += predict(nodes, taggers, threshold, morph, counts);
+			sum += predict(nodes, taggers, threshold, counts);
 			n   += nodes.length;
 
 			if (i%1000 == 0)	System.out.print(".");
@@ -177,12 +172,12 @@ public class POSPredict extends AbstractRun
 		reader.close();
 		fout.close();
 		
-		System.out.printf("Overall tagging time: %f (sec./%d tokens)\n", sum/1000, n);
-		System.out.printf("Average tagging time: %f (ms/token)\n", sum/n);
-		System.out.printf("General model used  : %f (%d/%d)\n", (double)counts[1]/i, counts[1], i);
+		System.out.printf("Overall tagging time  : %f (sec. for %d tokens)\n", sum/1000, n);
+		System.out.printf("Average tagging time  : %f (ms/token)\n", sum/n);
+		System.out.printf("Generalized model used: %f (%d/%d)\n", (double)counts[1]/i, counts[1], i);
 	}
 	
-	static double predict(POSNode[] nodes, POSTagger[] taggers, double threshold, AbstractMPAnalyzer morph, int[] counts)
+	static double predict(POSNode[] nodes, POSTagger[] taggers, double threshold, int[] counts)
 	{
 		double st, et;
 		
@@ -201,8 +196,6 @@ public class POSPredict extends AbstractRun
 		}
 
 		et = System.currentTimeMillis();
-		
-		if (morph != null)	morph.lemmatize(nodes);
 		return et - st;
 	}
 		

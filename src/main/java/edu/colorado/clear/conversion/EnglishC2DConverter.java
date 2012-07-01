@@ -987,11 +987,6 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return false;
 	}
 	
-	/**
-	 * Open clausal complement.
-	 * @param node
-	 * @return {@code true} if the specific node is an open clausal complement.
-	 */
 	private boolean isXcomp(CTNode node)
 	{
 		if (node.isPTag(CTLibEn.PTAG_S))
@@ -1227,6 +1222,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	{
 		DEPTree dTree = new DEPTree();
 		String form, lemma, pos;
+		DEPNode dNode;
 		int id;
 		
 		for (CTNode node : cTree.getTokens())
@@ -1236,9 +1232,11 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			lemma = AbstractColumnReader.BLANK_COLUMN;
 			pos   = node.pTag;
 			
-			dTree.add(new DEPNode(id, form, lemma, pos, node.c2d.d_feats));
+			dNode = new DEPNode(id, form, lemma, pos, node.c2d.d_feats);
+			dTree.add(dNode);
 		}
 		
+		dTree.initXHeads();
 		return dTree;
 	}
 	
@@ -1457,6 +1455,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private void addPBArgs(DEPTree dTree, CTTree cTree)
 	{
 		CTNode root = cTree.getRoot();
+		dTree.initSHeads();
 		
 		if (root.pbArgs != null)
 		{
@@ -1512,8 +1511,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 				
 				if (ancestorHasSHead(node, head, label))
 					remove.add(arc);
-				else if (rnrHasSHead(node, head, label))
-					remove.add(arc);
+			//	else if (rnrHasSHead(node, head, label))
+			//		remove.add(arc);
 			}
 			
 			node.removeSHeads(remove);
@@ -1535,7 +1534,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return false;
 	}
 	
-	private boolean rnrHasSHead(DEPNode dNode, DEPNode sHead, String label)
+	protected boolean rnrHasSHead(DEPNode dNode, DEPNode sHead, String label)
 	{
 		for (DEPArc rnr : dNode.getXHeads(DEPLibEn.DEP_RNR))
 		{

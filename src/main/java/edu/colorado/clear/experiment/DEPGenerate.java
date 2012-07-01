@@ -110,7 +110,7 @@ public class DEPGenerate extends DEPTrain
 		{
 			gHeads = tree.getHeads();
 			parser.parse(tree);
-			fout.println(tree+"\n");
+			fout.println(tree.toStringDEP()+"\n");
 			tree.addScoreCounts(gHeads, counts);
 			if (i%1000 == 0)	System.out.print(".");
 		}

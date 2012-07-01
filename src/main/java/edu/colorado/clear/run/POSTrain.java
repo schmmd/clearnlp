@@ -263,6 +263,7 @@ public class POSTrain extends AbstractRun
 		POSTagger[] taggers;
 		IntOpenHashSet sDev = new IntOpenHashSet();
 		
+		
 		for (devId=0; devId<size; devId++)
 		{
 			System.out.printf("<== Cross validation %d ==>\n", devId);
@@ -271,6 +272,10 @@ public class POSTrain extends AbstractRun
 			taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, sDev);
 			crossValidatePredict(trnFiles[devId], reader, taggers, list);
 		}
+		
+	/*	PrintStream fout = UTOutput.createPrintBufferedFileStream("cosine-sims.txt");
+		for (int i=0; i<list.size(); i++)	fout.println(list.get(i));
+		fout.close();*/
 		
 		int n = (int)Math.round(list.size() * 0.05);
 		double threshold = (double)Math.ceil(list.get(n)*1000)/1000;
@@ -286,9 +291,10 @@ public class POSTrain extends AbstractRun
 	{
 		int[] local   = new int[MODEL_SIZE];
 		int[] correct = new int[MODEL_SIZE];
+		int modId, total = 0;
 		POSNode[] nodes;
 		String[]  gold;
-		int modId, total = 0;
+		double sim;
 		
 		System.out.println("Predicting: "+devFile);
 		reader.open(UTInput.createBufferedFileReader(devFile));
@@ -306,7 +312,10 @@ public class POSTrain extends AbstractRun
 			}
 			
 			if (local[0] > local[1])
-				list.add(taggers[0].getCosineSimilarity(nodes));
+			{
+				sim = taggers[0].getCosineSimilarity(nodes);
+				if (sim > 0)	list.add(sim);
+			}
 		}
 		
 		reader.close();

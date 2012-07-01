@@ -23,7 +23,6 @@
 */
 package edu.colorado.clear.dependency.srl;
 
-import java.io.BufferedReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -31,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
+import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
 
 import edu.colorado.clear.classification.model.StringModel;
@@ -43,6 +43,7 @@ import edu.colorado.clear.dependency.DEPTree;
 import edu.colorado.clear.engine.AbstractTool;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.feature.xml.SRLFtrXml;
+import edu.colorado.clear.util.UTOutput;
 import edu.colorado.clear.util.map.Prob1DMap;
 import edu.colorado.clear.util.pair.IntIntPair;
 import edu.colorado.clear.util.pair.StringIntPair;
@@ -69,6 +70,7 @@ public class SRLParser extends AbstractTool
 	protected DEPTree				d_tree;
 	protected int					i_pred;
 	protected int					i_arg;
+	protected int					n_preds;
 	protected IntIntPair			n_trans;
 	protected PrintStream			f_trans;
 	
@@ -81,6 +83,8 @@ public class SRLParser extends AbstractTool
 	
 	protected Prob1DMap		m_down, m_up;
 	protected Set<String>	s_down, s_up;
+	
+	protected IntObjectOpenHashMap<IntOpenHashSet> m_coverage;
 	
 	/** Constructs a semantic role labeler for collecting. */
 	public SRLParser()
@@ -100,22 +104,12 @@ public class SRLParser extends AbstractTool
 		s_up     = sUp;
 	}
 	
-	/** Constructs a semantic role labeler for cross-validation. */
+	/** Constructs a semantic role labeler for predicting. */
 	public SRLParser(SRLFtrXml xml, StringModel[] models, Set<String> sDown, Set<String> sUp)
 	{
 		i_flag   = FLAG_PREDICT;
 		f_xml    = xml;
 		s_models = models;
-		s_down   = sDown;
-		s_up     = sUp;
-	}
-	
-	/** Constructs a semantic role labeler for predicting. */
-	public SRLParser(SRLFtrXml xml, Set<String> sDown, Set<String> sUp)
-	{
-		i_flag   = FLAG_PREDICT;
-		f_xml    = xml;
-		s_models = new StringModel[MODEL_SIZE];
 		s_down   = sDown;
 		s_up     = sUp;
 	}
@@ -138,16 +132,20 @@ public class SRLParser extends AbstractTool
 		f_trans = fout;
 	}
 	
-	/** Loads a semantic role labeling model from the specific input-reader. */
-	public void loadModel(BufferedReader fin, int idx)
-	{
-		s_models[idx] = new StringModel(fin);
-	}
-	
 	/** Saves a semantic role labeling model to the specific output-stream. */
 	public void saveModel(PrintStream fout, int idx)
 	{
 		s_models[idx].save(fout);
+	}
+	
+	public void saveDownSet(PrintStream fout)
+	{
+		UTOutput.printSet(fout, s_down);
+	}
+	
+	public void saveUpSet(PrintStream fout)
+	{
+		UTOutput.printSet(fout, s_up);
 	}
 	
 	/** @return the semantic role labeling models. */
@@ -164,12 +162,15 @@ public class SRLParser extends AbstractTool
 		s_skip  = new IntOpenHashSet();
 		l_argns = new ArrayList<String>();
 		n_trans = new IntIntPair(0, 0);
+		n_preds = 0;
 		
 		if (i_flag != FLAG_PREDICT)
 			g_heads = tree.getSHeads();
 
 		initArcs();
 		tree.clearSHeads();
+		
+	//	m_coverage = new IntObjectOpenHashMap<IntOpenHashSet>();
 	}
 	
 	/** @return the ID of the next predicate. */
@@ -310,6 +311,33 @@ public class SRLParser extends AbstractTool
 	{
 		return n_trans;
 	}
+	
+	public int getNumPredicates()
+	{
+		return n_preds;
+	}
+	
+	public IntIntPair getArgCoverage(StringIntPair[][] gHeads)
+	{
+		IntIntPair p = new IntIntPair(0, 0);
+		int argId, size = gHeads.length;
+		StringIntPair[] preds;
+		
+		for (argId=1; argId<size; argId++)
+		{
+			preds = gHeads[argId];
+			
+			for (StringIntPair pred : preds)
+			{
+				if (m_coverage.get(pred.i).contains(argId))
+					p.i1++;
+			}
+			
+			p.i2 += preds.length;
+		}
+		
+		return p;
+	}
 
 	/** Labels the dependency tree. */
 	public void label(DEPTree tree)
@@ -348,10 +376,28 @@ public class SRLParser extends AbstractTool
 			{
 				labelAux(pred, d_lca);
 				d_lca = d_lca.getHead();
+				
+			/*	if (d_lca == null)
+					break;
+				else
+				{
+					if (!s_skip.contains(d_lca.id))
+					{
+						i_arg = d_lca.id;
+						addArgument(getLabel(getDirIndex()));	
+					}
+					
+					if (pred.isDependentOf(d_lca))
+						continue;
+					else if (!s_up.contains(getDUPath(d_lca, pred)))
+						break;
+				}*/
 			}
-			while (d_lca != null && (pred.isDependentOf(d_lca) || s_up.contains(getDUPath(d_lca, pred))));
+			while (d_lca != null);// && (pred.isDependentOf(d_lca) || s_up.contains(getDUPath(d_lca, pred))));
 			
+			n_preds++;
 			i_pred = getNextPredId(i_pred);
+		//	m_coverage.put(i_pred, new IntOpenHashSet(s_skip));
 		}
 	}
 	
@@ -381,7 +427,7 @@ public class SRLParser extends AbstractTool
 				i_arg = arg.id;
 				addArgument(getLabel(getDirIndex()));
 				
-				if (i_pred == d_lca.id && s_down.contains(getDUPath(pred, arg)))
+			//	if (i_pred == d_lca.id)// && s_down.contains(getDUPath(pred, arg)))
 					labelDown(pred, arg.getDependents());
 			}
 		}

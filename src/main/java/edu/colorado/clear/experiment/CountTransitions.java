@@ -23,25 +23,68 @@
 */
 package edu.colorado.clear.experiment;
 
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Set;
 
 import edu.colorado.clear.dependency.DEPArc;
 import edu.colorado.clear.dependency.DEPLibEn;
 import edu.colorado.clear.dependency.DEPNode;
+import edu.colorado.clear.dependency.DEPParser;
 import edu.colorado.clear.dependency.DEPTree;
+import edu.colorado.clear.reader.DEPReader;
 import edu.colorado.clear.reader.SRLReader;
 import edu.colorado.clear.util.UTInput;
+import edu.colorado.clear.util.UTOutput;
 
 public class CountTransitions
 {
 	final int N = 10;
 	
-	public CountTransitions(String inputFile, boolean isGold)
+	public void countTransitions(String inputFile, boolean isSkip)
+	{
+		PrintStream fout = UTOutput.createPrintBufferedFileStream("tmp.txt");
+		int[] counts = new int[10];
+		int[] totals = new int[10];
+		
+		DEPReader reader = new DEPReader(0, 1, 2, 3, 4, 5, 6);
+		DEPParser parser = new DEPParser(fout);
+		DEPTree   tree;
+		int i, n=0, count, index;
+		
+		reader.open(UTInput.createBufferedFileReader(inputFile));
+		
+		while ((tree = reader.next()) != null)
+		{
+			if (isSkip && tree.getNonProjectiveSet().isEmpty())
+				continue;
+			
+			parser.parse(tree);
+			n++;
+
+			count = parser.getNumTransitions();
+			index = (tree.size() > 101) ? 9 : (tree.size()-2) / 10;
+			
+			counts[index] += count;
+			totals[index] += 1;
+		}
+
+		fout.close();
+		reader.close();
+		
+		System.out.println("# of trees: "+n);
+		
+		for (i=0; i<9; i++)
+			System.out.printf("<= %2d: %4.2f (%d/%d)\n", (i+1)*10, (double)counts[i]/totals[i], counts[i], totals[i]);
+		
+		System.out.printf(" > %2d: %4.2f (%d/%d)\n", i*10, (double)counts[i]/totals[i], counts[i], totals[i]);
+	}
+	
+	public void countArguments(String inputFile, boolean isGold)
 	{
 		SRLReader reader;
-		if (isGold)	reader = new SRLReader(0, 1, 2, 4, 6, 7,  9, 12);
-		else		reader = new SRLReader(0, 1, 3, 5, 6, 8, 10, 12);
+		if (isGold)	reader = new SRLReader(0, 1, 2, 4, 6, 7,  8, 12);
+		else		reader = new SRLReader(0, 1, 3, 5, 6, 9, 10, 12);
 
 		DEPTree tree;
 		int[]   counts = new int[2];
@@ -112,6 +155,9 @@ public class CountTransitions
 	
 	static public void main(String[] args)
 	{
-		new CountTransitions(args[0], Boolean.parseBoolean(args[1]));
+		CountTransitions c = new CountTransitions();
+		
+		c.countArguments(args[0], Boolean.parseBoolean(args[1]));
+	//	c.countTransitions(args[0], Boolean.parseBoolean(args[1]));
 	}
 }

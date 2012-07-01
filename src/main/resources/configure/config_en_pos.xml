@@ -7,8 +7,6 @@
 	<train>
 		<algorithm name="liblinear" solver="0" cost="0.1" eps="0.1" bias="0.9" note="specific"/>
 		<algorithm name="liblinear" solver="0" cost="0.2" eps="0.1" bias="0.4" note="general"/>
-	<!--<algorithm name="liblinear" solver="0" cost="0.1" eps="0.1" bias="0.9"/>
-		<algorithm name="liblinear" solver="0" cost="0.2" eps="0.1" bias="0.4"/>-->
 		<threads>8</threads>
 	</train>
 </configuration>

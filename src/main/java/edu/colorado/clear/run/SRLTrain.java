@@ -53,8 +53,8 @@ import edu.colorado.clear.util.pair.Pair;
  */
 public class SRLTrain extends AbstractRun
 {
-	protected final String ENTRY_FEATURE = "FEATURE";
-	protected final String ENTRY_MODEL   = "MODEL";
+	static public final String ENTRY_SET_DOWN = "SET_DOWN";
+	static public final String ENTRY_SET_UP   = "SET_UP";
 	
 	@Option(name="-i", usage="the directory containg training files (input; required)", required=true, metaVar="<directory>")
 	protected String s_trainDir;
@@ -107,12 +107,24 @@ public class SRLTrain extends AbstractRun
 		PrintStream fout;
 		int i;
 		
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
+		IOUtils.copy(new FileInputStream(featureXml), zout);
+		zout.closeArchiveEntry();
+		
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_SET_DOWN));
+		fout = new PrintStream(new BufferedOutputStream(zout));
+		parser.saveDownSet(fout);
+		fout.close();
+		zout.closeArchiveEntry();
+		
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_SET_UP));
+		fout = new PrintStream(new BufferedOutputStream(zout));
+		parser.saveUpSet(fout);
+		fout.close();
+		zout.closeArchiveEntry();
+		
 		for (i=0; i<SRLParser.MODEL_SIZE; i++)
 		{
-			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE+"."+i));
-			IOUtils.copy(new FileInputStream(featureXml), zout);
-			zout.closeArchiveEntry();
-			
 			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL+"."+i));
 			fout = new PrintStream(new BufferedOutputStream(zout));
 			parser.saveModel(fout, i);

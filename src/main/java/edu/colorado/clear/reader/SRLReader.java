@@ -85,6 +85,7 @@ public class SRLReader extends DEPReader
 			if (lines == null)	return null;
 			
 			tree = getDEPTree(lines);
+			tree.initSHeads();
 			if (i_sheads >= 0)	setSHeads(lines, tree);
 		}
 		catch (Exception e) {e.printStackTrace();}

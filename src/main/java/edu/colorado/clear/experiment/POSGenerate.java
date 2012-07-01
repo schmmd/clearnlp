@@ -31,7 +31,6 @@ import org.w3c.dom.Element;
 import com.carrotsearch.hppc.IntOpenHashSet;
 
 import edu.colorado.clear.feature.xml.POSFtrXml;
-import edu.colorado.clear.morphology.EnglishMPAnalyzer;
 import edu.colorado.clear.pos.POSTagger;
 import edu.colorado.clear.reader.POSReader;
 import edu.colorado.clear.run.POSPredict;
@@ -41,13 +40,12 @@ import edu.colorado.clear.util.UTXml;
 
 public class POSGenerate extends POSTrain
 {
-	public POSGenerate(String configXml, String featureXml, String dictFile, String trnDir, String outDir, double threshold) throws Exception
+	public POSGenerate(String configXml, String featureXml, String trnDir, String outDir, double threshold) throws Exception
 	{
 		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader   reader = (POSReader)getReader(eConfig);
 		POSFtrXml      xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
-		EnglishMPAnalyzer morph = new EnglishMPAnalyzer(dictFile);
 
 		IntOpenHashSet sDev = new IntOpenHashSet();
 		int devId, size = trnFiles.length;
@@ -63,7 +61,7 @@ public class POSGenerate extends POSTrain
 			sDev.clear();	sDev.add(devId);
 			
 			taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, sDev);
-			POSPredict.predict(trnFiles[devId], outDir+File.separator+devFile+".tagged", reader, taggers, threshold, morph);
+			POSPredict.predict(trnFiles[devId], outDir+File.separator+devFile+".tagged", reader, taggers, threshold);
 		}
 	}
 	
@@ -71,14 +69,13 @@ public class POSGenerate extends POSTrain
 	{
 		String configXml  = args[0];
 		String featureXml = args[1];
-		String dictFile   = args[2];
-		String trnDir     = args[3];
-		String outDir     = args[4];
-		double threshold  = Double.parseDouble(args[5]);
+		String trnDir     = args[2];
+		String outDir     = args[3];
+		double threshold  = Double.parseDouble(args[4]);
 		
 		try
 		{
-			new POSGenerate(configXml, featureXml, dictFile, trnDir, outDir, threshold);
+			new POSGenerate(configXml, featureXml, trnDir, outDir, threshold);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}

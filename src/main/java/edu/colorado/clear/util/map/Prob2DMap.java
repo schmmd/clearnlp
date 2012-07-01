@@ -61,6 +61,16 @@ public class Prob2DMap extends HashMap<String,ObjectIntOpenHashMap<String>>
 		i_total++;
 	}
 	
+	public int getTotal1D(String key)
+	{
+		return containsKey(key) ? get(key).get(TOTAL) : 0;
+	}
+	
+	public int getTotal2D()
+	{
+		return i_total;
+	}
+	
 	public StringDoublePair[] getProb1D(String key)
 	{
 		Pair<Double,StringDoublePair[]> p = getProb1DAux(key);

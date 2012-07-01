@@ -142,14 +142,17 @@ public class DEPTree extends ArrayList<DEPNode>
 		return xHeads;
 	}
 	
-	/** Clears dependency head information (including secondary dependencies) of all nodes in this tree. */
+	/** Clears dependency head information (excluding secondary dependencies) of all nodes in this tree. */
 	public void clearHeads()
 	{
 		for (DEPNode node : this)
-		{
-			node.d_head .clear();
+			node.d_head.clear();
+	}
+	
+	public void clearXHeads()
+	{
+		for (DEPNode node : this)
 			node.x_heads.clear();
-		}
 	}
 	
 	/** Clears semantic head information of all nodes in this tree. */
@@ -165,7 +168,7 @@ public class DEPTree extends ArrayList<DEPNode>
 		DEPNode node, head;
 		
 		for (i=0; i<size; i++)
-			get(i).l_dependents.clear();
+			get(i).l_dependents = new ArrayList<DEPArc>();
 		
 		for (i=1; i<size; i++)
 		{
@@ -173,6 +176,22 @@ public class DEPTree extends ArrayList<DEPNode>
 			head = node.getHead();
 			head.addDependent(node, node.getLabel());
 		}
+	}
+	
+	public void initXHeads()
+	{
+		int i, size = size();
+		
+		for (i=0; i<size; i++)
+			get(i).x_heads = new ArrayList<DEPArc>();
+	}
+	
+	public void initSHeads()
+	{
+		int i, size = size();
+		
+		for (i=0; i<size; i++)
+			get(i).s_heads = new ArrayList<DEPArc>();
 	}
 	
 	public List<List<DEPArc>> getArgumentList()
@@ -359,6 +378,34 @@ public class DEPTree extends ArrayList<DEPNode>
 		{
 			build.append(DEPReader.DELIM_SENTENCE);
 			build.append(get(i).toStringDEP());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringCoNLL()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringCoNLL());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringSRL()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringSRL());
 		}
 
 		return build.substring(DEPReader.DELIM_SENTENCE.length());

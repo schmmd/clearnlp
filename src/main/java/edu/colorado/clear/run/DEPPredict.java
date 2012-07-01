@@ -137,19 +137,20 @@ public class DEPPredict extends AbstractRun
 	/** @param devId if {@code -1}, train the models using all training files. */
 	static public void predict(String inputFile, String outputPath, DEPReader reader, DEPParser parser) throws Exception
 	{
-		double[] time = new double[10];
+		long[] time = new long[10];
 		int[] nTotal = new int[10];
-		double st, et, dTotal = 0;
-		int n, index;
+		long st, et, dTotal = 0;
+		int i, n, index;
 		DEPTree tree;
 		
 		System.out.println("Predicting: "+inputFile);
 		reader.open(UTInput.createBufferedFileReader(inputFile));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputPath);
 		
-		for (n=0; (tree = reader.next()) != null; n++)
+		for (n=0; true; n++)
 		{
 			st = System.currentTimeMillis();
+			if ((tree = reader.next()) == null)	break;
 			parser.parse(tree);
 			et = System.currentTimeMillis();
 			
@@ -168,11 +169,11 @@ public class DEPPredict extends AbstractRun
 		
 		System.out.println("\nParsing time per sentence length");
 		
-		for (int i=0; i<9; i++)
-			System.out.printf("<= %2d: %4.2f (%1.0f/%d)\n", (i+1)*10, time[i]/nTotal[i], time[i], nTotal[i]);
+		for (i=0; i<9; i++)
+			System.out.printf("<= %2d: %4.2f (%d/%d)\n", (i+1)*10, (double)time[i]/nTotal[i], time[i], nTotal[i]);
 		
-		System.out.printf(" > %2d: %4.2f (%1.0f/%d)\n", 90, time[9]/nTotal[9], time[9], nTotal[9]);
-		System.out.printf("\nAverage parsing time: %4.2f (ms) (%1.0f/%d)\n", dTotal/n, dTotal, n);
+		System.out.printf(" > %2d: %4.2f (%d/%d)\n", i*10, (double)time[9]/nTotal[9], time[9], nTotal[9]);
+		System.out.printf("\nAverage parsing time: %4.2f (ms) (%d/%d)\n", (double)dTotal/n, dTotal, n);
 	}
 	
 	static public void main(String[] args)

@@ -68,7 +68,7 @@ public class C2DConvert extends AbstractRun
 	private String s_dictFile = null;
 	@Option(name="-et", usage="the parse-file extension (default: parse)", required=false, metaVar="<extension>")
 	private String s_parseExt = "parse";
-	@Option(name="-ep", usage="the propb-file extension (default: prop)", required=false, metaVar="<extension>")
+	@Option(name="-ep", usage="the prop-file extension (default: prop)", required=false, metaVar="<extension>")
 	private String s_propExt = "prop";
 	@Option(name="-es", usage="the sense-file extension (default: sense)", required=false, metaVar="<extension>")
 	private String s_senseExt = "sense";
@@ -372,6 +372,9 @@ public class C2DConvert extends AbstractRun
 		dummy.setHead(tree.get(0), "NULL");
 		
 		tree.add(dummy);
+		tree.initXHeads();
+		tree.initSHeads();
+		
 		return tree;
 	}
 

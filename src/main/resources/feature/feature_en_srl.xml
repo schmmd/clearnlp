@@ -1,6 +1,6 @@
 <!--Feature template for dependency parsing in English -->
 <feature_template>
-	<cutoff label="2" feature="3" down="4" up="0"/>
+	<cutoff label="2" feature="3" down="5" up="0"/>
 
 	<!-- basic features -->
 	<feature n="1" f0="a:f"/>

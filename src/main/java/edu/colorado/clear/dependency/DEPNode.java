@@ -103,16 +103,15 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		this.pos     = pos;
 		this.namex   = AbstractColumnReader.BLANK_COLUMN;
 		d_feats      = feats;
-
 		d_head       = new DEPArc();
-		x_heads      = new ArrayList<DEPArc>();
-		s_heads      = new ArrayList<DEPArc>();
-		l_dependents = new ArrayList<DEPArc>();
+	//	x_heads      = new ArrayList<DEPArc>();
+	//	s_heads      = new ArrayList<DEPArc>();
+	//	l_dependents = new ArrayList<DEPArc>();
 	}
 	
 	/**
-	 * Returns {@code true} if this node is an artifical root.
-	 * @return {@code true} if this node is an artifical root.
+	 * Returns {@code true} if this node is an artificial root.
+	 * @return {@code true} if this node is an artificial root.
 	 */
 	public boolean isRoot()
 	{
@@ -585,6 +584,41 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 			build.append(AbstractColumnReader.BLANK_COLUMN);	build.append(DEPReader.DELIM_COLUMN);
 			build.append(AbstractColumnReader.BLANK_COLUMN);
 		}
+		
+		return build.toString();
+	}
+	
+	public String toStringCoNLL()
+	{
+		StringBuilder build = new StringBuilder();
+		
+		build.append(id);						build.append(DEPReader.DELIM_COLUMN);
+		build.append(form);						build.append(DEPReader.DELIM_COLUMN);
+		build.append(lemma);					build.append(DEPReader.DELIM_COLUMN);
+		build.append(pos);						build.append(DEPReader.DELIM_COLUMN);
+		build.append(pos);						build.append(DEPReader.DELIM_COLUMN);
+		build.append(DEPReader.BLANK_COLUMN);	build.append(DEPReader.DELIM_COLUMN);
+		
+		if (hasHead())
+		{
+			build.append(d_head.node.id);	build.append(DEPReader.DELIM_COLUMN);
+			build.append(d_head.label);
+		}
+		else
+		{
+			build.append(AbstractColumnReader.BLANK_COLUMN);	build.append(DEPReader.DELIM_COLUMN);
+			build.append(AbstractColumnReader.BLANK_COLUMN);
+		}
+		
+		return build.toString();
+	}
+	
+	public String toStringSRL()
+	{
+		StringBuilder build = new StringBuilder();
+		
+		build.append(toStringDEP());		build.append(DEPReader.DELIM_COLUMN);
+		build.append(toString(s_heads));
 		
 		return build.toString();
 	}
