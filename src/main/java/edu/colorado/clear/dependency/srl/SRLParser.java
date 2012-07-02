@@ -427,7 +427,7 @@ public class SRLParser extends AbstractTool
 				i_arg = arg.id;
 				addArgument(getLabel(getDirIndex()));
 				
-			//	if (i_pred == d_lca.id)// && s_down.contains(getDUPath(pred, arg)))
+				if (i_pred == d_lca.id && s_down.contains(getDUPath(pred, arg)))
 					labelDown(pred, arg.getDependents());
 			}
 		}
