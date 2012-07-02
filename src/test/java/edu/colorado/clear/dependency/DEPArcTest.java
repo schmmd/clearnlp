@@ -27,23 +27,24 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import edu.colorado.clear.dependency.DEPArc;
-import edu.colorado.clear.dependency.DEPNode;
-import edu.colorado.clear.reader.AbstractReader;
-
-public class DPHeadTest
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class DEPArcTest
 {
 	@Test
 	public void featTestSetters()
 	{
-		DEPArc head  = new DEPArc();
+		DEPArc  head  = new DEPArc();
 		DEPNode node1 = new DEPNode();
 		DEPNode node2 = new DEPNode();
 		
 		assertEquals(head.getNode() , null);
-		assertEquals(head.getLabel(), AbstractReader.DUMMY_TAG);
+		assertEquals(head.getLabel(), null);
 		
 		head.set(node1, "SBJ");
+		assertEquals(head.getNode(), node1);
+		assertEquals(true, head.isNode (node1));
+		assertEquals(true, head.isLabel("SBJ"));
+		
 		assertEquals(1, head.compareTo(node1, "SBJ"));
 		assertEquals(2, head.compareTo(node1, "OBJ"));
 		assertEquals(0, head.compareTo(node2, "SBJ"));

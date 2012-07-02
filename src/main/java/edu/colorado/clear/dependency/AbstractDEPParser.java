@@ -35,7 +35,7 @@ import edu.colorado.clear.classification.model.StringModel;
 import edu.colorado.clear.classification.prediction.StringPrediction;
 import edu.colorado.clear.classification.train.StringTrainSpace;
 import edu.colorado.clear.classification.vector.StringFeatureVector;
-import edu.colorado.clear.engine.AbstractTool;
+import edu.colorado.clear.engine.AbstractEngine;
 import edu.colorado.clear.feature.xml.DEPFtrXml;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.util.UTArray;
@@ -49,7 +49,7 @@ import edu.colorado.clear.util.triple.Triple;
  * @since v0.1
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-abstract public class AbstractDEPParser extends AbstractTool
+abstract public class AbstractDEPParser extends AbstractEngine
 {
 	static final protected String LB_LEFT		= "L";
 	static final protected String LB_RIGHT		= "R";

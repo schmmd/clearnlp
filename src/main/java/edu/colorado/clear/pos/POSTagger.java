@@ -38,7 +38,7 @@ import edu.colorado.clear.classification.model.StringModel;
 import edu.colorado.clear.classification.prediction.StringPrediction;
 import edu.colorado.clear.classification.train.StringTrainSpace;
 import edu.colorado.clear.classification.vector.StringFeatureVector;
-import edu.colorado.clear.engine.AbstractTool;
+import edu.colorado.clear.engine.AbstractEngine;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.feature.xml.POSFtrXml;
 import edu.colorado.clear.reader.AbstractColumnReader;
@@ -55,7 +55,7 @@ import edu.colorado.clear.util.pair.StringDoublePair;
  * @since v0.1
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class POSTagger extends AbstractTool
+public class POSTagger extends AbstractEngine
 {
 	private byte				i_flag;
 	private Set<String>			s_lemmas;

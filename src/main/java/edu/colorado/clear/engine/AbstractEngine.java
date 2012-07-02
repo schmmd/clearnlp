@@ -29,7 +29,7 @@ import edu.colorado.clear.feature.xml.FtrTemplate;
 import edu.colorado.clear.feature.xml.FtrToken;
 import edu.colorado.clear.reader.AbstractColumnReader;
 
-abstract public class AbstractTool
+abstract public class AbstractEngine
 {
 	static public final byte FLAG_LEXICA		= 0;
 	static public final byte FLAG_TRAIN			= 1;
@@ -47,7 +47,7 @@ abstract public class AbstractTool
 		return vector;
 	}
 
-	/** Called by {@link AbstractTool#getFeatureVector(AbstractFtrXml)}. */
+	/** Called by {@link AbstractEngine#getFeatureVector(AbstractFtrXml)}. */
 	private void addFeatures(StringFeatureVector vector, FtrTemplate template)
 	{
 		FtrToken[] tokens = template.tokens;

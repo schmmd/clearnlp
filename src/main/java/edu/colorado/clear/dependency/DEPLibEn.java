@@ -30,9 +30,11 @@ package edu.colorado.clear.dependency;
  */
 public class DEPLibEn extends DEPLib
 {
+	/** The Stanford dependency label for passive. */
 	static public final String DEP_PASS	= "pass";
+	/** The Stanford dependency label for subjects. */
 	static public final String DEP_SUBJ	= "subj";
-
+	
 	/** The Stanford dependency label for adjectival complements. */
 	static public final String DEP_ACOMP		= "acomp";
 	/** The Stanford dependency label for adverbial clause modifiers. */

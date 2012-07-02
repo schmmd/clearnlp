@@ -28,63 +28,28 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import edu.colorado.clear.dependency.DEPFeat;
-import edu.colorado.clear.dependency.DEPLib;
-import edu.colorado.clear.dependency.DEPNode;
-import edu.colorado.clear.reader.AbstractReader;
 import edu.colorado.clear.reader.DEPReader;
 
-public class DPNodeTest
+/** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
+public class DEPFeatTest
 {
 	@Test
-	public void featTestSetters()
+	public void testDEPFeat()
 	{
-		// initialization
-		DEPNode root = new DEPNode();
+		DEPFeat feat = new DEPFeat();
+		assertEquals(DEPReader.BLANK_COLUMN, feat.toString());
 		
-		assertEquals(DEPLib.NULL_ID , root.id);
-		assertEquals(AbstractReader.DUMMY_TAG, root.form);
-		assertEquals(AbstractReader.DUMMY_TAG, root.lemma);
-		assertEquals(AbstractReader.DUMMY_TAG, root.pos);
-		assertEquals(AbstractReader.DUMMY_TAG, root.getLabel());
-		assertEquals(null, root.getHead());
-
-		root.initRoot();
+		feat = new DEPFeat(DEPReader.BLANK_COLUMN);
+		assertEquals(DEPReader.BLANK_COLUMN, feat.toString());
 		
-		assertEquals(DEPLib.ROOT_ID , root.id);
-		assertEquals(DEPLib.ROOT_TAG, root.form);
-		assertEquals(DEPLib.ROOT_TAG, root.lemma);
-		assertEquals(DEPLib.ROOT_TAG, root.pos);
-		assertEquals(AbstractReader.DUMMY_TAG, root.getLabel());
+		feat.add("lst=choi|fst=jinho");
+		assertEquals("fst=jinho|lst=choi", feat.toString());
 		
-		DEPNode sbj  = new DEPNode(1, "Jinho", "jinho", "NNP", new DEPFeat("fst=jinho|lst=choi"));
-		DEPNode verb = new DEPNode(2, "is", "be", "VBZ", new DEPFeat(DEPReader.BLANK_COLUMN));
-		DEPNode obj  = new DEPNode(3, "awesome", "awesome", "JJ", new DEPFeat("_"));
+		assertEquals("choi" , feat.get("lst"));
+		assertEquals("jinho", feat.get("fst"));
+		assertEquals(null   , feat.get("mid"));
 		
-		assertEquals(1      , sbj.id);
-		assertEquals("Jinho", sbj.form);
-		assertEquals("jinho", sbj.lemma);
-		assertEquals("NNP"  , sbj.pos);
-		assertEquals("choi" , sbj.getFeat("lst"));
-		assertEquals(null   , sbj.getFeat("mid"));
-		
-		// getters and setters
-		assertEquals(null, verb.getHead());
-		
-		verb.setHead(root, "ROOT");
-		sbj .setHead(verb, "SBJ");
-		obj .setHead(verb, "OBJ");
-		
-		assertEquals(root  , verb.getHead());
-		assertEquals("ROOT", verb.getLabel());
-		
-		obj.setHead(verb, "PRD");
-		
-		assertEquals(verb , obj.getHead());
-		assertEquals("PRD", obj.getLabel());
-		
-		obj.setHead(root, "OBJ");
-		
-		assertEquals(root , obj.getHead());
-		assertEquals("OBJ", obj.getLabel());
+		feat.add(DEPReader.BLANK_COLUMN);
+		assertEquals("fst=jinho|lst=choi", feat.toString());
 	}
 }
