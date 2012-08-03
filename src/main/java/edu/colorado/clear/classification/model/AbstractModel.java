@@ -29,7 +29,6 @@ import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.List;
 
-import com.carrotsearch.hppc.IntDoubleOpenHashMap;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 
@@ -242,7 +241,7 @@ abstract public class AbstractModel
 	{
 		double[] scores = Arrays.copyOf(d_weights, n_labels);
 		int      i, index, weightIndex, label, size = x.size();
-		double   weight = 1, score;
+		double   weight = 1;
 		
 		for (i=0; i<size; i++)
 		{
@@ -254,11 +253,9 @@ abstract public class AbstractModel
 				for (label=0; label<n_labels; label++)
 				{
 					weightIndex = getWeightIndex(label, index);
-					score = d_weights[weightIndex];
-					scores[label] += x.hasWeight() ? score * weight : score;
 					
-				//	if (x.hasWeight())	scores[label] += score * weight;
-				//	else				scores[label] += score;
+					if (x.hasWeight())	scores[label] += d_weights[weightIndex] * weight;
+					else				scores[label] += d_weights[weightIndex];
 				}
 			}
 		}
