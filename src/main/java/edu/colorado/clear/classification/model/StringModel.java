@@ -210,9 +210,8 @@ public class StringModel extends AbstractModel
 		{
 			type  = vector.getType(i);
 			value = vector.getValue(i);
-			map   = m_features.get(type);
 			
-			if (map != null && (index = map.get(value)) > 0)
+			if ((map = m_features.get(type)) != null && (index = map.get(value)) > 0)
 			{
 				if (sparse.hasWeight())
 					sparse.addFeature(index, vector.getWeight(i));

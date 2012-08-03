@@ -54,8 +54,6 @@ public class DEPFtrXml extends AbstractFtrXml
 	static public final String F_LEMMA	= "m";
 	static public final String F_POS	= "p";
 	static public final String F_DEPREL	= "d";
-	static public final String F_LMDR	= R_LMD+"r";
-	static public final String F_RMDR	= R_RMD+"r";
 	static public final String F_LNPL	= "lnpl";	// left-nearest punctuation of lambda
 	static public final String F_RNPL	= "rnpl";	// right-nearest punctuation of lambda
 	static public final String F_LNPB	= "lnpb";	// left-nearest punctuation of beta
@@ -65,7 +63,7 @@ public class DEPFtrXml extends AbstractFtrXml
 	static public final Pattern P_BOOLEAN = Pattern.compile("^b(\\d+)$");
 	
 	static protected final Pattern P_REL	= Pattern.compile(R_H+"|"+R_LMD+"|"+R_RMD);
-	static protected final Pattern P_FIELD	= Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_DEPREL+"|"+F_LMDR+"|"+F_RMDR+"|"+F_LNPL+"|"+F_RNPL+"|"+F_LNPB+"|"+F_RNPB);
+	static protected final Pattern P_FIELD	= Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_DEPREL+"|"+F_LNPL+"|"+F_RNPL+"|"+F_LNPB+"|"+F_RNPB);
 	
 	private StringIntPair p_punc;
 	

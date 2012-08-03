@@ -601,14 +601,6 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		{
 			return node.getLabel();
 		}
-		else if (token.isField(DEPFtrXml.F_LMDR))
-		{
-			return lm_deps[node.id].label;
-		}
-		else if (token.isField(DEPFtrXml.F_RMDR))
-		{
-			return rm_deps[node.id].label;
-		}
 		else if (token.isField(DEPFtrXml.F_LNPL))
 		{
 			return getLeftNearestPunctuation (0, i_lambda);
