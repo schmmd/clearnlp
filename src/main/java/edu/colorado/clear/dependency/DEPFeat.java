@@ -40,9 +40,9 @@ public class DEPFeat extends HashMap<String,String>
 {
 	/** The delimiter between feature values ({@code ","}). */
 	static public final String DELIM_VALUES    = ",";
-	/** The delimiter between features ({@code ";"}). */
+	/** The delimiter between features ({@code "|"}). */
 	static public final String DELIM_FEATS     = "|";
-	/** The delimiter between keys and values ({@code ":"}). */
+	/** The delimiter between keys and values ({@code "="}). */
 	static public final String DELIM_KEY_VALUE = "=";
 
 	/** Constructs an empty feature map. */

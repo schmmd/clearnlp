@@ -37,6 +37,8 @@ public class DEPLibEn extends DEPLib
 	
 	/** The Stanford dependency label for adjectival complements. */
 	static public final String DEP_ACOMP		= "acomp";
+	/** The Stanford dependency label for all adverbial modifiers. */
+	static public final String DEP_ADV			= "adv";
 	/** The Stanford dependency label for adverbial clause modifiers. */
 	static public final String DEP_ADVCL		= "advcl";
 	/** The Stanford dependency label for adverbial modifiers. */
@@ -83,6 +85,8 @@ public class DEPLibEn extends DEPLib
 	static public final String DEP_META			= "meta";
 	/** The Stanford dependency label for negation modifiers. */
 	static public final String DEP_NEG			= "neg";
+	/** The Stanford dependency label for non-finite modifiers. */
+	static public final String DEP_NFMOD		= "nfmod";
 	/** The Stanford dependency label for infinitival modifiers. */
 	static public final String DEP_INFMOD		= "infmod";
 	/** The Stanford dependency label for noun phrase modifiers. */
@@ -105,6 +109,8 @@ public class DEPLibEn extends DEPLib
 	static public final String DEP_PARATAXIS 	= "parataxis";
 	/** The Stanford dependency label for participial modifiers. */
 	static public final String DEP_PARTMOD		= "partmod";
+	/** The Stanford dependency label for modifiers of prepositions. */
+	static public final String DEP_PMOD 		= "pmod";
 	/** The Stanford dependency label for prepositional complements. */
 	static public final String DEP_PCOMP 		= "pcomp";
 	/** The Stanford dependency label for objects of prepositions. */
@@ -123,6 +129,8 @@ public class DEPLibEn extends DEPLib
 	static public final String DEP_PRT 			= "prt";
 	/** The Stanford dependency label for punctuation. */
 	static public final String DEP_PUNCT		= "punct";
+	/** The Stanford dependency label for modifiers of quantifiers. */
+	static public final String DEP_QMOD			= "qmod";
 	/** The Stanford dependency label for quantifier phrase modifiers. */
 	static public final String DEP_QUANTMOD		= "quantmod";
 	/** The Stanford dependency label for relative clause modifiers. */
@@ -140,7 +148,7 @@ public class DEPLibEn extends DEPLib
 	/** The secondary dependency label for right node raising. */
 	static public final String DEP_RNR			= "rnr";
 	
-	static public final String CONLL_ADV	= "ADV";
+/*	static public final String CONLL_ADV	= "ADV";
 	static public final String CONLL_AMOD	= "AMOD";
 	static public final String CONLL_APPO	= "APPO";
 	static public final String CONLL_COORD	= "COORD";
@@ -167,5 +175,5 @@ public class DEPLibEn extends DEPLib
 	static public final String CONLL_SBJ	= "SBJ";
 	static public final String CONLL_SUB	= "SUB";
 	static public final String CONLL_VC		= "VC";
-	static public final String CONLL_XCOMP	= "XCOMP";
+	static public final String CONLL_XCOMP	= "XCOMP";*/
 }

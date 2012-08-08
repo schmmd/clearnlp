@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,7 @@ import edu.colorado.clear.morphology.MPLib;
 import edu.colorado.clear.morphology.MPLibEn;
 import edu.colorado.clear.reader.AbstractColumnReader;
 import edu.colorado.clear.util.UTArray;
+import edu.colorado.clear.util.pair.Pair;
 import edu.colorado.clear.util.pair.StringIntPair;
 
 /**
@@ -71,22 +73,28 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private Map<CTNode,Deque<CTNode>> m_xsbj;
 	private Map<String,Pattern>       m_coord;
 	
-	private byte i_type;
+	private List<Pair<String,Set<String>>> l_merge;
 	
-	public EnglishC2DConverter(HeadRuleMap headrules, byte type)
+	public EnglishC2DConverter(HeadRuleMap headrules)
 	{
 		super(headrules);
-		init(type);
+		
+		initBasic();
+		initCoord();
+		initMerge(false, false, false, false, false, "sbj=nsubj,csubj|obj=dobj,iobj");
 	}
 	
-	private void init(byte type)
+	private void initBasic()
 	{
 		s_semTags = UTArray.toSet(a_semTags);
 		s_synTags = UTArray.toSet(a_synTags);
 
-		i_type  = type;
 		m_rnr   = new HashMap<CTNode,Deque<CTNode>>();
 		m_xsbj  = new HashMap<CTNode,Deque<CTNode>>();
+	}
+	
+	private void initCoord()
+	{
 		m_coord = new HashMap<String,Pattern>();
 		
 		m_coord.put(CTLibEn.PTAG_ADJP	, Pattern.compile("^(ADJP|JJ.*|VBN|VBG)$"));
@@ -107,6 +115,44 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		m_coord.put(CTLibEn.PTAG_WHNP	, Pattern.compile("^(NN.*|WP)$"));
 		m_coord.put(CTLibEn.PTAG_WHADJP	, Pattern.compile("^(JJ.*|VBN|VBG)$"));
 		m_coord.put(CTLibEn.PTAG_WHADVP	, Pattern.compile("^(RB.*|WRB|IN)$"));
+	}
+	
+	private void initMerge(boolean adv, boolean nfmod, boolean nmod, boolean pmod, boolean qmod, String merge)
+	{
+		l_merge = new ArrayList<Pair<String,Set<String>>>();
+		
+		if (adv)	l_merge.add(getMergePair(DEPLibEn.DEP_ADV, DEPLibEn.DEP_ADVCL, DEPLibEn.DEP_ADVMOD, DEPLibEn.DEP_NPADVMOD, DEPLibEn.DEP_NEG));
+		if (nfmod)	l_merge.add(getMergePair(DEPLibEn.DEP_NFMOD, DEPLibEn.DEP_INFMOD, DEPLibEn.DEP_PARTMOD));
+		if (nmod)	l_merge.add(getMergePair(DEPLibEn.DEP_NMOD, DEPLibEn.DEP_DET, DEPLibEn.DEP_NN, DEPLibEn.DEP_NUM, DEPLibEn.DEP_POSSESSIVE, DEPLibEn.DEP_PREDET));
+		if (pmod)	l_merge.add(getMergePair(DEPLibEn.DEP_PMOD, DEPLibEn.DEP_PCOMP, DEPLibEn.DEP_POBJ));
+		if (qmod)	l_merge.add(getMergePair(DEPLibEn.DEP_QMOD, DEPLibEn.DEP_NUMBER, DEPLibEn.DEP_QUANTMOD));
+		
+		String[]    tmp;
+		String      nLabel;
+		Set<String> oLabels;
+		
+		for (String ms : merge.split("\\"+DEPFeat.DELIM_FEATS))
+		{
+			tmp     = ms.split(DEPFeat.DELIM_KEY_VALUE);
+			nLabel  = tmp[0];
+			oLabels = new HashSet<String>();
+			
+			for (String oLabel : tmp[1].split(DEPFeat.DELIM_VALUES))
+				oLabels.add(oLabel);
+					
+			l_merge.add(new Pair<String,Set<String>>(nLabel, oLabels));
+		}
+	}
+	
+	private Pair<String,Set<String>> getMergePair(String nLabel, String... oLabels)
+	{
+		Set<String> s = new HashSet<String>();
+		Pair<String,Set<String>> p = new Pair<String,Set<String>>(nLabel, s);
+		
+		for (String oLabel : oLabels)
+			s.add(oLabel);
+				
+		return p;
 	}
 
 	/**
@@ -156,8 +202,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 				continue;
 			else if (CTLibEn.RE_ICH_PPA_RNR.matcher(node.form).find())
 				mapICH(cTree, node);
-			else if (node.form.startsWith(CTLibEn.EC_EXP))
-				reloateEXP(cTree, node);
+		//	else if (node.form.startsWith(CTLibEn.EC_EXP))
+		//		reloateEXP(cTree, node);
 			else
 				removeCTNode(node);
 		}
@@ -295,8 +341,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		removeCTNode(ec);
 	}
 	
-	/** Called by {@link EnglishC2DConverter#mapEmtpyCategories(CTTree)}. */
-	private void reloateEXP(CTTree cTree, CTNode ec)
+/*	private void reloateEXP(CTTree cTree, CTNode ec)
 	{
 		int idx = ec.form.lastIndexOf("-");
 		
@@ -308,7 +353,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		}
 		
 		removeCTNode(ec);
-	}
+	}*/
 	
 	/**
 	 * @param ec empty subject.
@@ -652,14 +697,6 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return 0;
 	}
 	
-	public String getDEPLabel(CTNode C, CTNode P, CTNode p)
-	{
-		if (i_type == TYPE_STANFORD)
-			return getStanfordLabel(C, P, p);
-		else
-			return getCoNLLLabel(C, P, p);
-	}
-	
 	// ============================= Get Stanford labels ============================= 
 	
 	/**
@@ -667,7 +704,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	 * @param P the parent of {@code C}.
 	 * @param p the head of {@code P}.
 	 */
-	public String getStanfordLabel(CTNode C, CTNode P, CTNode p)
+	public String getDEPLabel(CTNode C, CTNode P, CTNode p)
 	{
 		CTNode c = C.c2d.getPhraseHead();
 		CTNode d = C.c2d.getDependencyHead();
@@ -690,7 +727,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		if (C.isPTag(CTLibEn.PTAG_UCP))
 		{
 			c.addFTags(C.getFTags());
-			return getStanfordLabel(c, P, p);
+			return getDEPLabel(c, P, p);
 		}
 		
 		// complements
@@ -1067,134 +1104,6 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return curr.isPTag(CTLibEn.PTAG_RRC) || curr.hasFTag(DEPLibEn.DEP_RCMOD) || (curr.isPTag(CTLibEn.PTAG_SBAR) && curr.containsTags("+WH.*"));
 	}
 	
-	// ============================= Get CoNLL labels =============================
-	
-	/**
-	 * @param C the current node.
-	 * @param P the parent of {@code C}.
-	 * @param p the head of {@code P}.
-	 */
-	public String getCoNLLLabel(CTNode C, CTNode P, CTNode p)
-	{
-		CTNode c = C.c2d.getPhraseHead();
-		CTNode d = C.c2d.getDependencyHead();
-		String label;
-		
-		// function tags
-		if (hasAdverbialTag(C))
-			return DEPLibEn.CONLL_ADV;
-
-		if ((label = getCoNLLFunctionTag(C)) != null)
-			return label;
-		
-		// coordination
-		if (C.isPTag(CTLibEn.PTAG_UCP))
-		{
-			c.addFTags(C.getFTags());
-			return getCoNLLLabel(c, P, p);
-		}
-		
-		// complements
-		if (P.isPTagAny(CTLibEn.PTAG_VP, CTLibEn.PTAG_SINV, CTLibEn.PTAG_SQ))
-		{
-			if (getObjectLabel(C) != null)	return DEPLibEn.CONLL_OBJ;
-			if (isOprd(C))	return DEPLibEn.CONLL_OPRD;
-			if (isXcomp(C))	return DEPLibEn.CONLL_XCOMP;
-			if (isCcomp(C))	return DEPLibEn.CONLL_OBJ;
-			if ((label = getCoNLLAuxLabel(C, p, d)) != null)	return label;
-		}
-		
-		// subordinate conjunctions
-		if (P.isPTag(CTLibEn.PTAG_SBAR) && p.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_TO, CTLibEn.POS_DT))
-			return DEPLibEn.CONLL_SUB;
-	
-		// simple labels
-		if ((label = getCoNLLSimpleLabel(C)) != null)
-			return label;
-		
-		// default
-		if (P.isPTagAny(CTLibEn.PTAG_PP, CTLibEn.PTAG_WHPP))
-			return DEPLibEn.CONLL_PMOD;
-		
-		if (C.isPTag(CTLibEn.PTAG_SBAR) || isXcomp(C) || C.isPTag(CTLibEn.PTAG_PP))
-			return DEPLibEn.CONLL_ADV;
-		
-		if (P.isPTag(CTLibEn.PTAG_QP))
-			return DEPLibEn.CONLL_QMOD;
-		
-		if (P.isPTagAny(CTLibEn.PTAG_NML, CTLibEn.PTAG_NP, CTLibEn.PTAG_NX, CTLibEn.PTAG_WHNP) || CTLibEn.isNoun(p))
-			return DEPLibEn.CONLL_NMOD;
-		
-		if ((P.isPTagAny(CTLibEn.PTAG_ADJP, CTLibEn.PTAG_ADVP, CTLibEn.PTAG_WHADJP, CTLibEn.PTAG_WHADVP) || CTLibEn.isAdjective(p) || CTLibEn.isAdverb(p)))
-			return DEPLibEn.CONLL_AMOD;
-
-		if (c != null)
-		{
-			if ((label = getCoNLLSimpleLabel(c)) != null)
-				return label;
-			
-			if (CTLibEn.isAdverb(d))
-				return DEPLibEn.CONLL_ADV;
-		}
-		
-		return DEPLibEn.CONLL_DEP;
-	}
-	
-	private String getCoNLLFunctionTag(CTNode C)
-	{
-		if (C.hasFTag(CTLibEn.FTAG_SBJ))
-			return DEPLibEn.CONLL_SBJ;
-		
-		if (C.hasFTag(CTLibEn.FTAG_LGS))
-			return DEPLibEn.CONLL_LGS;
-		
-		if (C.hasFTag(CTLibEn.FTAG_DTV))
-			return DEPLibEn.CONLL_DTV;
-		
-		if (C.hasFTag(CTLibEn.FTAG_PRD))
-			return DEPLibEn.CONLL_PRD;
-		
-		if (C.hasFTag(CTLibEn.FTAG_PUT))
-			return DEPLibEn.CONLL_PUT;
-		
-		if (C.hasFTag(DEPLibEn.CONLL_EXTR))
-			return DEPLibEn.CONLL_EXTR;
-		
-		return null;
-	}
-	
-	private String getCoNLLAuxLabel(CTNode C, CTNode p, CTNode d)
-	{
-		CTNode pd = p.c2d.getDependencyHead();
-		
-		if (C.isPTag(CTLibEn.PTAG_VP) || CTLibEn.isVerb(d))
-		{
-			if (pd.isPTag(CTLibEn.POS_TO))
-				return DEPLibEn.CONLL_IM;
-			
-			if (CTLibEn.isVerb(pd))
-				return DEPLibEn.CONLL_VC;
-		}
-		
-		return null;
-	}
-	
-	private String getCoNLLSimpleLabel(CTNode C)
-	{
-		String label;
-		
-		if (CTLibEn.isConjunction(C))
-			return DEPLibEn.CONLL_COORD;
-		
-		if (isPrt(C))
-			return DEPLibEn.DEP_PRT;
-
-		if ((label = getSpecialLabel(C)) != null)
-			return label;
-		
-		return null;
-	}
-	
 	// ============================= Get a dependency tree =============================
 	
 	private DEPTree getDPTree(CTTree cTree)
@@ -1205,16 +1114,30 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		if (dTree.containsCycle())
 			System.err.println("Error: cyclic dependencies exist");
 		
-		if (i_type == TYPE_STANFORD)
-			splitStanfordLabels(dTree);
-		else if (i_type == TYPE_CONLL)
-			convertToCoNLLLabels(dTree);
-		
+		splitLabels(dTree);
 		addXHeads(dTree);
 		addFeats(dTree, cTree, cTree.getRoot());
 		addPBArgs(dTree, cTree);
+		mergeLabels(dTree);
 		
 		return dTree;
+	}
+	
+	private void mergeLabels(DEPTree dTree)
+	{
+		int i, size = dTree.size();
+		DEPNode node;
+		
+		for (Pair<String,Set<String>> p : l_merge)
+		{
+			for (i=1; i<size; i++)
+			{
+				node = dTree.get(i);
+				
+				if (p.o2.contains(node.getLabel()))
+					node.setLabel(p.o1);
+			}
+		}
 	}
 	
 	/** @return the dependency tree converted from the specific constituent tree without head information. */
@@ -1263,7 +1186,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			{
 				label = cNode.c2d.s_label;
 				
-				if (i_type == TYPE_STANFORD && cNode.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_TO, CTLibEn.POS_DT) && cNode.getParent().isPTag(CTLibEn.PTAG_SBAR) && !label.equals(DEPLibEn.DEP_COMPLM))
+				if (cNode.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_TO, CTLibEn.POS_DT) && cNode.getParent().isPTag(CTLibEn.PTAG_SBAR) && !label.equals(DEPLibEn.DEP_COMPLM))
 					label = DEPLibEn.DEP_MARK;
 				
 				dNode.setHead(dTree.get(headId), label);
@@ -1277,7 +1200,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	}
 	
 	/** Splits certain Stanford dependency labels into finer-grained labels. */
-	private void splitStanfordLabels(DEPTree tree)
+	private void splitLabels(DEPTree tree)
 	{
 		int i, size = tree.size();
 		List<DEPNode> list;
@@ -1309,41 +1232,9 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		}
 	}
 	
-	private void convertToCoNLLLabels(DEPTree tree)
-	{
-		int i, size = tree.size();
-		DEPNode node;
-		
-		for (i=1; i<size; i++)
-		{
-			node = tree.get(i);
-			
-			if (node.getLabel().equals(DEPLibEn.DEP_ADVMOD))
-				node.setLabel(DEPLibEn.CONLL_ADV);
-			else if (node.getLabel().equals(DEPLibEn.DEP_APPOS))
-				node.setLabel(DEPLibEn.CONLL_APPO);
-			else if (node.getLabel().equals(DEPLibEn.DEP_CONJ))
-				node.setLabel(DEPLibEn.CONLL_CONJ);
-			else if (node.getLabel().equals(DEPLibEn.DEP_INTJ))
-				node.setLabel(DEPLibEn.CONLL_INTJ);
-			else if (node.getLabel().equals(DEPLibEn.DEP_META))
-				node.setLabel(DEPLibEn.CONLL_META);
-			else if (node.getLabel().equals(DEPLibEn.DEP_PARATAXIS))
-				node.setLabel(DEPLibEn.CONLL_PRN);
-			else if (node.getLabel().equals(DEPLibEn.DEP_PRT))
-				node.setLabel(DEPLibEn.CONLL_PRT);
-			else if (node.getLabel().equals(DEPLibEn.DEP_PUNCT))
-				node.setLabel(DEPLibEn.CONLL_P);
-			else if (node.getLabel().equals(DEPLibEn.DEP_ROOT))
-				node.setLabel(DEPLibEn.CONLL_ROOT);
-		}
-	}
-
 	/** Adds secondary dependency heads. */
 	private void addXHeads(DEPTree dTree)
 	{
-		dTree.initXHeads();
-		
 		for (CTNode curr : m_xsbj.keySet())
 		{
 			if (curr.c2d != null)
@@ -1373,22 +1264,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			head = getDEPNode(dTree, cHead);
 			node.addXHead(head, label);
 			
-			if (label.equals(DEPLibEn.DEP_XSUBJ))
-			{
-				if (i_type == TYPE_STANFORD)
-				{
-					if (head.isLabel(DEPLibEn.DEP_CCOMP))
-						head.setLabel(DEPLibEn.DEP_XCOMP);		
-				}
-				else if (i_type == TYPE_CONLL)
-				{
-					if (head.isLabel(DEPLibEn.CONLL_OBJ))
-						head.setLabel(DEPLibEn.CONLL_XCOMP);
-				}
-			}
-			
-		//	if (i_type == TYPE_STANFORD && label.equals(DEPLibEn.DEP_XSUBJ) && head.isLabel(DEPLibEn.DEP_CCOMP))
-		//		head.setLabel(DEPLibEn.DEP_XCOMP);
+			if (label.equals(DEPLibEn.DEP_XSUBJ) && head.isLabel(DEPLibEn.DEP_CCOMP))
+				head.setLabel(DEPLibEn.DEP_XCOMP);
 		}
 	}
 	
@@ -1461,7 +1338,6 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		if (root.pbArgs != null)
 		{
-			dTree.initSHeads();
 			initPBArgs(dTree, cTree, root);
 			arrangePBArgs(dTree);
 			relabelArgNs(dTree);
@@ -1585,4 +1461,158 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	{
 		return dTree.get(cNode.c2d.getDependencyHead().getTokenId() + 1);
 	}
+	
+	
+	// ============================= Get CoNLL labels =============================
+	
+/*	private void convertToCoNLLLabels(DEPTree tree)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			
+			if (node.getLabel().equals(DEPLibEn.DEP_ADVMOD))
+				node.setLabel(DEPLibEn.CONLL_ADV);
+			else if (node.getLabel().equals(DEPLibEn.DEP_APPOS))
+				node.setLabel(DEPLibEn.CONLL_APPO);
+			else if (node.getLabel().equals(DEPLibEn.DEP_CONJ))
+				node.setLabel(DEPLibEn.CONLL_CONJ);
+			else if (node.getLabel().equals(DEPLibEn.DEP_INTJ))
+				node.setLabel(DEPLibEn.CONLL_INTJ);
+			else if (node.getLabel().equals(DEPLibEn.DEP_META))
+				node.setLabel(DEPLibEn.CONLL_META);
+			else if (node.getLabel().equals(DEPLibEn.DEP_PARATAXIS))
+				node.setLabel(DEPLibEn.CONLL_PRN);
+			else if (node.getLabel().equals(DEPLibEn.DEP_PRT))
+				node.setLabel(DEPLibEn.CONLL_PRT);
+			else if (node.getLabel().equals(DEPLibEn.DEP_PUNCT))
+				node.setLabel(DEPLibEn.CONLL_P);
+			else if (node.getLabel().equals(DEPLibEn.DEP_ROOT))
+				node.setLabel(DEPLibEn.CONLL_ROOT);
+		}
+	}
+	
+	public String getCoNLLLabel(CTNode C, CTNode P, CTNode p)
+	{
+		CTNode c = C.c2d.getPhraseHead();
+		CTNode d = C.c2d.getDependencyHead();
+		String label;
+		
+		// function tags
+		if (hasAdverbialTag(C))
+			return DEPLibEn.CONLL_ADV;
+
+		if ((label = getCoNLLFunctionTag(C)) != null)
+			return label;
+		
+		// coordination
+		if (C.isPTag(CTLibEn.PTAG_UCP))
+		{
+			c.addFTags(C.getFTags());
+			return getCoNLLLabel(c, P, p);
+		}
+		
+		// complements
+		if (P.isPTagAny(CTLibEn.PTAG_VP, CTLibEn.PTAG_SINV, CTLibEn.PTAG_SQ))
+		{
+			if (getObjectLabel(C) != null)	return DEPLibEn.CONLL_OBJ;
+			if (isOprd(C))	return DEPLibEn.CONLL_OPRD;
+			if (isXcomp(C))	return DEPLibEn.CONLL_XCOMP;
+			if (isCcomp(C))	return DEPLibEn.CONLL_OBJ;
+			if ((label = getCoNLLAuxLabel(C, p, d)) != null)	return label;
+		}
+		
+		// subordinate conjunctions
+		if (P.isPTag(CTLibEn.PTAG_SBAR) && p.isPTagAny(CTLibEn.POS_IN, CTLibEn.POS_TO, CTLibEn.POS_DT))
+			return DEPLibEn.CONLL_SUB;
+	
+		// simple labels
+		if ((label = getCoNLLSimpleLabel(C)) != null)
+			return label;
+		
+		// default
+		if (P.isPTagAny(CTLibEn.PTAG_PP, CTLibEn.PTAG_WHPP))
+			return DEPLibEn.CONLL_PMOD;
+		
+		if (C.isPTag(CTLibEn.PTAG_SBAR) || isXcomp(C) || C.isPTag(CTLibEn.PTAG_PP))
+			return DEPLibEn.CONLL_ADV;
+		
+		if (P.isPTag(CTLibEn.PTAG_QP))
+			return DEPLibEn.CONLL_QMOD;
+		
+		if (P.isPTagAny(CTLibEn.PTAG_NML, CTLibEn.PTAG_NP, CTLibEn.PTAG_NX, CTLibEn.PTAG_WHNP) || CTLibEn.isNoun(p))
+			return DEPLibEn.CONLL_NMOD;
+		
+		if ((P.isPTagAny(CTLibEn.PTAG_ADJP, CTLibEn.PTAG_ADVP, CTLibEn.PTAG_WHADJP, CTLibEn.PTAG_WHADVP) || CTLibEn.isAdjective(p) || CTLibEn.isAdverb(p)))
+			return DEPLibEn.CONLL_AMOD;
+
+		if (c != null)
+		{
+			if ((label = getCoNLLSimpleLabel(c)) != null)
+				return label;
+			
+			if (CTLibEn.isAdverb(d))
+				return DEPLibEn.CONLL_ADV;
+		}
+		
+		return DEPLibEn.CONLL_DEP;
+	}
+	
+	private String getCoNLLFunctionTag(CTNode C)
+	{
+		if (C.hasFTag(CTLibEn.FTAG_SBJ))
+			return DEPLibEn.CONLL_SBJ;
+		
+		if (C.hasFTag(CTLibEn.FTAG_LGS))
+			return DEPLibEn.CONLL_LGS;
+		
+		if (C.hasFTag(CTLibEn.FTAG_DTV))
+			return DEPLibEn.CONLL_DTV;
+		
+		if (C.hasFTag(CTLibEn.FTAG_PRD))
+			return DEPLibEn.CONLL_PRD;
+		
+		if (C.hasFTag(CTLibEn.FTAG_PUT))
+			return DEPLibEn.CONLL_PUT;
+		
+		if (C.hasFTag(DEPLibEn.CONLL_EXTR))
+			return DEPLibEn.CONLL_EXTR;
+		
+		return null;
+	}
+	
+	private String getCoNLLAuxLabel(CTNode C, CTNode p, CTNode d)
+	{
+		CTNode pd = p.c2d.getDependencyHead();
+		
+		if (C.isPTag(CTLibEn.PTAG_VP) || CTLibEn.isVerb(d))
+		{
+			if (pd.isPTag(CTLibEn.POS_TO))
+				return DEPLibEn.CONLL_IM;
+			
+			if (CTLibEn.isVerb(pd))
+				return DEPLibEn.CONLL_VC;
+		}
+		
+		return null;
+	}
+	
+	private String getCoNLLSimpleLabel(CTNode C)
+	{
+		String label;
+		
+		if (CTLibEn.isConjunction(C))
+			return DEPLibEn.CONLL_COORD;
+		
+		if (isPrt(C))
+			return DEPLibEn.DEP_PRT;
+
+		if ((label = getSpecialLabel(C)) != null)
+			return label;
+		
+		return null;
+	}*/
 }

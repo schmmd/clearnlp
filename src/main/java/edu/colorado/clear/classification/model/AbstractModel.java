@@ -240,7 +240,7 @@ abstract public class AbstractModel
 	public double[] getScoresMulti(SparseFeatureVector x)
 	{
 		double[] scores = Arrays.copyOf(d_weights, n_labels);
-		int      i, index, weightIndex, label, size = x.size();
+		int      i, index, label, weightIndex, size = x.size();
 		double   weight = 1;
 		
 		for (i=0; i<size; i++)

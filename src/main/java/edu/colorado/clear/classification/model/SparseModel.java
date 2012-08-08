@@ -141,6 +141,7 @@ public class SparseModel extends AbstractModel
 	 */
 	public List<StringPrediction> predictAll(SparseFeatureVector x)
 	{
+	//	SortedStringPredictionArrayList list = new SortedStringPredictionArrayList(n_labels);
 		List<StringPrediction> list = new ArrayList<StringPrediction>(n_labels);
 		double[] scores = getScores(x);
 		int i;

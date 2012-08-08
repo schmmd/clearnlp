@@ -242,6 +242,7 @@ public class StringModel extends AbstractModel
 	 */
 	public List<StringPrediction> predictAll(StringFeatureVector x)
 	{
+	//	SortedStringPredictionArrayList list = new SortedStringPredictionArrayList(n_labels);
 		List<StringPrediction> list = new ArrayList<StringPrediction>(n_labels);
 		double[] scores = getScores(toSparseFeatureVector(x));
 		int i;

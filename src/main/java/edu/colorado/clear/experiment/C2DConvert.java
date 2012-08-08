@@ -80,25 +80,23 @@ public class C2DConvert extends AbstractRun
 	private String s_language = AbstractReader.LANG_EN;
 	@Option(name="-v", usage="if set, add only verb predicates in PropBank", required=false, metaVar="<boolean>")
 	private boolean b_verbs_only = false;
-	@Option(name="-t", usage="0: Stanford dependency, 1: CoNLL dependency (English only; default: "+EnglishC2DConverter.TYPE_STANFORD+")", required=false, metaVar="<byte>")
-	private byte i_type = EnglishC2DConverter.TYPE_STANFORD;
 	
 	public C2DConvert() {}
 
 	public C2DConvert(String[] args)
 	{
 		initArgs(args);
-		convert(s_headruleFile, i_type, s_dictFile, s_language, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
+		convert(s_headruleFile, s_dictFile, s_language, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
 	}
 	
-	public void convert(String headruleFile, byte type, String dictFile, String language, String inputPath, String parseExt, String propExt, String senseExt, String nameExt, String outputExt)
+	public void convert(String headruleFile, String dictFile, String language, String inputPath, String parseExt, String propExt, String senseExt, String nameExt, String outputExt)
 	{
 		AbstractMPAnalyzer morph = null;
 		AbstractC2DConverter c2d = null;
 		
 		if (s_language.equals(AbstractReader.LANG_EN))
 		{
-			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)), type);
+			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)));
 			if (dictFile != null)	morph = new EnglishMPAnalyzer(dictFile);
 		}
 		
