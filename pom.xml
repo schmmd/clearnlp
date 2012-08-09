@@ -2,19 +2,15 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>edu.colorado.clear</groupId>
+  <groupId>com.googlecode.clearnlp</groupId>
   <artifactId>clearnlp</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>clearnlp</name>
-  <description>This project provides NLP tools developed by the Center for Computational Language and EducAtion Research (CLEAR).</description>
+  <description>This project provides NLP components developed by the Center for Computational Language and EducAtion Research (CLEAR) at the University of Colorado Boulder and the Information Extraction and Synthesis Laboratory (IESL) at the University of Massachusetts Amherst.</description>
   <url>http://maven.apache.org</url>
 
-  <organization>
-  	<name>The Center for Computational Language and EducAtion Research (CLEAR)</name>
-  	<url>http://clear.colorado.edu</url>
-  </organization>
 
   <licenses>
     <license>
@@ -24,9 +20,9 @@
   </licenses>
 
   <scm>
-    <url>https://code.google.com/p/clearnlp/</url>
-    <connection>scm:git:https://code.google.com/p/clearnlp/</connection>
-    <developerConnection>scm:git:https://code.google.com/p/clearnlp/</developerConnection>
+    <url>https://clearnlp.googlecode.com</url>
+    <connection>scm:git:https://clearnlp.googlecode.com</connection>
+    <developerConnection>scm:git:https://clearnlp.googlecode.com</developerConnection>
   </scm>
 
   <developers>

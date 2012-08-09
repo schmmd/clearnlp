@@ -58,7 +58,7 @@ import com.goolgecode.clearnlp.util.UTOutput;
 import com.goolgecode.clearnlp.util.pair.StringIntPair;
 
 
-public class C2DConvert extends AbstractRun
+public class C2DConvertMulti extends AbstractRun
 {
 	@Option(name="-i", usage="the input path containing constituent trees (input; required)", required=true, metaVar="<filepath>")
 	private String s_inputPath;
@@ -81,9 +81,9 @@ public class C2DConvert extends AbstractRun
 	@Option(name="-v", usage="if set, add only verb predicates in PropBank", required=false, metaVar="<boolean>")
 	private boolean b_verbs_only = false;
 	
-	public C2DConvert() {}
+	public C2DConvertMulti() {}
 
-	public C2DConvert(String[] args)
+	public C2DConvertMulti(String[] args)
 	{
 		initArgs(args);
 		convert(s_headruleFile, s_dictFile, s_language, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
@@ -378,6 +378,6 @@ public class C2DConvert extends AbstractRun
 
 	public static void main(String[] args)
 	{
-		new C2DConvert(args);
+		new C2DConvertMulti(args);
 	}
 }

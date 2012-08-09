@@ -383,6 +383,20 @@ public class DEPTree extends ArrayList<DEPNode>
 		return build.substring(DEPReader.DELIM_SENTENCE.length());
 	}
 	
+	public String toStringDAG()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringDAG());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
 	public String toStringCoNLL()
 	{
 		StringBuilder build = new StringBuilder();
