@@ -27,8 +27,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.dependency.DEPLib;
-import com.goolgecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.DEPLib;
+import com.googlecode.clearnlp.dependency.DEPTree;
 
 
 public class DPTreeTest

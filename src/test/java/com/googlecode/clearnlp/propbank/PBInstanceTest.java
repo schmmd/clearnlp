@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.propbank.PBInstance;
+import com.googlecode.clearnlp.propbank.PBInstance;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

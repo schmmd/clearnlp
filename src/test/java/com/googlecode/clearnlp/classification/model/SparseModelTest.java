@@ -33,10 +33,10 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.classification.algorithm.AbstractAlgorithm;
-import com.goolgecode.clearnlp.classification.model.SparseModel;
-import com.goolgecode.clearnlp.classification.prediction.StringPrediction;
-import com.goolgecode.clearnlp.classification.vector.SparseFeatureVector;
+import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
+import com.googlecode.clearnlp.classification.model.SparseModel;
+import com.googlecode.clearnlp.classification.prediction.StringPrediction;
+import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

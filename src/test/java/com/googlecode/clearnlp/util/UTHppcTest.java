@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
-import com.goolgecode.clearnlp.util.UTHppc;
+import com.googlecode.clearnlp.util.UTHppc;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

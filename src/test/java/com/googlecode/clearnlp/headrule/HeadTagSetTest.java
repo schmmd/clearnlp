@@ -27,8 +27,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.constituent.CTNode;
-import com.goolgecode.clearnlp.headrule.HeadTagSet;
+import com.googlecode.clearnlp.constituent.CTNode;
+import com.googlecode.clearnlp.headrule.HeadTagSet;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

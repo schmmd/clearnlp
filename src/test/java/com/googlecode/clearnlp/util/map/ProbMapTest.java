@@ -29,8 +29,8 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.util.map.Prob2DMap;
-import com.goolgecode.clearnlp.util.pair.StringDoublePair;
+import com.googlecode.clearnlp.util.map.Prob2DMap;
+import com.googlecode.clearnlp.util.pair.StringDoublePair;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

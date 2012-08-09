@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.morphology.MPLib;
+import com.googlecode.clearnlp.morphology.MPLib;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

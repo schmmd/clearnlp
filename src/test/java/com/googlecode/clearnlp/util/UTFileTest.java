@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.util.UTFile;
+import com.googlecode.clearnlp.util.UTFile;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

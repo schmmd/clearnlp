@@ -27,11 +27,11 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.dependency.DEPFeat;
-import com.goolgecode.clearnlp.dependency.DEPLib;
-import com.goolgecode.clearnlp.dependency.DEPNode;
-import com.goolgecode.clearnlp.reader.AbstractReader;
-import com.goolgecode.clearnlp.reader.DEPReader;
+import com.googlecode.clearnlp.dependency.DEPFeat;
+import com.googlecode.clearnlp.dependency.DEPLib;
+import com.googlecode.clearnlp.dependency.DEPNode;
+import com.googlecode.clearnlp.reader.AbstractReader;
+import com.googlecode.clearnlp.reader.DEPReader;
 
 
 public class DEPNodeTest

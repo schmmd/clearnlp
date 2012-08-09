@@ -27,8 +27,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.dependency.DEPArc;
-import com.goolgecode.clearnlp.dependency.DEPNode;
+import com.googlecode.clearnlp.dependency.DEPArc;
+import com.googlecode.clearnlp.dependency.DEPNode;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

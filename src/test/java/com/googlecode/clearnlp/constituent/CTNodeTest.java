@@ -32,7 +32,7 @@ import java.util.Set;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.constituent.CTNode;
+import com.googlecode.clearnlp.constituent.CTNode;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

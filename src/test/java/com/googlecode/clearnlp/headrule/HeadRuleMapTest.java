@@ -30,8 +30,8 @@ import java.io.StringReader;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.headrule.HeadRuleMap;
-import com.goolgecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.headrule.HeadRuleMap;
+import com.googlecode.clearnlp.util.UTInput;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

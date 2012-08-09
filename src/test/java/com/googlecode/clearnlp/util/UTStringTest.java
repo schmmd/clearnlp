@@ -29,7 +29,7 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.util.UTString;
+import com.googlecode.clearnlp.util.UTString;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

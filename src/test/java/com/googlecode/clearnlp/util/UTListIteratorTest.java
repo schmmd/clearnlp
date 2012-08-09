@@ -30,7 +30,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.util.UTListIterator;
+import com.googlecode.clearnlp.util.UTListIterator;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

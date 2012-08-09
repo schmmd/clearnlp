@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.classification.vector.StringFeatureVector;
+import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

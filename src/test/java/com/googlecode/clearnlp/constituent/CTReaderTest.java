@@ -32,9 +32,9 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.constituent.CTReader;
-import com.goolgecode.clearnlp.constituent.CTTree;
-import com.goolgecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.constituent.CTReader;
+import com.googlecode.clearnlp.constituent.CTTree;
+import com.googlecode.clearnlp.util.UTInput;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

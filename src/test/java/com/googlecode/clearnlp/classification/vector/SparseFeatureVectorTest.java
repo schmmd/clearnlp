@@ -26,7 +26,7 @@ package com.googlecode.clearnlp.classification.vector;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.classification.vector.SparseFeatureVector;
+import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
 public class SparseFeatureVectorTest

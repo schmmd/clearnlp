@@ -27,7 +27,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.morphology.MPLibEn;
+import com.googlecode.clearnlp.morphology.MPLibEn;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

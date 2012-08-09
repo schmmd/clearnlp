@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.util.list.SortedIntArrayList;
+import com.googlecode.clearnlp.util.list.SortedIntArrayList;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */

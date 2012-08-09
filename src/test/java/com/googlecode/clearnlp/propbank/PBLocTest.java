@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.goolgecode.clearnlp.propbank.PBLoc;
+import com.googlecode.clearnlp.propbank.PBLoc;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
