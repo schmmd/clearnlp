@@ -37,69 +37,77 @@ import com.googlecode.clearnlp.util.UTOutput;
 
 
 /**
- * Normalizes indices of constituent trees.
+ * Normalizes indices of empty categories in constituent trees.
  * @see CTReader#normalizeIndices(CTTree)
  * @since v0.1
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class CTNormalize extends AbstractRun
+public class ECNormalize extends AbstractRun
 {
-	@Option(name="-i", usage="the input directory path (required)", required=true, metaVar="<dirpath>")
-	private String s_inputDir;
-	@Option(name="-o", usage="the output directory path (required)", required=true, metaVar="<dirpath>")
-	private String s_outputDir;
-	@Option(name="-ie", usage="the input treefile extension (required)", required=true, metaVar="<extension>")
-	private String s_inputExt;
-	@Option(name="-oe", usage="the output treefile extension (required)", required=true, metaVar="<extension>")
-	private String s_outputExt;
+	@Option(name="-i", usage="the input path (input; required)", required=true, metaVar="<filepath>")
+	private String s_inputPath;
+	@Option(name="-o", usage="the output path (output; required)", required=true, metaVar="<filepath>")
+	private String s_outputPath;
+	@Option(name="-ie", usage="the input file extension (default: .*)", required=false, metaVar="<regex>")
+	private String s_inputExt = ".*";
 	
-	public CTNormalize() {}
+	public ECNormalize() {}
 	
-	public CTNormalize(String[] args)
+	public ECNormalize(String[] args)
 	{
 		initArgs(args);
-		normalize(s_inputDir, s_outputDir, s_inputExt, s_outputExt);
+		
+		if (new File(s_inputPath).isFile())
+			normalize(s_inputPath, s_outputPath);
+		else
+			normalize(s_inputPath, s_outputPath, s_inputExt);
 	}
 	
 	/**
 	 * Normalizes indices of constituent trees.
-	 * @param inputDir the directory containing unnormalized tree files.
-	 * @param outputDir the directory to save normalized tree files.
+	 * @param inputPath the directory containing unnormalized tree files.
+	 * @param outputPath the directory to save normalized tree files.
 	 * @param inputExt the tree file extension (e.g., {@code parse}).
 	 */
-	public void normalize(String inputDir, String outputDir, String inputExt, String outputExt)
+	public void normalize(String inputPath, String outputPath, String inputExt)
 	{
-		CTReader    reader;
-		CTTree      tree;
-		PrintStream fout;
-		
-		File dir = new File(outputDir);
+		File dir = new File(outputPath);
 		if (!dir.exists())	dir.mkdirs();
 		
-		inputDir  += File.separator;
-		outputDir += File.separator;
+		inputPath  += File.separator;
+		outputPath += File.separator;
 		
-		int extLength = inputExt.length();
+		String inputFile, outputFile;
 		
-		for (String filename : new File(inputDir).list(new FileExtFilter(inputExt)))
+		for (String filename : new File(inputPath).list(new FileExtFilter(inputExt)))
 		{
-			reader = new CTReader(UTInput.createBufferedFileReader(inputDir + filename));
-			fout   = UTOutput.createPrintBufferedFileStream(outputDir + filename.substring(0, filename.length()-extLength) + outputExt);
+			inputFile  = inputPath  + filename;
+			outputFile = outputPath + filename;
 			
-			while ((tree = reader.nextTree()) != null)
-			{
-				CTLib.normalizeIndices(tree);
-				fout.println(tree.toString()+"\n");
-			}
-			
-			reader.close();
-			fout.close();
+			System.out.println(filename);
+			normalize(inputFile, outputFile);
 		}
+	}
+	
+	public void normalize(String inputFile, String outputFile)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		CTTree tree;
+		
+		while ((tree = reader.nextTree()) != null)
+		{
+			CTLib.normalizeIndices(tree);
+			fout.println(tree.toString()+"\n");
+		}
+		
+		reader.close();
+		fout.close();
 	}
 	
 	static public void main(String[] args)
 	{
-		new CTNormalize(args);
+		new ECNormalize(args);
 	//	new CTNormalizeIndices().normalize(inputDir, outputDir, extension);
 	}
 }

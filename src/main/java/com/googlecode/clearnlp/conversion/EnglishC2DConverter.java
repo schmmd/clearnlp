@@ -74,7 +74,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	private Map<CTNode,Deque<CTNode>> m_xsbj;
 	private Map<String,Pattern>       m_coord;
 	
-	private List<Pair<String,Set<String>>> l_merge;
+	private List<Pair<String,Set<String>>> l_mergeLabels;
 	
 	public EnglishC2DConverter(HeadRuleMap headrules)
 	{
@@ -82,7 +82,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		
 		initBasic();
 		initCoord();
-		initMerge(false, false, false, false, false, "sbj=nsubj,csubj|obj=dobj,iobj");
+		initMerge(false, false, false, false, false, null);
 	}
 	
 	private void initBasic()
@@ -118,30 +118,33 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		m_coord.put(CTLibEn.PTAG_WHADVP	, Pattern.compile("^(RB.*|WRB|IN)$"));
 	}
 	
-	private void initMerge(boolean adv, boolean nfmod, boolean nmod, boolean pmod, boolean qmod, String merge)
+	private void initMerge(boolean adv, boolean nfmod, boolean nmod, boolean pmod, boolean qmod, String mergeLabels)
 	{
-		l_merge = new ArrayList<Pair<String,Set<String>>>();
+		l_mergeLabels = new ArrayList<Pair<String,Set<String>>>();
 		
-		if (adv)	l_merge.add(getMergePair(DEPLibEn.DEP_ADV, DEPLibEn.DEP_ADVCL, DEPLibEn.DEP_ADVMOD, DEPLibEn.DEP_NPADVMOD, DEPLibEn.DEP_NEG));
-		if (nfmod)	l_merge.add(getMergePair(DEPLibEn.DEP_NFMOD, DEPLibEn.DEP_INFMOD, DEPLibEn.DEP_PARTMOD));
-		if (nmod)	l_merge.add(getMergePair(DEPLibEn.DEP_NMOD, DEPLibEn.DEP_DET, DEPLibEn.DEP_NN, DEPLibEn.DEP_NUM, DEPLibEn.DEP_POSSESSIVE, DEPLibEn.DEP_PREDET));
-		if (pmod)	l_merge.add(getMergePair(DEPLibEn.DEP_PMOD, DEPLibEn.DEP_PCOMP, DEPLibEn.DEP_POBJ));
-		if (qmod)	l_merge.add(getMergePair(DEPLibEn.DEP_QMOD, DEPLibEn.DEP_NUMBER, DEPLibEn.DEP_QUANTMOD));
+		if (adv)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_ADV, DEPLibEn.DEP_ADVCL, DEPLibEn.DEP_ADVMOD, DEPLibEn.DEP_NPADVMOD, DEPLibEn.DEP_NEG));
+		if (nfmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_NFMOD, DEPLibEn.DEP_INFMOD, DEPLibEn.DEP_PARTMOD));
+		if (nmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_NMOD, DEPLibEn.DEP_DET, DEPLibEn.DEP_NN, DEPLibEn.DEP_NUM, DEPLibEn.DEP_POSSESSIVE, DEPLibEn.DEP_PREDET));
+		if (pmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_PMOD, DEPLibEn.DEP_PCOMP, DEPLibEn.DEP_POBJ));
+		if (qmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_QMOD, DEPLibEn.DEP_NUMBER, DEPLibEn.DEP_QUANTMOD));
 		
-		String[]    tmp;
-		String      nLabel;
-		Set<String> oLabels;
-		
-		for (String ms : merge.split("\\"+DEPFeat.DELIM_FEATS))
+		if (mergeLabels != null)
 		{
-			tmp     = ms.split(DEPFeat.DELIM_KEY_VALUE);
-			nLabel  = tmp[0];
-			oLabels = new HashSet<String>();
+			String[]    tmp;
+			String      nLabel;
+			Set<String> oLabels;
 			
-			for (String oLabel : tmp[1].split(DEPFeat.DELIM_VALUES))
-				oLabels.add(oLabel);
-					
-			l_merge.add(new Pair<String,Set<String>>(nLabel, oLabels));
+			for (String ms : mergeLabels.split("\\"+DEPFeat.DELIM_FEATS))
+			{
+				tmp     = ms.split(DEPFeat.DELIM_KEY_VALUE);
+				nLabel  = tmp[0];
+				oLabels = new HashSet<String>();
+				
+				for (String oLabel : tmp[1].split(DEPFeat.DELIM_VALUES))
+					oLabels.add(oLabel);
+						
+				l_mergeLabels.add(new Pair<String,Set<String>>(nLabel, oLabels));
+			}
 		}
 	}
 	
@@ -169,7 +172,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		if (!mapEmtpyCategories(cTree))	return null;
 		setHeads(cTree.getRoot());
 		
-		return getDPTree(cTree);
+		return getDEPTree(cTree);
 	}
 	
 	private void clearMaps()
@@ -1107,7 +1110,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	
 	// ============================= Get a dependency tree =============================
 	
-	private DEPTree getDPTree(CTTree cTree)
+	private DEPTree getDEPTree(CTTree cTree)
 	{
 		DEPTree dTree = initDEPTree(cTree);
 		addDEPHeads(dTree, cTree);
@@ -1129,7 +1132,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		int i, size = dTree.size();
 		DEPNode node;
 		
-		for (Pair<String,Set<String>> p : l_merge)
+		for (Pair<String,Set<String>> p : l_mergeLabels)
 		{
 			for (i=1; i<size; i++)
 			{
