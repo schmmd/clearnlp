@@ -78,6 +78,8 @@ public class C2DConvertMulti extends AbstractRun
 	private String s_outputExt = "dep";
 	@Option(name="-l", usage="language (default: "+AbstractReader.LANG_EN+")", required=false, metaVar="<language>")
 	private String s_language = AbstractReader.LANG_EN;
+	@Option(name="-m", usage="merge specified labels", required=false, metaVar="<string>")
+	private String s_mergeLabels = null;
 	@Option(name="-v", usage="if set, add only verb predicates in PropBank", required=false, metaVar="<boolean>")
 	private boolean b_verbs_only = false;
 	
@@ -86,17 +88,17 @@ public class C2DConvertMulti extends AbstractRun
 	public C2DConvertMulti(String[] args)
 	{
 		initArgs(args);
-		convert(s_headruleFile, s_dictFile, s_language, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
+		convert(s_headruleFile, s_dictFile, s_language, s_mergeLabels, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
 	}
 	
-	public void convert(String headruleFile, String dictFile, String language, String inputPath, String parseExt, String propExt, String senseExt, String nameExt, String outputExt)
+	public void convert(String headruleFile, String dictFile, String language, String mergeLabels, String inputPath, String parseExt, String propExt, String senseExt, String nameExt, String outputExt)
 	{
 		AbstractMPAnalyzer morph = null;
 		AbstractC2DConverter c2d = null;
 		
 		if (s_language.equals(AbstractReader.LANG_EN))
 		{
-			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)));
+			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)), mergeLabels);
 			if (dictFile != null)	morph = new EnglishMPAnalyzer(dictFile);
 		}
 		

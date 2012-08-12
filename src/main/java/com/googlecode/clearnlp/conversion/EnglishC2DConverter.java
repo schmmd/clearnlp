@@ -76,13 +76,13 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	
 	private List<Pair<String,Set<String>>> l_mergeLabels;
 	
-	public EnglishC2DConverter(HeadRuleMap headrules)
+	public EnglishC2DConverter(HeadRuleMap headrules, String mergeLabels)
 	{
 		super(headrules);
 		
 		initBasic();
 		initCoord();
-		initMerge(false, false, false, false, false, null);
+		initMerge(mergeLabels);
 	}
 	
 	private void initBasic()
@@ -118,15 +118,9 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		m_coord.put(CTLibEn.PTAG_WHADVP	, Pattern.compile("^(RB.*|WRB|IN)$"));
 	}
 	
-	private void initMerge(boolean adv, boolean nfmod, boolean nmod, boolean pmod, boolean qmod, String mergeLabels)
+	private void initMerge(String mergeLabels)
 	{
 		l_mergeLabels = new ArrayList<Pair<String,Set<String>>>();
-		
-		if (adv)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_ADV, DEPLibEn.DEP_ADVCL, DEPLibEn.DEP_ADVMOD, DEPLibEn.DEP_NPADVMOD, DEPLibEn.DEP_NEG));
-		if (nfmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_NFMOD, DEPLibEn.DEP_INFMOD, DEPLibEn.DEP_PARTMOD));
-		if (nmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_NMOD, DEPLibEn.DEP_DET, DEPLibEn.DEP_NN, DEPLibEn.DEP_NUM, DEPLibEn.DEP_POSSESSIVE, DEPLibEn.DEP_PREDET));
-		if (pmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_PMOD, DEPLibEn.DEP_PCOMP, DEPLibEn.DEP_POBJ));
-		if (qmod)	l_mergeLabels.add(getMergePair(DEPLibEn.DEP_QMOD, DEPLibEn.DEP_NUMBER, DEPLibEn.DEP_QUANTMOD));
 		
 		if (mergeLabels != null)
 		{
@@ -148,16 +142,6 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		}
 	}
 	
-	private Pair<String,Set<String>> getMergePair(String nLabel, String... oLabels)
-	{
-		Set<String> s = new HashSet<String>();
-		Pair<String,Set<String>> p = new Pair<String,Set<String>>(nLabel, s);
-		
-		for (String oLabel : oLabels)
-			s.add(oLabel);
-				
-		return p;
-	}
 
 	/**
 	 * Returns the dependency tree converted from the specific constituent tree.
