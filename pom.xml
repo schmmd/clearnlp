@@ -1,35 +1,36 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <groupId>com.googlecode.clearnlp</groupId>
   <artifactId>clearnlp</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
   <packaging>jar</packaging>
-
   <name>clearnlp</name>
-  <description>This project provides NLP components developed by the Center for Computational Language and EducAtion Research (CLEAR) at the University of Colorado Boulder and the Information Extraction and Synthesis Laboratory (IESL) at the University of Massachusetts Amherst.</description>
-  <url>http://maven.apache.org</url>
-
+  <version>1.0.0-SNAPSHOT</version>
+  <description>Fast and robust NLP components implemented in Java.</description>
+  <url>https://clearnlp.googlecode.com</url>
 
   <licenses>
     <license>
-      <name>BSD 2-Clause License</name>
+      <name>The BSD 2-Clause License</name>
       <url>http://www.opensource.org/licenses/bsd-license.php</url>
+    </license>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
 
   <scm>
-    <url>https://clearnlp.googlecode.com</url>
-    <connection>scm:git:https://clearnlp.googlecode.com</connection>
-    <developerConnection>scm:git:https://clearnlp.googlecode.com</developerConnection>
+    <url>https://clearnlp.googlecode.com/git/</url>
+    <connection>scm:git:https://clearnlp.googlecode.com/git/</connection>
+    <developerConnection>scm:git:https://clearnlp.googlecode.com/git/</developerConnection>
   </scm>
 
   <developers>
     <developer>
       <id>jdchoi77</id>
       <name>Jinho D. Choi</name>
-      <email>jdchoi77@gmail.com</email>
+      <email>{id}@gmail.com</email>
     </developer>
   </developers>
   

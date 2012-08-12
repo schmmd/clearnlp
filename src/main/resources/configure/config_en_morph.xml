@@ -4,5 +4,5 @@
 		<column index="2" field="pos"/>
     </reader>
 	<language>en</language>
-	<morph_dict>/home/choijd/workspace/clearnlp/src/main/resources/model/dict_en-1.1.jar</morph_dict>
+	<morph_dict>~/workspace/clearnlp/src/main/resources/model/dict_en-1.1.jar</morph_dict>
 </configuration>

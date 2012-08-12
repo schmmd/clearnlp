@@ -23,18 +23,19 @@
 */
 package com.googlecode.clearnlp.run;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
+import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.POSReader;
-import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.UTXml;
@@ -64,26 +65,35 @@ public class MPAnalyze extends AbstractRun
 		
 		try
 		{
-			run(s_configFile, s_inputPath, s_inputExt, s_outputExt);
+			analyze(s_configFile, s_inputPath, s_inputExt, s_outputExt);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configFile, String inputPath, String inputExt, String outputExt) throws Exception
+	public void analyze(String configFile, String inputPath, String inputExt, String outputExt) throws Exception
 	{
 		Element          eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
 		POSReader         reader = (POSReader)getReader(eConfig); 
 		AbstractMPAnalyzer morph = getMPAnalyzer(eConfig);
 		
-		for (String inputFile : UTFile.getInputFileList(inputPath, inputExt))
-			analyze(reader, morph, inputFile, inputFile+"."+outputExt);
+		File f = new File(inputPath);
+		
+		if (f.isDirectory())
+		{
+			for (String inputFile : f.list(new FileExtFilter(inputExt)))
+				analyze(reader, morph, inputPath+File.separator+inputFile, outputExt);	
+		}
+		else
+			analyze(reader, morph, inputPath, outputExt);
 	}
 	
-	public void analyze(POSReader reader, AbstractMPAnalyzer morph, String inputFile, String outputFile)
+	public void analyze(POSReader reader, AbstractMPAnalyzer morph, String inputFile, String outputExt)
 	{
-		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(inputFile+"."+outputExt);
 		reader.open(UTInput.createBufferedFileReader(inputFile));
 		POSNode[] nodes;
+		
+		System.out.println(inputFile);
 		
 		while ((nodes = reader.next()) != null)
 		{
