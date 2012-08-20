@@ -30,116 +30,120 @@ package com.googlecode.clearnlp.dependency;
  */
 public class DEPLibEn extends DEPLib
 {
-	/** The Stanford dependency label for passive. */
+	/** The dependency label for passive. */
 	static public final String DEP_PASS	= "pass";
-	/** The Stanford dependency label for subjects. */
+	/** The dependency label for subjects. */
 	static public final String DEP_SUBJ	= "subj";
 	
-	/** The Stanford dependency label for adjectival complements. */
+	/** The dependency label for adjectival complements. */
 	static public final String DEP_ACOMP		= "acomp";
-	/** The Stanford dependency label for all adverbial modifiers. */
+	/** The dependency label for all adverbial modifiers. */
 	static public final String DEP_ADV			= "adv";
-	/** The Stanford dependency label for adverbial clause modifiers. */
+	/** The dependency label for adverbial clause modifiers. */
 	static public final String DEP_ADVCL		= "advcl";
-	/** The Stanford dependency label for adverbial modifiers. */
+	/** The dependency label for adverbial modifiers. */
 	static public final String DEP_ADVMOD		= "advmod";
-	/** The Stanford dependency label for agents. */
+	/** The dependency label for agents. */
 	static public final String DEP_AGENT		= "agent";
-	/** The Stanford dependency label for adjectival modifiers. */
+	/** The dependency label for adjectival modifiers. */
 	static public final String DEP_AMOD			= "amod";
-	/** The Stanford dependency label for appositional modifiers. */
+	/** The dependency label for appositional modifiers. */
 	static public final String DEP_APPOS		= "appos";
-	/** The Stanford dependency label for attributes. */
+	/** The dependency label for attributes. */
 	static public final String DEP_ATTR			= "attr";
-	/** The Stanford dependency label for auxiliary verbs. */
+	/** The dependency label for auxiliary verbs. */
 	static public final String DEP_AUX			= "aux";
-	/** The Stanford dependency label for passive auxiliary verbs. */
+	/** The dependency label for passive auxiliary verbs. */
 	static public final String DEP_AUXPASS		= DEP_AUX+DEP_PASS;
-	/** The Stanford dependency label for coordinating conjunctions. */
+	/** The dependency label for coordinating conjunctions. */
 	static public final String DEP_CC			= "cc";
-	/** The Stanford dependency label for clausal complements. */
+	/** The dependency label for clausal complements. */
 	static public final String DEP_CCOMP		= "ccomp";
-	/** The Stanford dependency label for complementizers. */
+	/** The dependency label for complementizers. */
 	static public final String DEP_COMPLM		= "complm";
-	/** The Stanford dependency label for conjuncts. */
+	/** The dependency label for conjuncts. */
 	static public final String DEP_CONJ			= "conj";
-	/** The Stanford dependency label for clausal subjects. */
+	/** The dependency label for clausal subjects. */
 	static public final String DEP_CSUBJ		= "c"+DEP_SUBJ;
-	/** The Stanford dependency label for clausal passive subjects. */
+	/** The dependency label for clausal passive subjects. */
 	static public final String DEP_CSUBJPASS	= DEP_CSUBJ+DEP_PASS;
-	/** The Stanford dependency label for unknown dependencies. */
+	/** The dependency label for unknown dependencies. */
 	static public final String DEP_DEP  		= "dep";
-	/** The Stanford dependency label for determiners. */
+	/** The dependency label for determiners. */
 	static public final String DEP_DET			= "det";
-	/** The Stanford dependency label for direct objects. */
+	/** The dependency label for direct objects. */
 	static public final String DEP_DOBJ 		= "dobj";
-	/** The Stanford dependency label for expletives. */
+	/** The dependency label for expletives. */
 	static public final String DEP_EXPL 		= "expl";
-	/** The Stanford dependency label for indirect objects. */
+	/** The dependency label for modifiers in hyphenation. */
+	static public final String DEP_HMOD 		= "hmod";
+	/** The dependency label for hyphenation. */
+	static public final String DEP_HYPH 		= "hyph";
+	/** The dependency label for indirect objects. */
 	static public final String DEP_IOBJ 		= "iobj";
-	/** The Stanford dependency label for interjections. */
+	/** The dependency label for interjections. */
 	static public final String DEP_INTJ			= "intj";
-	/** The Stanford dependency label for markers. */
+	/** The dependency label for markers. */
 	static public final String DEP_MARK			= "mark";
-	/** The Stanford dependency label for meta modifiers. */
+	/** The dependency label for meta modifiers. */
 	static public final String DEP_META			= "meta";
-	/** The Stanford dependency label for negation modifiers. */
+	/** The dependency label for negation modifiers. */
 	static public final String DEP_NEG			= "neg";
-	/** The Stanford dependency label for non-finite modifiers. */
+	/** The dependency label for non-finite modifiers. */
 	static public final String DEP_NFMOD		= "nfmod";
-	/** The Stanford dependency label for infinitival modifiers. */
+	/** The dependency label for infinitival modifiers. */
 	static public final String DEP_INFMOD		= "infmod";
-	/** The Stanford dependency label for noun phrase modifiers. */
+	/** The dependency label for noun phrase modifiers. */
 	static public final String DEP_NMOD 		= "nmod";
-	/** The Stanford dependency label for noun compound modifiers. */
+	/** The dependency label for noun compound modifiers. */
 	static public final String DEP_NN			= "nn";
-	/** The Stanford dependency label for noun phrase as adverbial modifiers. */
+	/** The dependency label for noun phrase as adverbial modifiers. */
 	static public final String DEP_NPADVMOD		= "npadvmod";
-	/** The Stanford dependency label for nominal subjects. */
+	/** The dependency label for nominal subjects. */
 	static public final String DEP_NSUBJ		= "n"+DEP_SUBJ;
-	/** The Stanford dependency label for nominal passive subjects. */
+	/** The dependency label for nominal passive subjects. */
 	static public final String DEP_NSUBJPASS	= DEP_NSUBJ+DEP_PASS;
-	/** The Stanford dependency label for numeric modifiers. */
+	/** The dependency label for numeric modifiers. */
 	static public final String DEP_NUM			= "num";
-	/** The Stanford dependency label for elements of compound numbers. */
+	/** The dependency label for elements of compound numbers. */
 	static public final String DEP_NUMBER		= "number";
-	/** The Stanford dependency label for object predicates. */
+	/** The dependency label for object predicates. */
 	static public final String DEP_OPRD			= "oprd";
-	/** The Stanford dependency label for parataxis. */
+	/** The dependency label for parataxis. */
 	static public final String DEP_PARATAXIS 	= "parataxis";
-	/** The Stanford dependency label for participial modifiers. */
+	/** The dependency label for participial modifiers. */
 	static public final String DEP_PARTMOD		= "partmod";
-	/** The Stanford dependency label for modifiers of prepositions. */
+	/** The dependency label for modifiers of prepositions. */
 	static public final String DEP_PMOD 		= "pmod";
-	/** The Stanford dependency label for prepositional complements. */
+	/** The dependency label for prepositional complements. */
 	static public final String DEP_PCOMP 		= "pcomp";
-	/** The Stanford dependency label for objects of prepositions. */
+	/** The dependency label for objects of prepositions. */
 	static public final String DEP_POBJ 		= "pobj";
-	/** The Stanford dependency label for possession modifiers. */
+	/** The dependency label for possession modifiers. */
 	static public final String DEP_POSS			= "poss";
-	/** The Stanford dependency label for possessive modifiers. */
+	/** The dependency label for possessive modifiers. */
 	static public final String DEP_POSSESSIVE 	= "possessive";
-	/** The Stanford dependency label for pre-conjuncts. */
+	/** The dependency label for pre-conjuncts. */
 	static public final String DEP_PRECONJ		= "preconj";
-	/** The Stanford dependency label for pre-determiners. */
+	/** The dependency label for pre-determiners. */
 	static public final String DEP_PREDET		= "predet";
-	/** The Stanford dependency label for prepositional modifiers. */
+	/** The dependency label for prepositional modifiers. */
 	static public final String DEP_PREP			= "prep";
-	/** The Stanford dependency label for particles. */
+	/** The dependency label for particles. */
 	static public final String DEP_PRT 			= "prt";
-	/** The Stanford dependency label for punctuation. */
+	/** The dependency label for punctuation. */
 	static public final String DEP_PUNCT		= "punct";
-	/** The Stanford dependency label for modifiers of quantifiers. */
+	/** The dependency label for modifiers of quantifiers. */
 	static public final String DEP_QMOD			= "qmod";
-	/** The Stanford dependency label for quantifier phrase modifiers. */
+	/** The dependency label for quantifier phrase modifiers. */
 	static public final String DEP_QUANTMOD		= "quantmod";
-	/** The Stanford dependency label for relative clause modifiers. */
+	/** The dependency label for relative clause modifiers. */
 	static public final String DEP_RCMOD		= "rcmod";
-	/** The Stanford dependency label for roots. */
+	/** The dependency label for roots. */
 	static public final String DEP_ROOT 		= "root";
-	/** The Stanford dependency label for open clausal modifiers. */
+	/** The dependency label for open clausal modifiers. */
 	static public final String DEP_XCOMP		= "xcomp";
-	/** The Stanford dependency label for open clausal subjects. */
+	/** The dependency label for open clausal subjects. */
 	static public final String DEP_XSUBJ		= "x"+DEP_SUBJ;
 	/** The secondary dependency label for gapping relations. */
 	static public final String DEP_GAP			= "gap";

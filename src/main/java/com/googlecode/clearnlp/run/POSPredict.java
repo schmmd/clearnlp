@@ -66,6 +66,8 @@ public class POSPredict extends AbstractRun
 	private String s_configXml;
 	@Option(name="-m", usage="the model file (input; required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
+	@Option(name="-t", usage="the similarity threshold (default: -1)", required=false, metaVar="<double>")
+	protected double d_threshold = -1;
 	
 	public POSPredict() {}
 	
@@ -75,17 +77,17 @@ public class POSPredict extends AbstractRun
 		
 		try
 		{
-			run(s_configXml, s_modelFile, s_inputPath, s_outputFile);	
+			run(s_configXml, s_modelFile, d_threshold, s_inputPath, s_outputFile);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configXml, String modelFile, String inputPath, String outputFile) throws Exception
+	public void run(String configXml, String modelFile, double threshold, String inputPath, String outputFile) throws Exception
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader reader = (POSReader)getReader(eConfig);
 		
-		Pair<POSTagger[],Double> p = getTaggers(modelFile);
+		Pair<POSTagger[],Double> p = getTaggers(modelFile, threshold);
 		
 		if (new File(inputPath).isFile())
 		{
@@ -99,7 +101,7 @@ public class POSPredict extends AbstractRun
 		}		
 	}
 	
-	static public Pair<POSTagger[],Double> getTaggers(String modelFile) throws Exception
+	static public Pair<POSTagger[],Double> getTaggers(String modelFile, double threshold) throws Exception
 	{
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
 		POSFtrXml xml = null;
@@ -109,13 +111,12 @@ public class POSPredict extends AbstractRun
 		int modId;
 		
 		POSTagger[] taggers = new POSTagger[POSTrain.MODEL_SIZE];
-		double threshold = 0;
 		
 		while ((zEntry = zin.getNextEntry()) != null)
 		{
 			name = zEntry.getName();
 						
-			if (name.equals(POSTrain.ENTRY_THRESHOLD))
+			if (threshold < 0 && name.equals(POSTrain.ENTRY_THRESHOLD))
 			{
 				fin = new BufferedReader(new InputStreamReader(zin));
 				threshold = Double.parseDouble(fin.readLine());

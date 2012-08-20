@@ -25,6 +25,7 @@ package com.googlecode.clearnlp.clustering;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -32,6 +33,8 @@ import java.util.Set;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.googlecode.clearnlp.pos.POSLib;
+import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.util.pair.IntDoublePair;
 
 
@@ -54,6 +57,17 @@ public class Kmeans
 	{
 		m_lexica = new ObjectIntOpenHashMap<String>();
 		v_units  = new ArrayList<int[]>();
+	}
+	
+	public void addUnit(POSNode[] nodes)
+	{
+		Set<String> lexica = new HashSet<String>();
+		POSLib.normalizeForms(nodes);
+		
+		for (POSNode node : nodes)
+			lexica.add(node.lemma);
+				
+		addUnit(lexica);
 	}
 	
 	public void addUnit(Set<String> lexica)
@@ -84,12 +98,12 @@ public class Kmeans
 	 * K-means clustering.
 	 * @param threshold minimum RSS.
 	 * @return each row represents a cluster, and
-	 *         each column represents a tuple of (index of a unit vector, similarity to the centroid).
+	 *         each column represents a pari of (index of a unit vector, similarity to the centroid).
 	 */
-	public List<ArrayList<IntDoublePair>> cluster(int k, double threshold)
+	public List<List<IntDoublePair>> cluster(int k, double threshold)
 	{
-		List<ArrayList<IntDoublePair>> currCluster = null;
-		List<ArrayList<IntDoublePair>> prevCluster = null;
+		List<List<IntDoublePair>> currCluster = null;
+		List<List<IntDoublePair>> prevCluster = null;
 		double prevRss = -1, currRss;
 		
 		K = k;
@@ -143,7 +157,7 @@ public class Kmeans
 	}
 	
 	/** @return centroid of each cluster. */
-	private void updateCentroids(List<ArrayList<IntDoublePair>> cluster)
+	private void updateCentroids(List<List<IntDoublePair>> cluster)
 	{
 		List<IntDoublePair> ck;
 		int i, k, size;
@@ -184,9 +198,9 @@ public class Kmeans
 	}
 	
 	/** Each cluster contains indices of {@link Kmeans#v_units}. */
-	private List<ArrayList<IntDoublePair>> getClusters()
+	private List<List<IntDoublePair>> getClusters()
 	{
-		List<ArrayList<IntDoublePair>> cluster = new ArrayList<ArrayList<IntDoublePair>>(K);
+		List<List<IntDoublePair>> cluster = new ArrayList<List<IntDoublePair>>(K);
 		IntDoublePair max = new IntDoublePair(-1, -1);
 		int[] unit;
 		int i, k;	double sim;
@@ -228,7 +242,7 @@ public class Kmeans
 		return k * D + index;
 	}
 	
-	private double getRSS(List<ArrayList<IntDoublePair>> cluster)
+	private double getRSS(List<List<IntDoublePair>> cluster)
 	{
 		double sim = 0;
 		System.out.print("Calulating RSS: ");

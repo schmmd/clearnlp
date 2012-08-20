@@ -396,12 +396,15 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	protected void setHeadsAux(HeadRule rule, CTNode curr)
 	{
 		if (findHeadsCoordination(rule, curr))	return;
+		
+		findHyphens(curr);
 		findHeadsApposition(curr);
 		findHeadsSmallClause(curr);
 
 		CTNode head = getHead(rule, curr.getChildren());
 		curr.c2d = new C2DInfo(head);
 	}
+	
 	
 	/**
 	 * If the specific node contains a coordination structure, find the head of each coordination.
@@ -546,6 +549,31 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		else
 			node.c2d.setHeadTerminal(head, label);
 	}
+	
+	private boolean findHyphens(CTNode node)
+	{
+		int i, size = node.getChildrenSize();
+		CTNode prev, hyph, next;
+		boolean isFound = false;
+		
+		for (i=0; i<size-2; i++)
+		{
+			prev = node.getChild(i);
+			hyph = node.getChild(i+1);
+			next = node.getChild(i+2);
+			
+			if (hyph.isPTag(CTLibEn.POS_HYPH))
+			{
+				prev.c2d.setHead(next, DEPLibEn.DEP_HMOD);
+				hyph.c2d.setHead(next, DEPLibEn.DEP_HYPH);
+				isFound = true;
+				i++;
+			}
+		}
+		
+		return isFound;
+	}
+	
 	
 	/**
 	 * Finds the head of appositional modifiers.
