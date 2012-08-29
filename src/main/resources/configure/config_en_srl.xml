@@ -5,7 +5,7 @@
 		<column index="4"  field="lemma"/>
 		<column index="6"  field="pos"/>
 		<column index="7"  field="feats"/>
-		<column index="9"  field="headId"/>
+		<column index="10" field="headId"/>
 		<column index="11" field="deprel"/>
 		<column index="13" field="sheads"/>
     </reader>
