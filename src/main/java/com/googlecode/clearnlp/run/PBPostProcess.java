@@ -90,31 +90,37 @@ public class PBPostProcess extends AbstractRun
 		{
 			tree = instance.getTree();
 			
+			// LINK-SLC, LINK-PSV are found here
 			if (language.equals(AbstractReader.LANG_EN))
 				CTLibEn.preprocessTree(tree);
+			else if (language.equals(AbstractReader.LANG_AR))
+				;
 			
-			if (isSkip(instance, tree))
+			// removes instances that do not align with the constiteunt tree
+			if (isSkip(instance, tree))		// varies by languages
 			{
 				remove.add(instance);
 				continue;
 			}
 			
+			// sorts by arguments' terminal IDs
 			instance.sortArgs();
 			
 			joinConcatenations(instance);
 			fixCyclicLocs(instance);
 			removeRedundantLocs(instance);
-			if (instance.isVerbPredicate())
-				fixIllegalPROs(instance);
-			aDSP = getArgDSP(instance);
+			// annotating NP(PRO) under S following the verb
+			if (instance.isVerbPredicate())	// English only
+				fixIllegalPROs(instance); 
+			aDSP = getArgDSP(instance);		// English only
 			getLinks(instance);
-			normalizeLinks(instance);
+			normalizeLinks(instance);		// varies by languages
 			instance.sortArgs();
 			removeRedundantLocs(instance);
 			findOverlappingArguments(instance);
 			addLinks(instance);
-			raiseEmptyArguments(instance);
-			if (aDSP != null)	instance.addArg(aDSP);
+			raiseEmptyArguments(instance);	// English only
+			if (aDSP != null)	instance.addArg(aDSP);	// English only
 		}
 		
 		instances.removeAll(remove);
@@ -125,6 +131,13 @@ public class PBPostProcess extends AbstractRun
 			PBLib.printPBInstances(instances, postFile);
 	}
 	
+	
+	/**
+	 * Returns {@code true} if the specific PropBank instance is valid.
+	 * @param instance a PropBank instance
+	 * @param tree a constiteunt tree associated with the PropBank instance.
+	 * @return {@code true} if the specific PropBank instance is valid.
+	 */
 	private boolean isSkip(PBInstance instance, CTTree tree)
 	{
 		if (findMisalignedArgs(instance))
@@ -202,7 +215,7 @@ public class PBPostProcess extends AbstractRun
 		instances.removeAll(remove);
 	}
 	
-	/** Returns {@code true} if the specific instance includes a mis-aligned argument. */
+	/** Returns {@code true} if the specific instance includes arguments misaligned to the constituent tree. */
 	private boolean findMisalignedArgs(PBInstance instance)
 	{
 		CTTree tree  = instance.getTree();
@@ -400,7 +413,7 @@ public class PBPostProcess extends AbstractRun
 	}
 	
 	/**
-	 * Adds antecedents.
+	 * Adds antecedents from manual annotation of LINK-*.
 	 * PRE: {@link PBInstance#sortArgs()} is called. 
 	 */
 	private void getLinks(PBInstance instance)
@@ -488,7 +501,7 @@ public class PBPostProcess extends AbstractRun
 					if ((node = CTLibEn.getComplementizer(curr)) != null && (ante = node.getAntecedent()) != null)
 						arg.addLoc(new PBLoc(ante.getPBLoc(), "*"));
 				}
-				else if (curr.isEmptyCategoryRec())
+				else if (curr.isEmptyCategoryRec())		// *T*, *
 				{
 					cLoc.height = 0;
 					node = tree.getTerminal(cLoc.terminalId);
@@ -520,6 +533,7 @@ public class PBPostProcess extends AbstractRun
 				}
 			}
 			
+			// removes errorneous arguments
 			for (PBLoc rLoc : lDel)
 				arg.removeLoc(rLoc.terminalId, rLoc.height);
 		}

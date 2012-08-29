@@ -506,6 +506,7 @@ public class DEPParser extends AbstractEngine
 	protected void postProcess()
 	{
 		Triple<DEPNode,String,Double> max = new Triple<DEPNode,String,Double>(null, null, -1d);
+		DEPNode root = d_tree.get(DEPLib.ROOT_ID);
 		int i, size = d_tree.size();
 		DEPNode node;
 		
@@ -515,13 +516,12 @@ public class DEPParser extends AbstractEngine
 			
 			if (!node.hasHead())
 			{
-				max.set(null, null, -1d);
+				max.set(root, DEPLibEn.DEP_ROOT, -1d);
 				
 				postProcessAux(node, -1, max);
 				postProcessAux(node, +1, max);
 				
-				if (max.o3 > 0)
-					node.setHead(max.o1, max.o2);
+				node.setHead(max.o1, max.o2);
 			}
 		}
 	}

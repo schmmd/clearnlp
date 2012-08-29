@@ -40,7 +40,7 @@ public class HeadRuleMapTest
 	@Test
 	public void testHeadRuleMap()
 	{
-		String filename = "src/main/resources/headrule/headrule_en_ontonotes.txt";
+		String filename = "src/main/resources/headrule/headrule_en_stanford.txt";
 		
 		HeadRuleMap map = new HeadRuleMap(UTInput.createBufferedFileReader(filename));
 		String      str = map.toString();
