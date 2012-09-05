@@ -262,6 +262,7 @@ abstract public class AbstractFtrXml
 			format.format("  <%s %s/>\n", XML_FEATURE, ft.toString());
 				
 		format.format("</%s>\n", XML_TEMPLATE);
+		format.close();
 		
 		return format.toString();
 	}

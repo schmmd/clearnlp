@@ -113,7 +113,8 @@ public class POSFtrXml extends AbstractFtrXml
 
 		for (int i=0; i<cutoff_label.length; i++)
 			format.format("  <%s %s=\"%d\" %s=\"%d\" %s=\"%d\" %s=\"%f\"/>\n", XML_CUTOFF, XML_LABEL, cutoff_label[i], XML_FEATURE, cutoff_feature[i], CUTOFF_DOCUMENT_FREQUENCY, cutoff_df[i], CUTOFF_AMBIGUITY, cutoff_ambiguity[i]);
-		
+
+		format.close();
 		return format.toString();
 	}
 }
