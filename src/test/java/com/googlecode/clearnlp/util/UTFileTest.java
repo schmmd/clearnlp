@@ -45,7 +45,7 @@ public class UTFileTest
 		assertEquals("a.txt", UTFile.replaceExtension("a.txt", "bmp", "jpg"));
 	}
 	
-	@Test
+//	@Test
 	public void getSortedFileListTest()
 	{
 		for (String filename : UTFile.getSortedFileList("/home/choijd/"))
