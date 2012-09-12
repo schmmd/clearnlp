@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
@@ -87,17 +88,35 @@ public class DEPTrain extends AbstractRun
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
 		DEPParser parser;
+		long st, et;
 		int i = 0;
 		
 		Set<String> sPunc = getLexica(reader, xml, trainFiles, -1);
+		
+		st = System.currentTimeMillis();
 		parser = getTrainedParser(eConfig, reader, xml, sPunc, trainFiles, null, -1);
 		saveModels(modelFile, featureXml, parser);
+		et = System.currentTimeMillis();
+		printTime(st, et);
 		
 		for (i=1; i<=nBoot; i++)
 		{
+			st = System.currentTimeMillis();
 			parser = getTrainedParser(eConfig, reader, xml, sPunc, trainFiles, parser.getModel(), -1);
 			saveModels(modelFile+"."+i, featureXml, parser);
+			et = System.currentTimeMillis();
+			printTime(st, et);	
 		}
+	}
+	
+	private void printTime(long st, long et)
+	{
+		long millis = et - st;
+		long mins   = TimeUnit.MILLISECONDS.toMinutes(millis);
+		long secs   = TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(mins);
+
+		System.out.println("Training time:");
+		System.out.println(String.format("- %d mins, %d secs", mins, secs));
 	}
 	
 	public void saveModels(String modelFile, String featureXml, DEPParser parser) throws Exception
@@ -167,11 +186,20 @@ public class DEPTrain extends AbstractRun
 			reader.close();
 		}
 		
-		System.out.println();
+		System.out.println("\nBootstrapping scores:");
+		printScores(parser.n_scores);
+		
 		model = null;
 		model = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), space, 0);
 		
 		return new DEPParser(xml, sPunc, model);
+	}
+	
+	protected void printScores(int[] counts)
+	{
+		System.out.printf("- LAS: %5.2f (%d/%d)\n", 100d*counts[1]/counts[0], counts[1], counts[0]);
+		System.out.printf("- UAS: %5.2f (%d/%d)\n", 100d*counts[2]/counts[0], counts[2], counts[0]);
+		System.out.printf("- LS : %5.2f (%d/%d)\n", 100d*counts[3]/counts[0], counts[3], counts[0]);
 	}
 	
 	static public void main(String[] args)

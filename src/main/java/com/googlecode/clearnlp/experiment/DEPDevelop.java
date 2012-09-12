@@ -26,6 +26,7 @@ package com.googlecode.clearnlp.experiment;
 import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
@@ -91,6 +92,7 @@ public class DEPDevelop extends DEPTrain
 	/** @param devId if {@code -1}, train the models using all training files. */
 	protected void develop(Element eConfig, DEPReader reader, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, String[] devFiles, Pair<StringModel,Double> model, int boost) throws Exception
 	{
+		long st = System.currentTimeMillis();
 		int[] lCounts = {0,0,0,0}, gCounts = {0,0,0,0};
 		StringIntPair[] gHeads;
 		DEPParser parser;
@@ -133,6 +135,8 @@ public class DEPDevelop extends DEPTrain
 		System.out.printf("LS : %5.2f (%d/%d)\n", 100d*gCounts[3]/gCounts[0], gCounts[3], gCounts[0]);
 		
 		model.o2 = 100d*gCounts[1]/gCounts[0];
+		long millis = System.currentTimeMillis() - st;
+		String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes(millis), TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millis)));
 	}
 	
 	static public void main(String[] args)

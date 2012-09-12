@@ -33,7 +33,7 @@ import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 
-public class DAGParser extends AbstractDEPParser
+public class DAGParser extends AbstractDAGParser
 { 
 	private StringIntPair[][] g_heads;
 	

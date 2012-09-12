@@ -73,6 +73,8 @@ public class DEPParser extends AbstractEngine
 	
 	protected DEPNode[]       lm_deps, rm_deps;
 	protected StringIntPair[] g_heads;
+	
+	public int[] n_scores = new int[4];
 		
 	/** Constructs a dependency parser for collecting lexica. */
 	public DEPParser(DEPFtrXml xml)
@@ -189,11 +191,12 @@ public class DEPParser extends AbstractEngine
 		init(tree);
 		parseAux();
 
-		switch (i_flag)
-		{
-		case FLAG_PREDICT: postProcess();		break;
-		case FLAG_DEMO   : f_trans.println();	break;
-		}
+		if (i_flag == FLAG_BOOST)
+			tree.addScoreCounts(g_heads, n_scores);
+		else if (i_flag == FLAG_PREDICT)
+			postProcess();
+		else if (i_flag == FLAG_DEMO)
+			f_trans.println();
 	}
 	
 	/** Initializes the dependency parser given the specific dependency tree. */
@@ -221,7 +224,7 @@ public class DEPParser extends AbstractEngine
 		rm_deps = new DEPNode[size];
 	}
 	
-	/** Called by {@link AbstractDEPParser#parse(DEPTree)}. */
+	/** Called by {@link DEPParser#parse(DEPTree)}. */
 	private void parseAux()
 	{
 		int size = d_tree.size();
@@ -302,7 +305,7 @@ public class DEPParser extends AbstractEngine
 		return labels;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getLabels()}. */
+	/** Called by {@link DEPParser#getLabels()}. */
 	private String[] getGoldLabels()
 	{
 		String[] labels = getGoldLabelArc();
@@ -393,7 +396,7 @@ public class DEPParser extends AbstractEngine
 		return true;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getLabels()}. */
+	/** Called by {@link DEPParser#getLabels()}. */
 	private String[] getAutoLabels(StringFeatureVector vector)
 	{
 		return s_model.predictBest(vector).label.split(LB_DELIM);
@@ -621,7 +624,7 @@ public class DEPParser extends AbstractEngine
 		f_trans.println(build.toString());
 	}
 	
-	/** Called by {@link AbstractDEPParser#printState(String, String)}. */
+	/** Called by {@link DEPParser#printState(String, String)}. */
 	private int getFirstLambda2()
 	{
 		int i;
@@ -723,7 +726,7 @@ public class DEPParser extends AbstractEngine
 		return node;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getNode(FtrToken)}. */
+	/** Called by {@link DEPParser#getNode(FtrToken)}. */
 	private DEPNode getNodeStack(FtrToken token)
 	{
 		if (token.offset == 0)
@@ -741,7 +744,7 @@ public class DEPParser extends AbstractEngine
 		return null;
 	}
 
-	/** Called by {@link AbstractDEPParser#getNode(FtrToken)}. */
+	/** Called by {@link DEPParser#getNode(FtrToken)}. */
 	private DEPNode getNodeLambda(FtrToken token)
 	{
 		if (token.offset == 0)
@@ -755,7 +758,7 @@ public class DEPParser extends AbstractEngine
 		return null;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getNode(FtrToken)}. */
+	/** Called by {@link DEPParser#getNode(FtrToken)}. */
 	private DEPNode getNodeBeta(FtrToken token)
 	{
 		if (token.offset == 0)

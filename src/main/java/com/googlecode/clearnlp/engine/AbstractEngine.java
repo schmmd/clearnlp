@@ -31,11 +31,11 @@ import com.googlecode.clearnlp.reader.AbstractColumnReader;
 
 abstract public class AbstractEngine
 {
-	static public final byte FLAG_LEXICA		= 0;
-	static public final byte FLAG_TRAIN			= 1;
-	static public final byte FLAG_PREDICT		= 2;
-	static public final byte FLAG_BOOST			= 3;
-	static public final byte FLAG_DEMO	= 4;
+	static public final byte FLAG_LEXICA	= 0;
+	static public final byte FLAG_TRAIN		= 1;
+	static public final byte FLAG_PREDICT	= 2;
+	static public final byte FLAG_BOOST		= 3;
+	static public final byte FLAG_DEMO		= 4;
 	
 	protected StringFeatureVector getFeatureVector(AbstractFtrXml xml)
 	{

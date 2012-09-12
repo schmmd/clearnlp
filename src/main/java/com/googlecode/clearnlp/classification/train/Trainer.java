@@ -23,12 +23,17 @@
 */
 package com.googlecode.clearnlp.classification.train;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
+import com.googlecode.clearnlp.util.pair.Pair;
 
 
 /**
@@ -63,7 +68,7 @@ public class Trainer
 		m_model.copyWeightVector(weights);
 	}
 	
-	private void trainMulti(int numThreads)
+/*	private void trainMulti(int numThreads)
 	{
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 		
@@ -79,9 +84,30 @@ public class Trainer
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		}
 		catch (InterruptedException e) {e.printStackTrace();}
-	}
+	}*/
+	
+	private void trainMulti(int numThreads)
+	{
+		int currLabel, size = t_space.getLabelSize();
+		Executor executor = new ThreadPoolExecutor(numThreads, numThreads, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(size-numThreads));
+		CompletionService<Pair<Integer,double[]>> ecs = new ExecutorCompletionService<Pair<Integer,double[]>>(executor);
+		Pair<Integer,double[]> p;
+		
+		for (currLabel=0; currLabel<size; currLabel++)
+			ecs.submit(new TrainTask(currLabel));
 
-	class TrainTask implements Runnable
+		try
+		{
+			for (currLabel=0; currLabel<size; currLabel++)
+			{
+				p = ecs.take().get();
+				m_model.copyWeightVector(p.o1, p.o2);
+			}
+		}
+		catch (Exception e) {e.printStackTrace();}	
+    }
+
+	class TrainTask implements Callable<Pair<Integer,double[]>>
 	{
 		/** The current label to train */
 		int curr_label;
@@ -94,11 +120,11 @@ public class Trainer
 		{
 			curr_label = currLabel;
 		}
-		
-		public void run()
+
+		@Override
+		public Pair<Integer,double[]> call() throws Exception
 		{
-			double[] weights = a_algorithm.getWeight(t_space, curr_label);
-			m_model.copyWeightVector(curr_label, weights);
+			return new Pair<Integer,double[]>(curr_label, a_algorithm.getWeight(t_space, curr_label));
 		}
 	}
 }

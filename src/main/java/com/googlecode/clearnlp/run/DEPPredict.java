@@ -92,7 +92,7 @@ public class DEPPredict extends AbstractRun
 		{
 			for (String filename : UTFile.getSortedFileList(inputPath))
 				predict(filename, filename+EXT, reader, parser);
-		}		
+		}
 	}
 	
 	static public DEPParser getParser(String modelFile) throws Exception
