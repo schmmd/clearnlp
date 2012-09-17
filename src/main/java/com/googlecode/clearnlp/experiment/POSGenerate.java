@@ -25,6 +25,7 @@ package com.googlecode.clearnlp.experiment;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Arrays;
 
 import org.w3c.dom.Element;
 
@@ -49,7 +50,7 @@ public class POSGenerate extends POSTrain
 
 		IntOpenHashSet sDev = new IntOpenHashSet();
 		int devId, size = trnFiles.length;
-		POSTagger[] taggers;
+		long[] counts = new long[4];
 		String devFile;
 		
 		for (devId=0; devId<size; devId++)
@@ -59,9 +60,10 @@ public class POSGenerate extends POSTrain
 			
 			System.out.println("Cross validation: "+devFile);
 			sDev.clear();	sDev.add(devId);
+			Arrays.fill(counts, 0);
 			
-			taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, sDev);
-			POSPredict.predict(trnFiles[devId], outDir+File.separator+devFile+".tagged", reader, taggers, threshold);
+			POSTagger[] taggers = {getTrainedTagger(eConfig, reader, xml, trnFiles, sDev, FLAG_DYNAMIC)};
+			POSPredict.predict(trnFiles[devId], outDir+File.separator+devFile+".tagged", reader, taggers, threshold, counts);
 		}
 	}
 	

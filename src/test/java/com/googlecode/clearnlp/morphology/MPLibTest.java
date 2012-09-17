@@ -25,9 +25,9 @@ package com.googlecode.clearnlp.morphology;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Test;
+import java.util.Arrays;
 
-import com.googlecode.clearnlp.morphology.MPLib;
+import org.junit.Test;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
@@ -136,5 +136,11 @@ public class MPLibTest
 		assertEquals(false, MPLib.isPeriodLike(form));
 		form = "@?";
 		assertEquals(false, MPLib.isPeriodLike(form));
+	}
+	
+	public void splitWhiteSpaces()
+	{
+		String s = "A B\nC\tD\rE\fF  G\n";
+		assertEquals("[A, B, C, D, E, F, G]", Arrays.toString(MPLib.splitWhiteSpaces(s)));
 	}
 }

@@ -25,11 +25,7 @@ package com.googlecode.clearnlp.util;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
-
 import org.junit.Test;
-
-import com.googlecode.clearnlp.util.UTString;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
@@ -68,8 +64,5 @@ public class UTStringTest
 		assertEquals(true, UTString.containsDigit(s));
 		s = "ab3";
 		assertEquals(true, UTString.containsDigit(s));
-	
-		s = "A B\nC\tD\rE\fF  G\n";
-		assertEquals("[A, B, C, D, E, F, G]", Arrays.toString(UTString.splitWhiteSpaces(s)));
 	}
 }

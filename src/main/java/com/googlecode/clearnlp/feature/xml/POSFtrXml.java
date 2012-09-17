@@ -106,6 +106,11 @@ public class POSFtrXml extends AbstractFtrXml
 	{
 		return (index < cutoff_df.length) ? cutoff_df[index] : 0; 
 	}
+	
+	public int getNumberOfConfigurations()
+	{
+		return cutoff_ambiguity.length;
+	}
 
 	protected String toStringCutoffs()
 	{

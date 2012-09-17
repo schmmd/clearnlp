@@ -23,20 +23,9 @@
 */
 package com.googlecode.clearnlp.util;
 
-import java.util.regex.Pattern;
 
 public class UTString
 {
-	/** White space characters ({@code " \t\n\r\f"}). */
-	static final public String WHITESPACES = " \t\n\r\f";
-	
-	static final private Pattern P_SPLIT_WHITESPACES = Pattern.compile("\\s\\s*");
-	
-	static public String[] splitWhiteSpaces(String str)
-	{
-		return P_SPLIT_WHITESPACES.split(str);
-	}
-	
 	static public boolean isAllUpperCase(String str)
 	{
 		int i, size = str.length();

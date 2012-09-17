@@ -88,8 +88,10 @@ public class Trainer
 	
 	private void trainMulti(int numThreads)
 	{
-		int currLabel, size = t_space.getLabelSize();
-		Executor executor = new ThreadPoolExecutor(numThreads, numThreads, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(size-numThreads));
+		int currLabel, size = t_space.getLabelSize(), qSize = size - numThreads;
+		if (qSize < 0)	qSize = 0;
+		
+		Executor executor = new ThreadPoolExecutor(numThreads, numThreads, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(qSize));
 		CompletionService<Pair<Integer,double[]>> ecs = new ExecutorCompletionService<Pair<Integer,double[]>>(executor);
 		Pair<Integer,double[]> p;
 		

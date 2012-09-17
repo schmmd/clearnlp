@@ -38,7 +38,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
 public class MPLib
 {
 	static final protected Pattern URL_URI       = Pattern.compile("(cvs|dns|file|ftp|http|https|imap|mms|pop|rsync|rtmp|ssh|sftp|smb|svn)://.+");
-	static final protected Pattern URL_DOMAIN    = Pattern.compile(".+\\.(com|edu|gov|int|mil|net|org)");
+	static final protected Pattern URL_DOMAIN    = Pattern.compile(".+\\.(com|edu|gov|int|mil|net|org|biz)");
 	static final protected Pattern URL_DOMAIN_KR = Pattern.compile(".+\\.(co|ac|go|mil|ne|or)\\.kr");
 	static final protected Pattern URL_WEB_EXT   = Pattern.compile(".+\\.(asp|aspx|htm|html|jsp|php|shtml|xml)");
 
@@ -49,6 +49,13 @@ public class MPLib
 	static final protected Pattern   DIGIT_SPAN	= Pattern.compile("\\d+");
 	static final protected Pattern   DIGIT_ONLY	= Pattern.compile("^\\d+$");
 	static final protected Pattern[] DIGIT_LIKE	= {Pattern.compile("\\d%"), Pattern.compile("\\$\\d"), Pattern.compile("(^|\\d)\\.\\d"), Pattern.compile("\\d,\\d"), Pattern.compile("\\d:\\d"), Pattern.compile("\\d-\\d"), Pattern.compile("\\d\\/\\d")};
+	
+	static final protected Pattern WHITE_SPACES = Pattern.compile("\\s\\s*");
+	
+	static public String[] splitWhiteSpaces(String str)
+	{
+		return WHITE_SPACES.split(str);
+	}
 	
 	@SuppressWarnings("serial")
 	static final protected List<Pair<Pattern, String>> BRACKET_LIST = new ArrayList<Pair<Pattern,String>>()
