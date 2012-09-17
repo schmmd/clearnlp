@@ -30,6 +30,7 @@ import org.kohsuke.args4j.Option;
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.algorithm.LiblinearL2LR;
 import com.googlecode.clearnlp.classification.algorithm.LiblinearL2SV;
+import com.googlecode.clearnlp.classification.algorithm.LiblinearL2SVPREC;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.classification.train.SparseTrainSpace;
@@ -40,67 +41,71 @@ import com.googlecode.clearnlp.util.UTOutput;
 
 
 /**
- * Trains a Liblinear model.
- * @since 0.1.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
- */
-public class LiblinearTrain extends AbstractRun
+* Trains a Liblinear model.
+* @since 0.1.0
+* @author Jinho D. Choi ({@code choijd@colorado.edu})
+*/
+public class LiblinearTrainPrec extends AbstractRun
 {
 	@Option(name="-i", usage="the training file (input; required)", required=true, metaVar="<filename>")
 	private String s_trainFile;
-	
+
 	@Option(name="-m", usage="the model file (output; required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
 
+    @Option(name="-p", usage="precision bias parameter", required=false, metaVar="<double>")
+	private double prec_bias = 1.0;
+
 	@Option(name="-nl", usage="label frequency cutoff (default: 0)\n"+"exclusive, string vector space only", required=false, metaVar="<integer>")
-	private int i_labelCutoff = 0; 
-	
+	private int i_labelCutoff = 0;
+
 	@Option(name="-nf", usage="feature frequency cutoff (default: 0)\n"+"exclusive, string vector space only", required=false, metaVar="<integer>")
 	private int i_featureCutoff = 0;
-	
+
 	@Option(name="-nt", usage="the number of threads to be used (default: 1)", required=false, metaVar="<integer>")
 	private int i_numThreads = 1;
-	
+
 	@Option(name="-v", usage="the type of vector space (default: "+AbstractTrainSpace.VECTOR_STRING+")\n"+
 							AbstractTrainSpace.VECTOR_SPARSE+": sparse vector space\n"+
             				AbstractTrainSpace.VECTOR_STRING+": string vector space\n",
             required=false, metaVar="<byte>")
 	private byte i_vectorType = AbstractTrainSpace.VECTOR_STRING;
-	
+
 	@Option(name="-s", usage="the type of solver (default: "+AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV+")\n"+
 							AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV+": L2-regularized L1-loss support vector classification (dual)\n"+
 							AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L2_SV+": L2-regularized L2-loss support vector classification (dual)\n"+
-							AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_LR   +": L2-regularized logistic regression (dual)",
+							AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_LR   +": L2-regularized logistic regression (dual)\n"+
+                            AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV_PREC+": Precision-biased L2-regularized L1-loss support vector classification (dual)",
 			required=false, metaVar="<byte>")
 	private byte i_solver = AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV;
-	
+
 	@Option(name="-c", usage="the cost (default: 0.1)", required=false, metaVar="<double>")
 	private double d_cost = 0.1;
-	
+
 	@Option(name="-e", usage="the tolerance of termination criterion (default: 0.1)", required=false, metaVar="<double>")
 	private double d_eps = 0.1;
-	
+
 	@Option(name="-b", usage="the bias (default: 0)", required=false, metaVar="<double>")
 	private double d_bias = 0.0;
-	
-	public LiblinearTrain() {}
-	
-	public LiblinearTrain(String[] args)
+
+	public LiblinearTrainPrec() {}
+
+	public LiblinearTrainPrec(String[] args)
 	{
 		initArgs(args);
 
 		try
 		{
-			train(s_trainFile, s_modelFile, i_vectorType, i_labelCutoff, i_featureCutoff, i_numThreads, i_solver, d_cost, d_eps, d_bias);
+			train(s_trainFile, s_modelFile, i_vectorType, i_labelCutoff, i_featureCutoff, i_numThreads, i_solver, d_cost, d_eps, d_bias,prec_bias);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
-	
-	public void train(String trainFile, String modelFile, byte vectorType, int labelCutoff, int featureCutoff, int numThreads, byte solver, double cost, double eps, double bias) throws Exception
+
+	public void train(String trainFile, String modelFile, byte vectorType, int labelCutoff, int featureCutoff, int numThreads, byte solver, double cost, double eps, double bias,double prec_bias) throws Exception
 	{
 		AbstractTrainSpace space = null;
 		boolean hasWeight = AbstractTrainSpace.hasWeight(vectorType, trainFile);
-		
+
 		switch (vectorType)
 		{
 		case AbstractTrainSpace.VECTOR_SPARSE:
@@ -108,23 +113,26 @@ public class LiblinearTrain extends AbstractRun
 		case AbstractTrainSpace.VECTOR_STRING:
 			space = new StringTrainSpace(hasWeight, labelCutoff, featureCutoff); break;
 		}
-		
+
 		space.readInstances(UTInput.createBufferedFileReader(trainFile));
 		space.build();
-		AbstractModel model = getModel(space, numThreads, solver, cost, eps, bias);
+        System.out.println("using prec_bias " + prec_bias);
+		AbstractModel model = getModel(space, numThreads, solver, cost, eps, bias,prec_bias);
 		PrintStream   fout  = UTOutput.createPrintBufferedGzipFileStream(modelFile);
-		
+
 		model.setSolver(solver);
 		model.save(fout);
 		fout.close();
 	}
-	
-	static public AbstractModel getModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
+
+	static public AbstractModel getModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias,double prec_bias)
 	{
 		AbstractAlgorithm algorithm = null;
-		
+
 		switch (solver)
 		{
+        case AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV_PREC:
+			algorithm = new LiblinearL2SVPREC((byte)1, cost, eps, bias,prec_bias); break;
 		case AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV:
 			algorithm = new LiblinearL2SV((byte)1, cost, eps, bias); break;
 		case AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L2_SV:
@@ -136,9 +144,9 @@ public class LiblinearTrain extends AbstractRun
 		new Trainer(space, algorithm, numThreads);
 		return space.getModel();
 	}
-	
+
 	static public void main(String[] args)
 	{
-		new LiblinearTrain(args);
+		new LiblinearTrainPrec(args);
 	}
 }

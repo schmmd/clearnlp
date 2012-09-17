@@ -24,7 +24,7 @@
     <connection>scm:git:https://clearnlp.googlecode.com/git/</connection>
     <developerConnection>scm:git:https://clearnlp.googlecode.com/git/</developerConnection>
   </scm>
-
+  
   <developers>
     <developer>
       <id>jdchoi77</id>

@@ -36,12 +36,13 @@ import com.googlecode.clearnlp.util.UTArray;
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class LiblinearL2SV extends AbstractAlgorithm
+public class LiblinearL2SVPREC extends AbstractAlgorithm
 {
 	private byte   i_lossType;
 	private double d_cost;
 	private double d_eps;
 	private double d_bias;
+    private double p_bias;
 	
 	/**
 	 * Constructs the liblinear L2-regularized support vector classification algorithm.
@@ -50,12 +51,13 @@ public class LiblinearL2SV extends AbstractAlgorithm
 	 * @param eps the tolerance of termination criterion.
 	 * @param bias the bias.
 	 */
-	public LiblinearL2SV(byte lossType, double cost, double eps, double bias)
+	public LiblinearL2SVPREC(byte lossType, double cost, double eps, double bias,double prec_bias)
 	{
 		i_lossType = lossType;
 		d_cost     = cost;
 		d_eps      = eps;
 		d_bias     = bias;
+        p_bias = prec_bias;
 	}
 	
 	/* (non-Javadoc)
@@ -77,7 +79,6 @@ public class LiblinearL2SV extends AbstractAlgorithm
 		double[] alpha  = new double[N];
 		double[] weight = new double[D];
 		double U, G, d, alpha_old;
-		
 		int [] index = new int [N];
 		byte[] aY    = new byte[N];
 		
@@ -140,7 +141,11 @@ public class LiblinearL2SV extends AbstractAlgorithm
 				i  = index[s];
 				yi = aY[i];
 				xi = xs.get(i);
-				U  = upper_bound[GETI(aY, i)];
+                if(yi == 1)
+				    U  = p_bias * upper_bound[GETI(aY, i)];
+                else
+                   U  = upper_bound[GETI(aY, i)];
+
 				G  = (d_bias > 0) ? weight[0] * d_bias : 0;
 								
 				if (space.hasWeight())
