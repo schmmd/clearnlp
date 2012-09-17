@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ import java.util.Set;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.googlecode.clearnlp.pos.POSLib;
+import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.util.pair.IntDoublePair;
 
@@ -59,17 +59,6 @@ public class Kmeans
 		v_units  = new ArrayList<int[]>();
 	}
 	
-	public void addUnit(POSNode[] nodes)
-	{
-		Set<String> lexica = new HashSet<String>();
-		POSLib.normalizeForms(nodes);
-		
-		for (POSNode node : nodes)
-			lexica.add(node.lemma);
-				
-		addUnit(lexica);
-	}
-	
 	public void addUnit(Set<String> lexica)
 	{
 		int index, i = 0, size = lexica.size();
@@ -93,12 +82,33 @@ public class Kmeans
 		Arrays.sort(unit);
 		v_units.add(unit);
 	}
+	
+	public void addUnit(POSNode[] nodes)
+	{
+		Set<String> lexica = new HashSet<String>();
+		
+		for (POSNode node : nodes)
+			lexica.add(node.lemma);
+				
+		addUnit(lexica);
+	}
+	
+	public void addUnit(DEPTree tree)
+	{
+		Set<String> lexica = new HashSet<String>();
+		int i, size = tree.size();
+		
+		for (i=1; i<size; i++)
+			lexica.add(tree.get(i).lemma);
+				
+		addUnit(lexica);
+	}
 
 	/**
 	 * K-means clustering.
 	 * @param threshold minimum RSS.
 	 * @return each row represents a cluster, and
-	 *         each column represents a pari of (index of a unit vector, similarity to the centroid).
+	 *         each column represents a pair of (index of a unit vector, similarity to the centroid).
 	 */
 	public List<List<IntDoublePair>> cluster(int k, double threshold)
 	{

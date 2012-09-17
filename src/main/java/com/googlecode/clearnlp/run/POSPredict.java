@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,11 @@ public class POSPredict extends AbstractRun
 {
 	final private String EXT = ".tagged";
 	
+	static final private int COUNT_WC = 0;		// word count
+	static final private int COUNT_SC = 1;		// sentence count
+	static final private int COUNT_GC = 2;		// count how many times a generalized model is used
+	static final private int COUNT_TC = 3;		// total time in milliseconds
+	
 	@Option(name="-i", usage="the input path (input; required)", required=true, metaVar="<filepath>")
 	private String s_inputPath;
 	@Option(name="-o", usage="the output file (default: <input_path>.tagged)", required=false, metaVar="<filename>")
@@ -66,8 +71,8 @@ public class POSPredict extends AbstractRun
 	private String s_configXml;
 	@Option(name="-m", usage="the model file (input; required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
-	@Option(name="-t", usage="the similarity threshold (default: -1)", required=false, metaVar="<double>")
-	protected double d_threshold = -1;
+	@Option(name="-t", usage="the similarity threshold (default: read from the model file)", required=false, metaVar="<double>")
+	protected double d_threshold = Double.MAX_VALUE;
 	
 	public POSPredict() {}
 	
@@ -88,35 +93,52 @@ public class POSPredict extends AbstractRun
 		POSReader reader = (POSReader)getReader(eConfig);
 		
 		Pair<POSTagger[],Double> p = getTaggers(modelFile, threshold);
+		long counts[] = {0, 0, 0, 0};
 		
 		if (new File(inputPath).isFile())
 		{
 			if (outputFile == null)	outputFile = inputPath + EXT;
-			predict(inputPath, outputFile, reader, p.o1, p.o2);	
+			predict(inputPath, outputFile, reader, p.o1, p.o2, counts);	
 		}
 		else
 		{
 			for (String filename : UTFile.getSortedFileList(inputPath))
-				predict(filename, filename+EXT, reader, p.o1, p.o2);
-		}		
+				predict(filename, filename+EXT, reader, p.o1, p.o2, counts);
+		}
+	
+		printScores(counts, p.o1.length);
+	}
+	
+	private void printScores(long[] counts, int modelSize)
+	{
+		long wc = counts[COUNT_WC], sc = counts[COUNT_SC], gc = counts[COUNT_GC];
+		double time = counts[COUNT_TC];
+		
+		System.out.println("Average tagging speed");
+		System.out.printf(": %f (milliseconds/token)\n", time/wc);
+		System.out.printf(": %f (milliseconds/sentence)\n", time/sc);
+		
+		if (modelSize > 1)
+		{
+			System.out.println("Generalized model used");
+			System.out.printf(": %f (%d/%d)\n", (double)gc/sc, gc, sc);			
+		}
 	}
 	
 	static public Pair<POSTagger[],Double> getTaggers(String modelFile, double threshold) throws Exception
 	{
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
+		POSTagger[] taggers = null;
 		POSFtrXml xml = null;
 		BufferedReader fin;
 		ZipEntry zEntry;
 		String name;
-		int modId;
-		
-		POSTagger[] taggers = new POSTagger[POSTrain.MODEL_SIZE];
 		
 		while ((zEntry = zin.getNextEntry()) != null)
 		{
 			name = zEntry.getName();
 						
-			if (threshold < 0 && name.equals(POSTrain.ENTRY_THRESHOLD))
+			if (name.equals(POSTrain.ENTRY_CONFIGURATION) && threshold == Double.MAX_VALUE)
 			{
 				fin = new BufferedReader(new InputStreamReader(zin));
 				threshold = Double.parseDouble(fin.readLine());
@@ -137,68 +159,64 @@ public class POSPredict extends AbstractRun
 				
 				xml = new POSFtrXml(new ByteArrayInputStream(build.toString().getBytes()));
 			}
-			else if (name.startsWith(ENTRY_MODEL))
+			else if (name.equals(ENTRY_MODEL))
 			{
 				fin = new BufferedReader(new InputStreamReader(zin));
-				modId = Integer.parseInt(name.substring(ENTRY_MODEL.length()));
-				taggers[modId] = new POSTagger(xml, fin);
+				int i, size = Integer.parseInt(fin.readLine());
+				taggers = new POSTagger[size];
+				
+				for (i=0; i<size; i++)
+					taggers[i] = new POSTagger(xml, fin);
 			}
 		}
 		
 		zin.close();
-		
 		return new Pair<POSTagger[],Double>(taggers, threshold);
 	}
 	
-	static public void predict(String inputFile, String outputFile, POSReader reader, POSTagger[] taggers, double threshold) 
+	static public void predict(String inputFile, String outputFile, POSReader reader, POSTagger[] taggers, double threshold, long[] counts) 
 	{
-		double sum = 0;
-		POSNode[] nodes;
-		int i, n = 0;
-		int counts[] = {0, 0};
-		
 		System.out.println("Predicting: "+inputFile);
 		reader.open(UTInput.createBufferedFileReader(inputFile));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
-		
-		for (i=0; (nodes = reader.next()) != null; i++)
-		{
-			sum += predict(nodes, taggers, threshold, counts);
-			n   += nodes.length;
 
-			if (i%1000 == 0)	System.out.print(".");
+		POSNode[] nodes;
+		long sc;
+		
+		for (sc=0; (nodes = reader.next()) != null; sc++)
+		{
+			predict(nodes, taggers, threshold, counts);
+			counts[COUNT_WC] += nodes.length;
+
+			if (sc%1000 == 0)	System.out.print(".");
 			fout.println(UTArray.join(nodes, AbstractColumnReader.DELIM_SENTENCE) + AbstractColumnReader.DELIM_SENTENCE);
 		}
 		
 		System.out.println();
+		counts[COUNT_SC] += sc;
 		reader.close();
 		fout.close();
-		
-		System.out.printf("Overall tagging time  : %f (sec. for %d tokens)\n", sum/1000, n);
-		System.out.printf("Average tagging time  : %f (ms/token)\n", sum/n);
-		System.out.printf("Generalized model used: %f (%d/%d)\n", (double)counts[1]/i, counts[1], i);
 	}
 	
-	static double predict(POSNode[] nodes, POSTagger[] taggers, double threshold, int[] counts)
+	static void predict(POSNode[] nodes, POSTagger[] taggers, double threshold, long[] counts)
 	{
-		double st, et;
+		long st, et;
 		
 		st = System.currentTimeMillis();
 		POSLib.normalizeForms(nodes);
-		
-		if (threshold < taggers[0].getCosineSimilarity(nodes))
+
+		if (taggers.length == 1 || threshold < taggers[0].getCosineSimilarity(nodes))
 		{
 			taggers[0].tag(nodes);
-			counts[0]++;
 		}
 		else
 		{
 			taggers[1].tag(nodes);
-			counts[1]++;
+			counts[COUNT_GC]++;
 		}
 
 		et = System.currentTimeMillis();
-		return et - st;
+		counts[COUNT_TC] += et - st;
 	}
 		
 	static public void main(String[] args)

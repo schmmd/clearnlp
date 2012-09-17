@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@ import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 
-public class DAGParser extends AbstractDEPParser
+public class DAGParser extends AbstractDAGParser
 { 
 	private StringIntPair[][] g_heads;
 	

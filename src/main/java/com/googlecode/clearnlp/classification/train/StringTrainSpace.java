@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@ public class StringTrainSpace extends AbstractTrainSpace
 	/** The feature count cutoff (exclusive). */
 	private int f_cutoff;
 	/** The list of all training instances. */
-	private List<String> s_instances;
+	private List<Pair<String,StringFeatureVector>> s_instances;
 	/** The map between labels and their counts. */
 	private ObjectIntOpenHashMap<String> m_labels;
 	/** The map between features and their counts. */
@@ -69,7 +69,7 @@ public class StringTrainSpace extends AbstractTrainSpace
 		s_model     = (StringModel)m_model;
 		l_cutoff    = labelCutoff;
 		f_cutoff    = featureCutoff;
-		s_instances = new ArrayList<String>();
+		s_instances = new ArrayList<Pair<String,StringFeatureVector>>();
 		m_labels    = new ObjectIntOpenHashMap<String>();
 		m_features  = new HashMap<String, ObjectIntOpenHashMap<String>>();
 	}
@@ -82,7 +82,8 @@ public class StringTrainSpace extends AbstractTrainSpace
 	public void addInstance(String label, StringFeatureVector vector)
 	{
 		addLexica(label, vector);
-		s_instances.add(label + DELIM_COL + vector.toString());
+		s_instances.add(new Pair<String, StringFeatureVector>(label, vector));
+	//	s_instances.add(label + DELIM_COL + vector.toString());
 	}
 	
 	/**
@@ -94,12 +95,8 @@ public class StringTrainSpace extends AbstractTrainSpace
 		Pair<String,StringFeatureVector> instance = toInstance(line, b_weight);
 		
 		addLexica(instance.o1, instance.o2);
-		s_instances.add(line);
-	}
-	
-	public List<String> getInstances()
-	{
-		return s_instances;
+		s_instances.add(instance);
+	//	s_instances.add(line);
 	}
 	
 	/** 
@@ -140,16 +137,13 @@ public class StringTrainSpace extends AbstractTrainSpace
 	 */
 	public void build()
 	{
-		Pair<String,StringFeatureVector> instance;
-		int y;	SparseFeatureVector x;
-		
 		System.out.println("Building:");
 		initModelMaps();
 		
-		for (String line : s_instances)
+		int y;	SparseFeatureVector x;
+		
+		for (Pair<String,StringFeatureVector> instance : s_instances)
 		{
-			instance = toInstance(line, b_weight);
-			
 			if ((y = s_model.getLabelIndex(instance.o1)) < 0)
 				continue;
 			

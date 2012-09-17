@@ -1,25 +1,17 @@
 /**
-* Copyright (c) 2009-2012, Regents of the University of Colorado
-* All rights reserved.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-* Neither the name of the University of Colorado at Boulder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-* ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-* LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-* CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-* SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-* INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-* CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-* ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-* POSSIBILITY OF SUCH DAMAGE.
+* Copyright 2012 University of Massachusetts Amherst
+* 
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* 
+*   http://www.apache.org/licenses/LICENSE-2.0
+*   
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
 */
 package com.googlecode.clearnlp.dependency;
 
@@ -45,7 +37,7 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 import com.googlecode.clearnlp.util.triple.Triple;
 
 
-public class DEPParser extends AbstractEngine
+public class DEPParserCC extends AbstractEngine
 { 
 	static final protected String LB_LEFT		= "L";
 	static final protected String LB_RIGHT		= "R";
@@ -58,80 +50,87 @@ public class DEPParser extends AbstractEngine
 	static final protected int    IDX_LIST		= 1;
 	static final protected int    IDX_DEPREL	= 2;
 	
-	protected byte				i_flag;
-	protected DEPFtrXml			f_xml;
-	protected StringTrainSpace	s_space;
-	protected StringModel		s_model;
-	protected DEPTree			d_tree;
-	protected int				i_lambda;
-	protected int				i_beta;
-	protected IntOpenHashSet    s_reduce;
-	protected int				n_trans;
-	protected PrintStream		f_trans;
-	protected Set<String>		s_punc;
-	protected Prob1DMap			m_punc;
+	protected byte					i_flag;
+	protected DEPFtrXml[]			f_xmls;
+	protected StringTrainSpace[]	s_spaces;
+	protected StringModel[]			s_models;
+	protected DEPTree				d_tree;
+	protected int					i_lambda;
+	protected int					i_beta;
+	protected IntOpenHashSet	    s_reduce;
+	protected int					n_trans;
+	protected PrintStream			f_trans;
+	protected Set<String>			s_punc;
+	protected Prob1DMap				m_punc;
+	protected int					n_models;
 	
 	protected DEPNode[]       lm_deps, rm_deps;
 	protected StringIntPair[] g_heads;
-	
+	protected double          d_lower;
 	public int[] n_scores = new int[4];
 		
 	/** Constructs a dependency parser for collecting lexica. */
-	public DEPParser(DEPFtrXml xml)
+	public DEPParserCC(DEPFtrXml[] xmls)
 	{
 		i_flag = FLAG_LEXICA;
-		f_xml  = xml;
+		f_xmls = xmls;
 		m_punc = new Prob1DMap();
 	}
 	
 	/** Constructs a dependency parser for training. */
-	public DEPParser(DEPFtrXml xml, Set<String> sPunc, StringTrainSpace space)
+	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringTrainSpace[] spaces)
 	{
-		i_flag  = FLAG_TRAIN;
-		f_xml   = xml;
-		s_punc  = sPunc;
-		s_space = space;
+		i_flag   = FLAG_TRAIN;
+		f_xmls   = xmls;
+		s_punc   = sPunc;
+		s_spaces = spaces;
+		n_models = f_xmls.length;
 	}
 	
 	/** Constructs a dependency parser for cross-validation. */
-	public DEPParser(DEPFtrXml xml, Set<String> sPunc, StringModel model)
+	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringModel[] models)
 	{
-		i_flag  = FLAG_PREDICT;
-		f_xml   = xml;
-		s_punc  = sPunc;
-		s_model = model;
+		i_flag   = FLAG_PREDICT;
+		f_xmls   = xmls;
+		s_punc   = sPunc;
+		s_models = models;
+		n_models = f_xmls.length;
 	}
 	
 	/** Constructs a dependency parser for predicting. */
-	public DEPParser(DEPFtrXml xml, BufferedReader fin)
+	public DEPParserCC(DEPFtrXml[] xmls, BufferedReader fin)
 	{
-		i_flag = FLAG_PREDICT;
-		f_xml  = xml;
+		i_flag   = FLAG_PREDICT;
+		f_xmls   = xmls;
+		n_models = f_xmls.length;
 		loadModel(fin);
 	}
 	
 	/** Constructs a dependency parser for bootstrapping. */
-	public DEPParser(DEPFtrXml xml, Set<String> sPunc, StringModel model, StringTrainSpace space)
+	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringModel[] models, StringTrainSpace[] spaces)
 	{
-		i_flag  = FLAG_BOOST;
-		f_xml   = xml;
-		s_punc  = sPunc;
-		s_model = model;
-		s_space = space;
+		i_flag   = FLAG_BOOST;
+		f_xmls   = xmls;
+		s_punc   = sPunc;
+		s_models = models;
+		s_spaces = spaces;
+		n_models = f_xmls.length;
 	}
 	
 	/** Constructs a dependency parser for demonstration. */
-	public DEPParser(PrintStream fout)
+	public DEPParserCC(PrintStream fout)
 	{
 		i_flag  = FLAG_DEMO;
 		f_trans = fout;
 	}
 	
-	/** Saves collections and a dependency parsing model to the specific output stream. */
+	/** Saves collections and a dependency parsing model to the specific output-stream. */
 	public void saveModel(PrintStream fout)
 	{
 		UTOutput.printSet(fout, s_punc);
-		s_model.save(fout);
+		
+		for (StringModel model : s_models)
+			model.save(fout);
 	}
 	
 	/** Loads collections and a dependency parsing model from the specific input reader. */
@@ -143,13 +142,17 @@ public class DEPParser extends AbstractEngine
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
-		s_model = new StringModel(fin);
+		s_models = new StringModel[n_models];
+		int i;
+		
+		for (i=0; i<n_models; i++)
+			s_models[i] = new StringModel(fin);
 	}
 	
 	/** @return the dependency parsing model. */
-	public StringModel getModel()
+	public StringModel[] getModels()
 	{
-		return s_model;
+		return s_models;
 	}
 	
 	/**
@@ -161,7 +164,7 @@ public class DEPParser extends AbstractEngine
 		int i, size = tree.size();
 		DEPNode node;
 		
-		String lPunct = f_xml.getPunctuationLabel();
+		String lPunct = f_xmls[0].getPunctuationLabel();
 		
 		for (i=1; i<size; i++)
 		{
@@ -178,7 +181,7 @@ public class DEPParser extends AbstractEngine
 	 */
 	public Set<String> getPunctuationSet()
 	{
-		return m_punc.toSet(f_xml.getPunctuationCutoff());
+		return m_punc.toSet(f_xmls[0].getPunctuationCutoff());
 	}
 	
 	/**
@@ -229,7 +232,7 @@ public class DEPParser extends AbstractEngine
 		rm_deps = new DEPNode[size];
 	}
 	
-	/** Called by {@link DEPParser#parse(DEPTree)}. */
+	/** Called by {@link DEPParserCC#parse(DEPTree)}. */
 	private void parseAux()
 	{
 		int size = d_tree.size();
@@ -289,28 +292,40 @@ public class DEPParser extends AbstractEngine
 	{
 		if (i_flag == FLAG_DEMO)	return getGoldLabels();
 		
-		StringFeatureVector vector = getFeatureVector(f_xml);
-		String[] labels = null;
+		StringFeatureVector[] vectors = new StringFeatureVector[n_models];
+		String[] labels = null;	int i;
+		
+		for (i=0; i<n_models; i++)
+			vectors[i] = getFeatureVector(f_xmls[i]);
 		
 		if (i_flag == FLAG_TRAIN)
 		{
 			labels = getGoldLabels();
-			s_space.addInstance(UTArray.join(labels, LB_DELIM), vector);
+			String lb = UTArray.join(labels, LB_DELIM);
+			
+			for (i=0; i<n_models; i++)
+				s_spaces[i].addInstance(lb, vectors[i]);			
 		}
 		else if (i_flag == FLAG_PREDICT)
 		{
-			labels = getAutoLabels(vector);
+			labels = getAutoLabels(vectors);
 		}
 		else if (i_flag == FLAG_BOOST)
 		{
-			s_space.addInstance(UTArray.join(getGoldLabels(), LB_DELIM), vector);
-			labels = getAutoLabels(vector);
+			String lb = UTArray.join(getGoldLabels(), LB_DELIM);
+			
+			for (i=0; i<n_models; i++)
+				s_spaces[i].addInstance(lb, vectors[i]);
+			
+			labels = getAutoLabels(vectors);
 		}
+		else // if (i_flag == FLAG_TRANSITION)
+			labels = getGoldLabels();
 
 		return labels;
 	}
 	
-	/** Called by {@link DEPParser#getLabels()}. */
+	/** Called by {@link DEPParserCC#getLabels()}. */
 	private String[] getGoldLabels()
 	{
 		String[] labels = getGoldLabelArc();
@@ -336,7 +351,7 @@ public class DEPParser extends AbstractEngine
 		return labels;
 	}
 	
-	/** Called by {@link DEPParser#getGoldLabels()}. */
+	/** Called by {@link DEPParserCC#getGoldLabels()}. */
 	protected String[] getGoldLabelArc()
 	{
 		StringIntPair head = g_heads[i_lambda];
@@ -364,7 +379,7 @@ public class DEPParser extends AbstractEngine
 		return labels;
 	}
 	
-	/** Called by {@link DEPParser#getGoldLabels()}. */
+	/** Called by {@link DEPParserCC#getGoldLabels()}. */
 	protected boolean isGoldShift()
 	{
 		if (g_heads[i_beta].i < i_lambda)
@@ -384,7 +399,7 @@ public class DEPParser extends AbstractEngine
 		return true;
 	}
 	
-	/** Called by {@link DEPParser#getGoldLabels()}. */
+	/** Called by {@link DEPParserCC#getGoldLabels()}. */
 	protected boolean isGoldReduce(boolean hasHead)
 	{
 		if (!hasHead && !d_tree.get(i_lambda).hasHead())
@@ -401,10 +416,18 @@ public class DEPParser extends AbstractEngine
 		return true;
 	}
 	
-	/** Called by {@link DEPParser#getLabels()}. */
-	private String[] getAutoLabels(StringFeatureVector vector)
+	/** Called by {@link DEPParserCC#getLabels()}. */
+	private String[] getAutoLabels(StringFeatureVector[] vector)
 	{
-		return s_model.predictBest(vector).label.split(LB_DELIM);
+		StringPrediction p = null;	int i;
+		
+		for (i=0; i<n_models; i++)
+		{
+			p = s_models[i].predictBest(vector[i]);
+			if (p.score > d_lower)	break;
+		}
+		
+		return p.label.split(LB_DELIM);
 	}
 	
 	private void leftReduce(DEPNode lambda, DEPNode beta, String deprel)
@@ -515,7 +538,7 @@ public class DEPParser extends AbstractEngine
 	{
 		Triple<DEPNode,String,Double> max = new Triple<DEPNode,String,Double>(null, null, -1d);
 		DEPNode root = d_tree.get(DEPLib.ROOT_ID);
-		int i, size = d_tree.size();
+		int i, lIdx = n_models-1, size = d_tree.size();
 		DEPNode node;
 		
 		for (i=1; i<size; i++)
@@ -526,15 +549,15 @@ public class DEPParser extends AbstractEngine
 			{
 				max.set(root, DEPLibEn.DEP_ROOT, -1d);
 				
-				postProcessAux(node, -1, max);
-				postProcessAux(node, +1, max);
+				postProcessAux(node, -1, max, lIdx);
+				postProcessAux(node, +1, max, lIdx);
 				
 				node.setHead(max.o1, max.o2);
 			}
 		}
 	}
 	
-	private void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
+	private void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max, int lIdx)
 	{
 		StringFeatureVector vector;
 		List<StringPrediction> ps;
@@ -553,9 +576,9 @@ public class DEPParser extends AbstractEngine
 			if (dir < 0)	i_lambda = i;
 			else			i_beta   = i;
 			
-			vector = getFeatureVector(f_xml);
-			ps = s_model.predictAll(vector);
-			s_model.toProbability(ps);
+			vector = getFeatureVector(f_xmls[lIdx]);
+			ps = s_models[lIdx].predictAll(vector);
+			s_models[lIdx].toProbability(ps);
 			
 			for (StringPrediction p : ps)
 			{
@@ -629,7 +652,7 @@ public class DEPParser extends AbstractEngine
 		f_trans.println(build.toString());
 	}
 	
-	/** Called by {@link DEPParser#printState(String, String)}. */
+	/** Called by {@link DEPParserCC#printState(String, String)}. */
 	private int getFirstLambda2()
 	{
 		int i;
@@ -731,7 +754,7 @@ public class DEPParser extends AbstractEngine
 		return node;
 	}
 	
-	/** Called by {@link DEPParser#getNode(FtrToken)}. */
+	/** Called by {@link DEPParserCC#getNode(FtrToken)}. */
 	private DEPNode getNodeStack(FtrToken token)
 	{
 		if (token.offset == 0)
@@ -749,7 +772,7 @@ public class DEPParser extends AbstractEngine
 		return null;
 	}
 
-	/** Called by {@link DEPParser#getNode(FtrToken)}. */
+	/** Called by {@link DEPParserCC#getNode(FtrToken)}. */
 	private DEPNode getNodeLambda(FtrToken token)
 	{
 		if (token.offset == 0)
@@ -763,7 +786,7 @@ public class DEPParser extends AbstractEngine
 		return null;
 	}
 	
-	/** Called by {@link DEPParser#getNode(FtrToken)}. */
+	/** Called by {@link DEPParserCC#getNode(FtrToken)}. */
 	private DEPNode getNodeBeta(FtrToken token)
 	{
 		if (token.offset == 0)

@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ import com.googlecode.clearnlp.util.triple.Triple;
  * @since v0.1
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-abstract public class AbstractDEPParser extends AbstractEngine
+abstract public class AbstractDAGParser extends AbstractEngine
 {
 	static final protected String LB_LEFT		= "L";
 	static final protected String LB_RIGHT		= "R";
@@ -78,7 +78,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 	protected DEPArc[] lm_deps, rm_deps;
 	
 	/** Constructs a dependency parser for collecting lexica. */
-	public AbstractDEPParser(DEPFtrXml xml)
+	public AbstractDAGParser(DEPFtrXml xml)
 	{
 		i_flag = FLAG_LEXICA;
 		f_xml  = xml;
@@ -86,7 +86,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 	}
 	
 	/** Constructs a dependency parser for training. */
-	public AbstractDEPParser(DEPFtrXml xml, Set<String> sPunc, StringTrainSpace space)
+	public AbstractDAGParser(DEPFtrXml xml, Set<String> sPunc, StringTrainSpace space)
 	{
 		i_flag  = FLAG_TRAIN;
 		f_xml   = xml;
@@ -95,7 +95,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 	}
 	
 	/** Constructs a dependency parser for cross-validation. */
-	public AbstractDEPParser(DEPFtrXml xml, Set<String> sPunc, StringModel model)
+	public AbstractDAGParser(DEPFtrXml xml, Set<String> sPunc, StringModel model)
 	{
 		i_flag  = FLAG_PREDICT;
 		f_xml   = xml;
@@ -104,7 +104,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 	}
 	
 	/** Constructs a dependency parser for predicting. */
-	public AbstractDEPParser(DEPFtrXml xml, BufferedReader fin)
+	public AbstractDAGParser(DEPFtrXml xml, BufferedReader fin)
 	{
 		i_flag = FLAG_PREDICT;
 		f_xml  = xml;
@@ -119,7 +119,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 	}
 	
 	/** Constructs a dependency parser for bootstrapping. */
-	public AbstractDEPParser(DEPFtrXml xml, Set<String> sPunc, StringModel model, StringTrainSpace space)
+	public AbstractDAGParser(DEPFtrXml xml, Set<String> sPunc, StringModel model, StringTrainSpace space)
 	{
 		i_flag  = FLAG_BOOST;
 		f_xml   = xml;
@@ -129,7 +129,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 	}
 	
 	/** Constructs a dependency parser for demonstration. */
-	public AbstractDEPParser(PrintStream fout)
+	public AbstractDAGParser(PrintStream fout)
 	{
 		i_flag  = FLAG_DEMO;
 		f_trans = fout;
@@ -230,7 +230,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		}
 	}
 	
-	/** Called by {@link AbstractDEPParser#parse(DEPTree)}. */
+	/** Called by {@link AbstractDAGParser#parse(DEPTree)}. */
 	private void parseAux()
 	{
 		int size = d_tree.size();
@@ -311,7 +311,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		return labels;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getLabels()}. */
+	/** Called by {@link AbstractDAGParser#getLabels()}. */
 	private String[] getGoldLabels()
 	{
 		String[] labels = getGoldLabelArc();
@@ -337,7 +337,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		return labels;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getLabels()}. */
+	/** Called by {@link AbstractDAGParser#getLabels()}. */
 	private String[] getAutoLabels(StringFeatureVector vector)
 	{
 		return s_model.predictBest(vector).label.split(LB_DELIM);
@@ -565,7 +565,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		f_trans.println(build.toString());
 	}
 	
-	/** Called by {@link AbstractDEPParser#printState(String, String)}. */
+	/** Called by {@link AbstractDAGParser#printState(String, String)}. */
 	private int getFirstLambda2()
 	{
 		int i;
@@ -667,7 +667,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		return node;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getNode(FtrToken)}. */
+	/** Called by {@link AbstractDAGParser#getNode(FtrToken)}. */
 	private DEPNode getNodeStack(FtrToken token)
 	{
 		if (token.offset == 0)
@@ -685,7 +685,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		return null;
 	}
 
-	/** Called by {@link AbstractDEPParser#getNode(FtrToken)}. */
+	/** Called by {@link AbstractDAGParser#getNode(FtrToken)}. */
 	private DEPNode getNodeLambda(FtrToken token)
 	{
 		if (token.offset == 0)
@@ -699,7 +699,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		return null;
 	}
 	
-	/** Called by {@link AbstractDEPParser#getNode(FtrToken)}. */
+	/** Called by {@link AbstractDAGParser#getNode(FtrToken)}. */
 	private DEPNode getNodeBeta(FtrToken token)
 	{
 		if (token.offset == 0)

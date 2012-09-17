@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -50,8 +50,9 @@ import com.googlecode.clearnlp.util.UTXml;
  */
 abstract public class AbstractRun
 {
-	static final protected String ENTRY_FEATURE	= "FEATURE";
-	static final protected String ENTRY_MODEL	= "MODEL";
+	static final protected String ENTRY_CONFIGURATION	= "CONFIGURATION";
+	static final protected String ENTRY_FEATURE			= "FEATURE";
+	static final protected String ENTRY_MODEL			= "MODEL";
 	
 	static final public String TAG_READER				= "reader";
 	static final public String TAG_READER_TYPE			= "type";

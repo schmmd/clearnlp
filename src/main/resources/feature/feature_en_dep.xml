@@ -62,8 +62,8 @@
 	
 	<!-- dependency features -->
 	<feature n="1" f0="l:d"/>
-	<feature n="1" f0="l:lmdr"/>
-	<feature n="1" f0="l:rmdr"/>
+	<feature n="1" f0="l_lmd:d"/>
+	<feature n="1" f0="l_rmd:d"/>
 	
 	<feature n="2" f0="l_h:m" f1="l:p"/>
 		

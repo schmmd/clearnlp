@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,11 +25,7 @@ package com.googlecode.clearnlp.util;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
-
 import org.junit.Test;
-
-import com.googlecode.clearnlp.util.UTString;
 
 
 /** @author Jinho D. Choi ({@code choijd@colorado.edu}) */
@@ -68,8 +64,5 @@ public class UTStringTest
 		assertEquals(true, UTString.containsDigit(s));
 		s = "ab3";
 		assertEquals(true, UTString.containsDigit(s));
-	
-		s = "A B\nC\tD\rE\fF  G\n";
-		assertEquals("[A, B, C, D, E, F, G]", Arrays.toString(UTString.splitWhiteSpaces(s)));
 	}
 }

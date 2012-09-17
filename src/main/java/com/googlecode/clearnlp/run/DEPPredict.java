@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -92,7 +92,7 @@ public class DEPPredict extends AbstractRun
 		{
 			for (String filename : UTFile.getSortedFileList(inputPath))
 				predict(filename, filename+EXT, reader, parser);
-		}		
+		}
 	}
 	
 	static public DEPParser getParser(String modelFile) throws Exception

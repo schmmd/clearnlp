@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -58,12 +58,12 @@ public class POSDevelop2 extends POSTrain
 		
 		try
 		{
-			run(s_configXml, s_featureXml, s_trainDir, s_devDir, d_threshold);	
+			run(s_configXml, s_featureXml, s_trainDir, s_devDir);	
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configXml, String featureXml, String trnDir, String devDir, double threshold) throws Exception
+	public void run(String configXml, String featureXml, String trnDir, String devDir) throws Exception
 	{
 		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader   reader = (POSReader)getReader(eConfig);
@@ -71,11 +71,9 @@ public class POSDevelop2 extends POSTrain
 		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
 		String[]  devFiles = UTFile.getSortedFileList(devDir);
 		
-		if (threshold < 0)	threshold = crossValidate(trnFiles, reader, xml, eConfig);
 		POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, null);
 		int[] lCounts, gCounts;	int i;
 		
-		System.out.println("Threshold: "+threshold);
 		gCounts = new int[4];
 		
 		for (String devFile : devFiles)

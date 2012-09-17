@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -61,8 +61,11 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class POSTrain extends AbstractRun
 {
-	static final int    MODEL_SIZE      = 2;
-	static final String ENTRY_THRESHOLD = "THRESHOLD";
+	static final int MODEL_SIZE = 2;
+	
+	protected final int FLAG_DOMAIN  = 0;
+	protected final int FLAG_GENERAL = 1;
+	protected final int FLAG_DYNAMIC = 2;
 	
 	@Option(name="-i", usage="the directory containg training files (input; required)", required=true, metaVar="<directory>")
 	protected String s_trainDir;
@@ -74,6 +77,8 @@ public class POSTrain extends AbstractRun
 	protected String s_modelFile;
 	@Option(name="-t", usage="the similarity threshold (default: -1)", required=false, metaVar="<double>")
 	protected double d_threshold = -1;
+	@Option(name="-flag", usage="0|1|2 (default: 1)\n0: train only a domain-specific model\n1: train only a generalized model\n2: train both models using dynamic model selection", required=false, metaVar="<int>")
+	protected int i_flag = FLAG_GENERAL;
 	
 	public POSTrain() {}
 	
@@ -83,72 +88,89 @@ public class POSTrain extends AbstractRun
 		
 		try
 		{
-			run(s_configXml, s_featureXml, s_trainDir, s_modelFile, d_threshold);
+			run(s_configXml, s_featureXml, s_trainDir, s_modelFile, d_threshold, i_flag);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configXml, String featureXml, String trainDir, String modelFile, double threshold) throws Exception
+	public void run(String configXml, String featureXml, String trainDir, String modelFile, double threshold, int flag) throws Exception
 	{
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader    reader = (POSReader)getReader(eConfig);
 		POSFtrXml       xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[] trainFiles = UTFile.getSortedFileList(trainDir);
+		POSTagger[] taggers = null;
 		
-		if (threshold < 0)
-			threshold = crossValidate(trainFiles, reader, xml, eConfig);
+		if (flag == FLAG_DYNAMIC)
+		{
+			if (threshold < 0)	threshold = crossValidate(trainFiles, reader, xml, eConfig);
+			taggers = getTrainedTaggers(eConfig, reader, xml, trainFiles, null);
+		}
+		else
+		{
+			taggers    = new POSTagger[1];
+			taggers[0] = getTrainedTagger(eConfig, reader, xml, trainFiles, null, flag);
+		}
 		
-		POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trainFiles, null);
 		saveModels(modelFile, featureXml, taggers, threshold);
 	}
 	
-	public POSTagger[] getTrainedTaggers(Element eConfig, POSReader reader, POSFtrXml xml, String[] trnFiles, IntOpenHashSet sDev) throws Exception
+	/** @return a single POS tagging model using {@code modId}. */
+	public POSTagger getTrainedTagger(Element eConfig, POSReader reader, POSFtrXml xml, String[] trnFiles, IntOpenHashSet sDev, int modId) throws Exception
 	{
-		POSTagger[] taggers = new POSTagger[MODEL_SIZE];
 		Pair<Set<String>, Map<String,String>> p;
 		StringTrainSpace space;
 		Set<String> sLemmas;
 		StringModel model;
+		
+		sLemmas = getLemmaSet  (reader, xml, modId, trnFiles, sDev);
+		p       = getLexica    (reader, xml, modId, sLemmas, trnFiles, sDev);
+		space   = getTrainSpace(reader, xml, modId, sLemmas, p.o1, p.o2, trnFiles, sDev); 
+		model   = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), space, modId);
+		
+		return new POSTagger(xml, sLemmas, p.o1, p.o2, model);
+	}
+	
+	/** @return both domain-specific and generalized models. */
+	public POSTagger[] getTrainedTaggers(Element eConfig, POSReader reader, POSFtrXml xml, String[] trnFiles, IntOpenHashSet sDev) throws Exception
+	{
+		POSTagger[] taggers = new POSTagger[MODEL_SIZE];
 		int modId;
 		
 		for (modId=0; modId<MODEL_SIZE; modId++)
 		{
 			System.out.printf("===== Training model %d =====\n", modId);
-
-			sLemmas = getLemmaSet  (reader, xml, modId, trnFiles, sDev);
-			p       = getLexica    (reader, xml, modId, sLemmas, trnFiles, sDev);
-			space   = getTrainSpace(reader, xml, modId, sLemmas, p.o1, p.o2, trnFiles, sDev); 
-			model   = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), space, modId);
-			
-			taggers[modId] = new POSTagger(xml, sLemmas, p.o1, p.o2, model);
+			taggers[modId] = getTrainedTagger(eConfig, reader, xml, trnFiles, sDev, modId);
 		}
 		
 		return taggers;
 	}
 	
+	/** Saves POS tagging models. */
 	public void saveModels(String modelFile, String featureXml, POSTagger[] taggers, double threshold) throws Exception
 	{
 		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
 		PrintStream fout;
 		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_THRESHOLD));
-		fout = new PrintStream(zout);
-		fout.println(threshold);
-		fout.close();
-		zout.closeArchiveEntry();
+		if (taggers.length > 1)
+		{
+			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_CONFIGURATION));
+			fout = new PrintStream(zout);
+			fout.println(threshold);
+			fout.close();
+			zout.closeArchiveEntry();			
+		}
 		
 		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
 		IOUtils.copy(new FileInputStream(featureXml), zout);
 		zout.closeArchiveEntry();
 		
-		for (int i=0; i<MODEL_SIZE; i++)
-		{
-			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL+i));
-			fout = new PrintStream(new BufferedOutputStream(zout));
-			taggers[i].saveModel(fout);
-			fout.close();
-			zout.closeArchiveEntry();
-		}
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
+		fout = new PrintStream(new BufferedOutputStream(zout));
+		fout.println(taggers.length);
+		for (POSTagger tagger : taggers) tagger.saveModel(fout);
+		fout.close();
+		zout.closeArchiveEntry();		
 		
 		zout.close();
 	}

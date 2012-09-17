@@ -1,5 +1,5 @@
 /**
-* Copyright (c) 2011, Regents of the University of Colorado
+* Copyright (c) 2009-2012, Regents of the University of Colorado
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -105,6 +105,11 @@ public class POSFtrXml extends AbstractFtrXml
 	public int getDocumentFrequency(int index)
 	{
 		return (index < cutoff_df.length) ? cutoff_df[index] : 0; 
+	}
+	
+	public int getNumberOfConfigurations()
+	{
+		return cutoff_ambiguity.length;
 	}
 
 	protected String toStringCutoffs()

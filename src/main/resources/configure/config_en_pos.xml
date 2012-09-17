@@ -1,7 +1,7 @@
 <configuration>
 	<reader type="pos">
-		<column index="2" field="form"/>
-		<column index="5" field="pos"/>
+		<column index="1" field="form"/>
+		<column index="2" field="pos"/>
     </reader>
 	<language>en</language>
 	<train>
