@@ -5,7 +5,7 @@
   <version>1.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>clearnlp</name>
-  <description>Fast and robust NLP components implemented in Java and Scala.</description>
+  <description>Fast and robust NLP components implemented in Java.</description>
   <url>https://clearnlp.googlecode.com</url>
 
   <licenses>
