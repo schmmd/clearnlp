@@ -70,7 +70,7 @@ public class DefaultTokenizer
 		return str;
 	}
 		
-	private String protectPatterns(String str, Pattern p, String protect)
+	protected String protectPatterns(String str, Pattern p, String protect)
 	{
 		Matcher m;
 		
