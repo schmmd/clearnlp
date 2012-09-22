@@ -81,7 +81,7 @@ public class DEPPredict extends AbstractRun
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPReader reader = (DEPReader)getReader(eConfig);
-		DEPParser  parser = getParser(modelFile);
+		DEPParser parser = getParser(modelFile);
 		
 		if (new File(inputPath).isFile())
 		{

@@ -63,7 +63,6 @@ public class SRLParser extends AbstractEngine
 	
 	static protected final String LB_NO_ARG = "N";
 	
-	protected byte					i_flag;
 	protected SRLFtrXml				f_xml;
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
@@ -89,7 +88,7 @@ public class SRLParser extends AbstractEngine
 	/** Constructs a semantic role labeler for collecting. */
 	public SRLParser()
 	{
-		i_flag = FLAG_LEXICA;
+		super(FLAG_LEXICA);
 		m_down = new Prob1DMap();
 		m_up   = new Prob1DMap();
 	}
@@ -97,7 +96,7 @@ public class SRLParser extends AbstractEngine
 	/** Constructs a semantic role labeler for training. */
 	public SRLParser(SRLFtrXml xml, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
 	{
-		i_flag   = FLAG_TRAIN;
+		super(FLAG_TRAIN);
 		f_xml    = xml;
 		s_spaces = spaces;
 		s_down   = sDown;
@@ -107,7 +106,7 @@ public class SRLParser extends AbstractEngine
 	/** Constructs a semantic role labeler for predicting. */
 	public SRLParser(SRLFtrXml xml, StringModel[] models, Set<String> sDown, Set<String> sUp)
 	{
-		i_flag   = FLAG_PREDICT;
+		super(FLAG_PREDICT);
 		f_xml    = xml;
 		s_models = models;
 		s_down   = sDown;
@@ -117,7 +116,7 @@ public class SRLParser extends AbstractEngine
 	/** Constructs a semantic role labeler for bootstrapping. */
 	public SRLParser(SRLFtrXml xml, StringModel[] models, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
 	{
-		i_flag   = FLAG_BOOST;
+		super(FLAG_BOOST);
 		f_xml    = xml;
 		s_models = models;
 		s_spaces = spaces;
@@ -128,7 +127,7 @@ public class SRLParser extends AbstractEngine
 	/** Constructs a semantic role labeler for demonstration. */
 	public SRLParser(PrintStream fout)
 	{
-		i_flag  = FLAG_DEMO;
+		super(FLAG_DEMO);
 		f_trans = fout;
 	}
 	

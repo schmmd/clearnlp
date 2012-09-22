@@ -425,6 +425,7 @@ public class DEPTree extends ArrayList<DEPNode>
 		return build.substring(DEPReader.DELIM_SENTENCE.length());
 	}
 	
+	/** Adds counts of [N, LAS, UAS, LS]. */
 	public void addScoreCounts(StringIntPair[] gHeads, int[] counts)
 	{
 		int i, size = size();

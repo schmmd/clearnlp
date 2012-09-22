@@ -86,6 +86,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 		byte     yi;
 		int[]    xi;
 		double[] vi = null;
+		boolean  bBias = d_bias > 0;
 		
 		// PG: projected gradient, for shrinking and stopping
 		double PG;
@@ -111,7 +112,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 			aY   [i] = (ys.get(i) == currLabel) ? (byte)1 : (byte)-1;
 			QD   [i] = diag[GETI(aY, i)];
 
-			if (d_bias > 0)	QD[i] += d_bias * d_bias;
+			if (bBias)	QD[i] += d_bias * d_bias;
 			
 			if (space.hasWeight())
 			{
@@ -141,7 +142,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 				yi = aY[i];
 				xi = xs.get(i);
 				U  = upper_bound[GETI(aY, i)];
-				G  = (d_bias > 0) ? weight[0] * d_bias : 0;
+				G  = (bBias) ? weight[0] * d_bias : 0;
 								
 				if (space.hasWeight())
 				{
@@ -197,7 +198,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 					alpha[i] = Math.min(Math.max(alpha[i] - G / QD[i], 0.0), U);
 					d = (alpha[i] - alpha_old) * yi;
 					
-					if (d_bias > 0)	weight[0] += d * d_bias;
+					if (bBias)	weight[0] += d * d_bias;
 					
 					for (j=0; j<xi.length; j++)
 					{

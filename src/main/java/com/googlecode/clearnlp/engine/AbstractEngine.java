@@ -37,6 +37,17 @@ abstract public class AbstractEngine
 	static public final byte FLAG_BOOST		= 3;
 	static public final byte FLAG_DEMO		= 4;
 	
+	protected byte i_flag;
+	
+	/**
+	 * Initializes the flag of this engine.
+	 * @param flag {@code FLAG_*}.
+	 */
+	public AbstractEngine(byte flag)
+	{
+		i_flag = flag;
+	}
+	
 	protected StringFeatureVector getFeatureVector(AbstractFtrXml xml)
 	{
 		StringFeatureVector vector = new StringFeatureVector();

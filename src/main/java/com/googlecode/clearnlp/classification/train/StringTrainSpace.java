@@ -83,7 +83,6 @@ public class StringTrainSpace extends AbstractTrainSpace
 	{
 		addLexica(label, vector);
 		s_instances.add(new Pair<String, StringFeatureVector>(label, vector));
-	//	s_instances.add(label + DELIM_COL + vector.toString());
 	}
 	
 	/**
@@ -93,10 +92,13 @@ public class StringTrainSpace extends AbstractTrainSpace
 	public void addInstance(String line)
 	{
 		Pair<String,StringFeatureVector> instance = toInstance(line, b_weight);
-		
-		addLexica(instance.o1, instance.o2);
-		s_instances.add(instance);
-	//	s_instances.add(line);
+		addInstance(instance.o1, instance.o2);
+	}
+	
+	public void append(StringTrainSpace space)
+	{
+		for (Pair<String,StringFeatureVector> instance : space.s_instances)
+			addInstance(instance.o1, instance.o2);
 	}
 	
 	/** 

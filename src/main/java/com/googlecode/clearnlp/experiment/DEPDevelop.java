@@ -78,7 +78,8 @@ public class DEPDevelop extends DEPTrain
 		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);
 		double prevScore;	int i = 0;
 		
-		Set<String> sPunc = getLexica(reader, xml, trainFiles, -1);
+		Set<String> sPunc = getLexica(reader, trainFiles, -1, getPunctInfo(eConfig));
+		
 		develop(eConfig, reader, xml, sPunc, trainFiles, devFiles, model, i++);
 		
 		do
@@ -99,7 +100,7 @@ public class DEPDevelop extends DEPTrain
 		DEPTree tree;
 		int i;
 		
-		parser = getTrainedParser(eConfig, reader, xml, sPunc, trainFiles, model.o1, -1);
+		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, model.o1, -1);
 		model.o1 = parser.getModel();
 		
 		for (String devFile : devFiles)

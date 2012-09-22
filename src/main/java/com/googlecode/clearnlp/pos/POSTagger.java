@@ -49,7 +49,6 @@ import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.map.Prob2DMap;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 
-
 /**
  * Part-of-speech tagger.
  * @since v0.1
@@ -57,7 +56,6 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
  */
 public class POSTagger extends AbstractEngine
 {
-	private byte				i_flag;
 	private Set<String>			s_lemmas;
 	private Prob2DMap			p_ambi;
 	private Map<String,String>	m_ambi;
@@ -74,7 +72,8 @@ public class POSTagger extends AbstractEngine
 	/** Constructs a POS tagger for collecting lexica. */
 	public POSTagger(Set<String> sLemma)
 	{
-		i_flag   = FLAG_LEXICA;
+		super(FLAG_LEXICA);
+		
 		s_lemmas = sLemma;
 		p_ambi   = new Prob2DMap();
 		p_forms  = new Prob1DMap();
@@ -83,7 +82,7 @@ public class POSTagger extends AbstractEngine
 	/** Constructs a POS tagger for training. */
 	public POSTagger(POSFtrXml xml, Set<String> sLemmas, Set<String> sForms, Map<String,String> ambiguityMap, StringTrainSpace trainSpace)
 	{
-		i_flag   = FLAG_TRAIN;
+		super(FLAG_TRAIN);
 		f_xml    = xml;
 		s_lemmas = sLemmas;
 		s_forms  = sForms;
@@ -94,7 +93,7 @@ public class POSTagger extends AbstractEngine
 	/** Constructs a POS tagger for cross-validation. */
 	public POSTagger(POSFtrXml xml, Set<String> sLemmas, Set<String> sForms, Map<String,String> ambiguityMap, StringModel model)
 	{
-		i_flag   = FLAG_PREDICT;
+		super(FLAG_PREDICT);
 		f_xml    = xml;
 		s_lemmas = sLemmas;
 		s_forms  = sForms;
@@ -106,7 +105,7 @@ public class POSTagger extends AbstractEngine
 	/** Constructs a POS tagger for predicting. */
 	public POSTagger(POSFtrXml xml, BufferedReader fin)
 	{
-		i_flag = FLAG_PREDICT;
+		super(FLAG_PREDICT);
 		f_xml  = xml;
 		
 		try

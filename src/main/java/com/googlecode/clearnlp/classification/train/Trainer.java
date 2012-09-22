@@ -23,17 +23,12 @@
 */
 package com.googlecode.clearnlp.classification.train;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
-import com.googlecode.clearnlp.util.pair.Pair;
 
 
 /**
@@ -68,7 +63,7 @@ public class Trainer
 		m_model.copyWeightVector(weights);
 	}
 	
-/*	private void trainMulti(int numThreads)
+	private void trainMulti(int numThreads)
 	{
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 		
@@ -84,9 +79,30 @@ public class Trainer
 			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 		}
 		catch (InterruptedException e) {e.printStackTrace();}
-	}*/
+	}
 	
-	private void trainMulti(int numThreads)
+	class TrainTask implements Runnable
+	{
+		/** The current label to train */
+		int curr_label;
+		
+		/**
+		 * Trains one-vs-all model.
+		 * @param currLabel the current label to train.
+		 */
+		public TrainTask(int currLabel)
+		{
+			curr_label = currLabel;
+		}
+		
+		public void run()
+		{
+			double[] weights = a_algorithm.getWeight(t_space, curr_label);
+			m_model.copyWeightVector(curr_label, weights);
+		}
+    }
+	
+/*	private void trainMulti(int numThreads)
 	{
 		int currLabel, size = t_space.getLabelSize(), qSize = size - numThreads;
 		if (qSize < 0)	qSize = 0;
@@ -111,13 +127,8 @@ public class Trainer
 
 	class TrainTask implements Callable<Pair<Integer,double[]>>
 	{
-		/** The current label to train */
 		int curr_label;
 		
-		/**
-		 * Trains one-vs-all model.
-		 * @param currLabel the current label to train.
-		 */
 		public TrainTask(int currLabel)
 		{
 			curr_label = currLabel;
@@ -128,5 +139,5 @@ public class Trainer
 		{
 			return new Pair<Integer,double[]>(curr_label, a_algorithm.getWeight(t_space, curr_label));
 		}
-	}
+	}*/
 }

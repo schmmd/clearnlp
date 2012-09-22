@@ -60,6 +60,12 @@ abstract public class AbstractRun
 	static final public String TAG_READER_COLUMN_INDEX	= "index";
 	static final public String TAG_READER_COLUMN_FIELD	= "field";
 	
+	static final public String TAG_LEXICA					= "lexica";
+	static final public String TAG_LEXICA_LEXICON			= "lexicon";
+	static final public String TAG_LEXICA_LEXICON_TYPE		= "type";
+	static final public String TAG_LEXICA_LEXICON_LABEL		= "label";
+	static final public String TAG_LEXICA_LEXICON_CUTOFF	= "cutoff";
+	
 	static final public String TAG_TRAIN				= "train";
 	static final public String TAG_TRAIN_ALGORITHM		= "algorithm";
 	static final public String TAG_TRAIN_ALGORITHM_NAME	= "name";
@@ -286,10 +292,8 @@ abstract public class AbstractRun
 	
 	protected AbstractModel getModel(Element eTrain, AbstractTrainSpace space, int index)
 	{
-		Element eThreads   = UTXml.getFirstElementByTagName(eTrain, TAG_TRAIN_THREADS); 
-		int     numThreads = Integer.parseInt(UTXml.getTrimmedTextContent(eThreads));
-		
 		NodeList list = eTrain.getElementsByTagName(TAG_TRAIN_ALGORITHM);
+		int numThreads = getNumOfThreads(eTrain);
 		Element  eAlgorithm;
 		String   name;
 		
@@ -307,6 +311,12 @@ abstract public class AbstractRun
 		}
 		
 		return null;
+	}
+	
+	protected int getNumOfThreads(Element eTrain)
+	{
+		Element eThreads = UTXml.getFirstElementByTagName(eTrain, TAG_TRAIN_THREADS); 
+		return Integer.parseInt(UTXml.getTrimmedTextContent(eThreads));
 	}
 	
 	/** Called by {@link AbstractRun#getModel(Element, AbstractTrainSpace, int)}. */

@@ -27,7 +27,11 @@ import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
@@ -35,9 +39,11 @@ import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
+import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
@@ -45,6 +51,8 @@ import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTXml;
+import com.googlecode.clearnlp.util.map.Prob1DMap;
+import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 
 /**
@@ -56,6 +64,8 @@ public class DEPTrain extends AbstractRun
 {
 	protected final String ENTRY_FEATURE = "FEATURE";
 	protected final String ENTRY_MODEL   = "MODEL";
+	
+	protected final String LEXICON_PUNCTUATION = "punctuation"; 
 	
 	@Option(name="-i", usage="the directory containg training files (input; required)", required=true, metaVar="<directory>")
 	protected String s_trainDir;
@@ -91,10 +101,10 @@ public class DEPTrain extends AbstractRun
 		long st, et;
 		int i = 0;
 		
-		Set<String> sPunc = getLexica(reader, xml, trainFiles, -1);
+		Set<String> sPunc = getLexica(reader, trainFiles, -1, getPunctInfo(eConfig));
 		
 		st = System.currentTimeMillis();
-		parser = getTrainedParser(eConfig, reader, xml, sPunc, trainFiles, null, -1);
+		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, null, -1);
 		saveModels(modelFile, featureXml, parser);
 		et = System.currentTimeMillis();
 		printTime(st, et);
@@ -102,11 +112,33 @@ public class DEPTrain extends AbstractRun
 		for (i=1; i<=nBoot; i++)
 		{
 			st = System.currentTimeMillis();
-			parser = getTrainedParser(eConfig, reader, xml, sPunc, trainFiles, parser.getModel(), -1);
+			parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, parser.getModel(), -1);
 			saveModels(modelFile+"."+i, featureXml, parser);
 			et = System.currentTimeMillis();
 			printTime(st, et);	
 		}
+	}
+	
+	protected StringIntPair getPunctInfo(Element eConfig)
+	{
+		Element eLexica = UTXml.getFirstElementByTagName(eConfig, TAG_LEXICA);
+		NodeList   list = eLexica.getElementsByTagName(TAG_LEXICA_LEXICON);
+		int i, size = list.getLength();
+		Element eLexicon;
+
+		for (i=0; i<size; i++)
+		{
+			eLexicon = (Element)list.item(i);
+			
+			if (UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_TYPE).equals(LEXICON_PUNCTUATION))
+			{
+				String label  = UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_LABEL);
+				int    cutoff = Integer.parseInt(UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_CUTOFF));
+				return new StringIntPair(label, cutoff);
+			}
+		}
+		
+		return new StringIntPair("", 0);
 	}
 	
 	private void printTime(long st, long et)
@@ -137,9 +169,9 @@ public class DEPTrain extends AbstractRun
 		zout.close();
 	}
 	
-	protected Set<String> getLexica(DEPReader reader, DEPFtrXml xml, String[] trainFiles, int devId)
+	protected Set<String> getLexica(DEPReader reader, String[] trainFiles, int devId, StringIntPair punctInfo)
 	{
-		DEPParser parser = new DEPParser(xml);
+		Prob1DMap mPunct = new Prob1DMap();
 		int i, size = trainFiles.length;
 		DEPTree tree;
 		
@@ -151,18 +183,37 @@ public class DEPTrain extends AbstractRun
 			reader.open(UTInput.createBufferedFileReader(trainFiles[i]));
 			
 			while ((tree = reader.next()) != null)
-				parser.collectLexica(tree);
+				collectLexica(tree, mPunct, punctInfo.s);
 			
 			System.out.print(".");
 			reader.close();
 		}
 		
 		System.out.println();
-		return parser.getPunctuationSet();
+		return mPunct.toSet(punctInfo.i);
+	}
+
+	/**
+	 * Retrieves lexica from the specific dependency tree and stores them to the specific map.
+	 * @param tree the dependency tree to collect lexica from.
+	 * @param mPunct the map to store lexica to.
+	 * @param punctLabel punctuation dependency label.
+	 */
+	private void collectLexica(DEPTree tree, Prob1DMap mPunct, String punctLabel)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			
+			if (node.isLabel(punctLabel))
+				mPunct.add(node.form);
+		}
 	}
 	
-	/** @param devId if {@code -1}, train the models using all training files. */
-	public DEPParser getTrainedParser(Element eConfig, DEPReader reader, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId) throws Exception
+/*	public DEPParser getTrainedParserOld(Element eConfig, DEPReader reader, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId) throws Exception
 	{
 		StringTrainSpace space = new StringTrainSpace(false, xml.getLabelCutoff(0), xml.getFeatureCutoff(0));
 		int i, size = trainFiles.length;
@@ -186,14 +237,91 @@ public class DEPTrain extends AbstractRun
 			reader.close();
 		}
 		
-		System.out.println("\nBootstrapping scores:");
-		printScores(parser.n_scores);
+		System.out.println();
 		
 		model = null;
 		model = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), space, 0);
+		return new DEPParser(xml, sPunc, model);
+	}*/
+	
+	/** @param devId if {@code -1}, train the models using all training files. */
+	public DEPParser getTrainedParser(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId) throws Exception
+	{
+		Element eTrain = UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN);
+		int numThreads = getNumOfThreads(eTrain);
 		
+		int i, size = trainFiles.length, labelCutoff = xml.getLabelCutoff(0), featureCutoff = xml.getFeatureCutoff(0);
+		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+		List<StringTrainSpace> spaces = new ArrayList<StringTrainSpace>();
+		StringTrainSpace space;
+		
+		System.out.println("Collecting training instances:");
+		
+		for (i=0; i<size; i++)
+		{
+			if (devId != i)
+			{
+				spaces.add(space = new StringTrainSpace(false, labelCutoff, featureCutoff));
+				executor.execute(new TrainTask(eConfig, xml, sPunc, trainFiles[i], model, space));
+			}
+		}
+		
+		executor.shutdown();
+		
+		try
+		{
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		}
+		catch (InterruptedException e) {e.printStackTrace();}
+		
+		System.out.println();
+		
+		if (spaces.size() == 1)
+		{
+			space = spaces.get(0);
+		}
+		else
+		{
+			System.out.println("Merging training instances:");
+			space = new StringTrainSpace(false, labelCutoff, featureCutoff);
+			
+			for (StringTrainSpace s : spaces)
+			{
+				space.append(s);
+				System.out.print(".");
+			}
+			
+			System.out.println();			
+		}
+		
+		model = null;
+		model = (StringModel)getModel(eTrain, space, 0);
 		return new DEPParser(xml, sPunc, model);
 	}
+	
+	class TrainTask implements Runnable
+	{
+		DEPParser d_parser;
+		DEPReader d_reader;
+		
+		public TrainTask(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String trainFile, StringModel model, StringTrainSpace space)
+		{
+			d_parser = (model == null) ? new DEPParser(xml, sPunc, space) : new DEPParser(xml, sPunc, model, space);
+			d_reader = (DEPReader)getReader(eConfig);
+			d_reader.open(UTInput.createBufferedFileReader(trainFile));
+		}
+		
+		public void run()
+		{
+			DEPTree tree;
+			
+			while ((tree = d_reader.next()) != null)
+				d_parser.parse(tree);
+			
+			d_reader.close();
+			System.out.print(".");
+		}
+    }
 	
 	protected void printScores(int[] counts)
 	{
