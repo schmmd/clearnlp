@@ -141,4 +141,17 @@ public class UTArray
 		array[idx0] = array[idx1];
 		array[idx1] = temp;
 	}
+	
+	/**
+	 * Adds each cell in the source array to each cell in the target array.
+	 * The size of the source and the target arrays must be the same. 
+	 * PRE: source = {1,2,3}, target = {4,5,6}, POST: source = {0,1,2}, target = {5,7,9}.
+	 */
+	static public void add(int[] target, int[] source)
+	{
+		int i, size = target.length;
+		
+		for (i=0; i<size; i++)
+			target[i] += source[i];
+	}
 }

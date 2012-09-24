@@ -95,11 +95,33 @@ public class StringTrainSpace extends AbstractTrainSpace
 		addInstance(instance.o1, instance.o2);
 	}
 	
-	public void append(StringTrainSpace space)
+	public void addInstances(StringTrainSpace space)
 	{
 		for (Pair<String,StringFeatureVector> instance : space.s_instances)
 			addInstance(instance.o1, instance.o2);
 	}
+	
+	public void clear()
+	{
+		s_instances.clear();
+		m_labels   .clear();
+		m_features .clear();
+	}
+	
+/*	public void appendInstances(StringTrainSpace space)
+	{
+		StringFeatureVector tFeatures, sFeatures;
+		int i, size = space.s_instances.size();
+		
+		for (i=0; i<size; i++)
+		{
+			tFeatures = this .s_instances.get(i).o2;
+			sFeatures = space.s_instances.get(i).o2;
+			
+			addLexicaFeatures(sFeatures);
+			tFeatures.addFeatures(sFeatures);
+		}
+	}*/
 	
 	/** 
 	 * Called by {@link StringTrainSpace#addInstance(String, StringFeatureVector)}.
@@ -107,10 +129,17 @@ public class StringTrainSpace extends AbstractTrainSpace
 	 */
 	private void addLexica(String label, StringFeatureVector vector)
 	{
-		// add a label
+		addLexicaLabel   (label);
+		addLexicaFeatures(vector);
+	}
+	
+	private void addLexicaLabel(String label)
+	{
 		m_labels.put(label, m_labels.get(label)+1);
-
-		// add features
+	}
+	
+	private void addLexicaFeatures(StringFeatureVector vector)
+	{
 		ObjectIntOpenHashMap<String> map;
 		int i, size = vector.size();
 		String type, value;

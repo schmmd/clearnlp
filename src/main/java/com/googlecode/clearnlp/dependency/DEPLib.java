@@ -23,6 +23,8 @@
 */
 package com.googlecode.clearnlp.dependency;
 
+import com.googlecode.clearnlp.util.pair.StringIntPair;
+
 /**
  * Dependency library.
  * @since 1.0.0
@@ -49,4 +51,36 @@ public class DEPLib
 	static public final String DELIM_HEADS     = ";";
 	/** The delimiter between head ID and label pairs. */
 	static public final String DELIM_HEADS_KEY = ":";
+	
+	/** @return [Total, LAS, UAS, LS]. */
+	static public int[] getScores(DEPTree tree, StringIntPair[] gHeads)
+	{
+		int[] counts = new int[4];
+		int i, size = tree.size();
+		StringIntPair head;
+		DEPNode node;
+		
+		counts[0] += size - 1;
+		
+		for (i=1; i<size; i++)
+		{
+			if (!(node = tree.get(i)).hasHead())
+				continue;
+			
+			head = gHeads[i];
+			
+			if (head.i == node.getHead().id)
+				counts[2]++;
+			
+			if (gHeads[i].s.equals(node.getLabel()))
+			{
+				if (head.i == node.getHead().id)
+					counts[1]++;
+				
+				counts[3]++;
+			}
+		}
+		
+		return counts;
+	}
 }

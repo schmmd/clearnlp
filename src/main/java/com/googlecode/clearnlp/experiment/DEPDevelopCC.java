@@ -33,15 +33,16 @@ import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.dependency.DEPLib;
-import com.googlecode.clearnlp.dependency.DEPParser;
+import com.googlecode.clearnlp.dependency.DEPParserCC;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.reader.DEPReader;
-import com.googlecode.clearnlp.run.DEPTrain;
+import com.googlecode.clearnlp.run.DEPTrainCC;
 import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTXml;
+import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
@@ -51,58 +52,60 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  * @since v0.1
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class DEPDevelop extends DEPTrain
+public class DEPDevelopCC extends DEPTrainCC
 {
 	@Option(name="-d", usage="the directory containing development file (input; required)", required=true, metaVar="<filename>")
 	private String s_devDir;
 	
-	public DEPDevelop() {}
+	public DEPDevelopCC() {}
 	
-	public DEPDevelop(String[] args)
+	public DEPDevelopCC(String[] args)
 	{
 		initArgs(args);
 		
 		try
 		{
-			run(s_configXml, s_featureXml, s_trainDir, s_devDir);	
+			run(s_configFile, s_featureFiles, s_trainDir, s_devDir);	
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void run(String configXml, String featureXml, String trainDir, String devDir) throws Exception
+	private void run(String configFile, String featureFiles, String trainDir, String devDir) throws Exception
 	{
-		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader reader = (DEPReader)getReader(eConfig);
-		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
+		Element      eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
+		DEPReader     reader = (DEPReader)getReader(eConfig);
+		DEPFtrXml[]     xmls = getFeatureTemplates(featureFiles);	// initialize MODEL_SIZE
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
-		String[]  devFiles = UTFile.getSortedFileList(devDir); 
-		Set<String> sPunc = getLexica(eConfig, trainFiles, -1);
+		String[]    devFiles = UTFile.getSortedFileList(devDir); 
+		Set<String>    sPunc = getLexica(eConfig, trainFiles, -1);
+		IntIntPair[] cutoffs = getCutoffs(xmls);
 		
-		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);
-		double prevScore;	int i = 0;
-		
-		develop(eConfig, reader, xml, sPunc, trainFiles, devFiles, model, i++);
+		Pair<StringModel[],Double> model = new Pair<StringModel[],Double>(null, 0d);
+		double prevScore;
+		int i = 0;
+			
+		develop(eConfig, reader, xmls, sPunc, trainFiles, devFiles, cutoffs, model, i++);
 		
 		do
 		{
 			prevScore = model.o2;
-			develop(eConfig, reader, xml, sPunc, trainFiles, devFiles, model, i++);
+			develop(eConfig, reader, xmls, sPunc, trainFiles, devFiles, cutoffs, model, i++);
 		}
 		while (model.o2 > prevScore);
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */
-	protected void develop(Element eConfig, DEPReader reader, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, String[] devFiles, Pair<StringModel,Double> model, int boot) throws Exception
+	protected void develop(Element eConfig, DEPReader reader, DEPFtrXml[] xmls, Set<String> sPunc, String[] trainFiles, String[] devFiles, IntIntPair[] cutoffs, Pair<StringModel[],Double> model, int boost) throws Exception
 	{
 		long st = System.currentTimeMillis();
 		int[] lCounts = {0,0,0,0}, gCounts = {0,0,0,0}, counts;
 		StringIntPair[] gHeads;
-		DEPParser parser;
+		DEPParserCC parser;
 		DEPTree tree;
 		int i;
 		
-		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, model.o1, -1, boot);
-		model.o1 = parser.getModel();
+		parser = getTrainedParser(eConfig, xmls, sPunc, trainFiles, cutoffs, model.o1, -1);
+		model.o1 = parser.getModels();
 		
 		for (String devFile : devFiles)
 		{
@@ -129,6 +132,8 @@ public class DEPDevelop extends DEPTrain
 				gCounts[i] += lCounts[i];
 		}
 		
+		System.out.printf("1st model: %4.2f (%d/%d)\n", 100d*parser.n_1st/parser.n_total, parser.n_1st, parser.n_total);
+		
 		System.out.println("Total");
 		System.out.printf("LAS: %5.2f (%d/%d)\n", 100d*gCounts[1]/gCounts[0], gCounts[1], gCounts[0]);
 		System.out.printf("UAS: %5.2f (%d/%d)\n", 100d*gCounts[2]/gCounts[0], gCounts[2], gCounts[0]);
@@ -141,6 +146,6 @@ public class DEPDevelop extends DEPTrain
 	
 	static public void main(String[] args)
 	{
-		new DEPDevelop(args);
+		new DEPDevelopCC(args);
 	}
 }

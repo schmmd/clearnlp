@@ -30,11 +30,13 @@ import java.util.Set;
 import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.classification.model.StringModel;
+import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.run.DEPTrain;
+import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -77,9 +79,9 @@ public class DEPGenerate extends DEPTrain
 		DEPFtrXml     xml = new DEPFtrXml(new FileInputStream(featureXml));
 		
 		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);
+		Set<String> sPunc = getLexica(eConfig, trainFiles, -1);
 		double prevScore;	int i = 0;
 		
-		Set<String> sPunc = getLexica(reader, trainFiles, -1, getPunctInfo(eConfig));
 		develop(eConfig, reader, xml, sPunc, trainFiles, devId, model, i++);
 		
 		do
@@ -91,19 +93,19 @@ public class DEPGenerate extends DEPTrain
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */
-	protected void develop(Element eConfig, DEPReader reader, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, int devId, Pair<StringModel,Double> model, int boost) throws Exception
+	protected void develop(Element eConfig, DEPReader reader, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, int devId, Pair<StringModel,Double> model, int boot) throws Exception
 	{
-		int[] counts = {0,0,0,0};
+		int[] lCounts = {0,0,0,0}, counts;
 		StringIntPair[] gHeads;
 		DEPParser parser;
 		DEPTree tree;
 		int i;
 		
-		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, model.o1, devId);
+		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, model.o1, devId, boot);
 		model.o1 = parser.getModel();
 		
 		reader.open(UTInput.createBufferedFileReader(trainFiles[devId]));
-		PrintStream fout = UTOutput.createPrintBufferedFileStream(trainFiles[devId]+".parse."+boost);
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(trainFiles[devId]+".parse."+boot);
 		
 		System.out.print("Predicting: ");
 		
@@ -112,7 +114,8 @@ public class DEPGenerate extends DEPTrain
 			gHeads = tree.getHeads();
 			parser.parse(tree);
 			fout.println(tree.toStringDEP()+"\n");
-			tree.addScoreCounts(gHeads, counts);
+			counts = DEPLib.getScores(tree, gHeads);
+			UTArray.add(lCounts, counts);
 			if (i%1000 == 0)	System.out.print(".");
 		}
 		
@@ -120,11 +123,11 @@ public class DEPGenerate extends DEPTrain
 		reader.close();
 		fout.close();
 		
-		System.out.printf("LAS: %5.2f (%d/%d)\n", 100d*counts[1]/counts[0], counts[1], counts[0]);
-		System.out.printf("UAS: %5.2f (%d/%d)\n", 100d*counts[2]/counts[0], counts[2], counts[0]);
-		System.out.printf("LS : %5.2f (%d/%d)\n", 100d*counts[3]/counts[0], counts[3], counts[0]);
+		System.out.printf("LAS: %5.2f (%d/%d)\n", 100d*lCounts[1]/lCounts[0], lCounts[1], lCounts[0]);
+		System.out.printf("UAS: %5.2f (%d/%d)\n", 100d*lCounts[2]/lCounts[0], lCounts[2], lCounts[0]);
+		System.out.printf("LS : %5.2f (%d/%d)\n", 100d*lCounts[3]/lCounts[0], lCounts[3], lCounts[0]);
 
-		model.o2 = 100d*counts[1]/counts[0];
+		model.o2 = 100d*lCounts[1]/lCounts[0];
 	}
 	
 	static public void main(String[] args)

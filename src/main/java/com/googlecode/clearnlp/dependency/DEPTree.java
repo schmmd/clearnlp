@@ -425,35 +425,6 @@ public class DEPTree extends ArrayList<DEPNode>
 		return build.substring(DEPReader.DELIM_SENTENCE.length());
 	}
 	
-	/** Adds counts of [N, LAS, UAS, LS]. */
-	public void addScoreCounts(StringIntPair[] gHeads, int[] counts)
-	{
-		int i, size = size();
-		StringIntPair head;
-		DEPNode node;
-		
-		counts[0] += size - 1;
-		
-		for (i=1; i<size; i++)
-		{
-			node = get(i);
-			if (!node.hasHead())	continue;
-			
-			head = gHeads[i];
-			
-			if (head.i == node.getHead().id)
-				counts[2]++;
-			
-			if (gHeads[i].s.equals(node.getLabel()))
-			{
-				if (head.i == node.getHead().id)
-					counts[1]++;
-				
-				counts[3]++;
-			}
-		}
-	}
-	
 	public DEPNode getNextPredicate(int prevId)
 	{
 		int i, size = size();

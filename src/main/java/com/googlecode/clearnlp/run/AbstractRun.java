@@ -23,6 +23,8 @@
 */
 package com.googlecode.clearnlp.run;
 
+import java.util.concurrent.TimeUnit;
+
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.w3c.dom.Element;
@@ -50,15 +52,15 @@ import com.googlecode.clearnlp.util.UTXml;
  */
 abstract public class AbstractRun
 {
-	static final protected String ENTRY_CONFIGURATION	= "CONFIGURATION";
-	static final protected String ENTRY_FEATURE			= "FEATURE";
-	static final protected String ENTRY_MODEL			= "MODEL";
+	static final protected String ENTRY_CONFIGURATION		= "CONFIGURATION";
+	static final protected String ENTRY_FEATURE				= "FEATURE";
+	static final protected String ENTRY_MODEL				= "MODEL";
 	
-	static final public String TAG_READER				= "reader";
-	static final public String TAG_READER_TYPE			= "type";
-	static final public String TAG_READER_COLUMN		= "column";
-	static final public String TAG_READER_COLUMN_INDEX	= "index";
-	static final public String TAG_READER_COLUMN_FIELD	= "field";
+	static final public String TAG_READER					= "reader";
+	static final public String TAG_READER_TYPE				= "type";
+	static final public String TAG_READER_COLUMN			= "column";
+	static final public String TAG_READER_COLUMN_INDEX		= "index";
+	static final public String TAG_READER_COLUMN_FIELD		= "field";
 	
 	static final public String TAG_LEXICA					= "lexica";
 	static final public String TAG_LEXICA_LEXICON			= "lexicon";
@@ -66,10 +68,10 @@ abstract public class AbstractRun
 	static final public String TAG_LEXICA_LEXICON_LABEL		= "label";
 	static final public String TAG_LEXICA_LEXICON_CUTOFF	= "cutoff";
 	
-	static final public String TAG_TRAIN				= "train";
-	static final public String TAG_TRAIN_ALGORITHM		= "algorithm";
-	static final public String TAG_TRAIN_ALGORITHM_NAME	= "name";
-	static final public String TAG_TRAIN_THREADS		= "threads";
+	static final public String TAG_TRAIN					= "train";
+	static final public String TAG_TRAIN_ALGORITHM			= "algorithm";
+	static final public String TAG_TRAIN_ALGORITHM_NAME		= "name";
+	static final public String TAG_TRAIN_THREADS			= "threads";
 	
 	static final public String TAG_LANGUAGE		= "language";
 	static final public String TAG_MORPH_DICT	= "morph_dict";
@@ -302,30 +304,43 @@ abstract public class AbstractRun
 		
 		if (name.equals("liblinear"))
 		{
-			byte solver = Byte  .parseByte  (UTXml.getTrimmedAttribute(eAlgorithm, "solver"));
-			double cost = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "cost"));
-			double eps  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "eps"));
-			double bias = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "bias"));
+			byte solver  = Byte  .parseByte  (UTXml.getTrimmedAttribute(eAlgorithm, "solver"));
+			double cost  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "cost"));
+			double eps   = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "eps"));
+			double bias  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "bias"));
 			
 			return getLiblinearModel(space, numThreads, solver, cost, eps, bias);
+		}
+		else if (name.equals("liblinearPrec"))
+		{
+			byte solver  = Byte  .parseByte  (UTXml.getTrimmedAttribute(eAlgorithm, "solver"));
+			double cost  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "cost"));
+			double eps   = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "eps"));
+			double bias  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "bias"));
+			double pBias = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "pBias"));
+			
+			return getLiblinearPrecModel(space, numThreads, solver, cost, eps, bias, pBias);
 		}
 		
 		return null;
 	}
 	
-	protected int getNumOfThreads(Element eTrain)
-	{
-		Element eThreads = UTXml.getFirstElementByTagName(eTrain, TAG_TRAIN_THREADS); 
-		return Integer.parseInt(UTXml.getTrimmedTextContent(eThreads));
-	}
-	
 	/** Called by {@link AbstractRun#getModel(Element, AbstractTrainSpace, int)}. */
-	private AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
+	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
 	{
 		space.build();
 		System.out.println("Liblinear:");
 		System.out.printf("- solver=%d, cost=%f, eps=%f, bias=%f\n", solver, cost, eps, bias);
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
+	}
+	
+	protected AbstractModel getLiblinearPrecModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias, double pBias)
+	{
+		space.build();
+		System.out.println("LiblinearPrec:");
+		System.out.printf("- solver=%d, cost=%f, eps=%f, bias=%f, pBias=%f\n", solver, cost, eps, bias, pBias);
+		
+		return LiblinearTrainPrec.getModel(space, numThreads, solver, cost, eps, bias, pBias);
 	}
 	
 	protected AbstractMPAnalyzer getMPAnalyzer(Element eConfig)
@@ -349,5 +364,21 @@ abstract public class AbstractRun
 			return new EnglishMPAnalyzer(dictFile);
 		
 		return new DefaultMPAnalyzer();
+	}
+	
+	protected int getNumOfThreads(Element eTrain)
+	{
+		Element eThreads = UTXml.getFirstElementByTagName(eTrain, TAG_TRAIN_THREADS); 
+		return Integer.parseInt(UTXml.getTrimmedTextContent(eThreads));
+	}
+	
+	protected void printTime(String message, long st, long et)
+	{
+		long millis = et - st;
+		long mins   = TimeUnit.MILLISECONDS.toMinutes(millis);
+		long secs   = TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(mins);
+
+		System.out.println(message);
+		System.out.println(String.format("- %d mins, %d secs", mins, secs));
 	}
 }

@@ -26,6 +26,7 @@ package com.googlecode.clearnlp.classification.train;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 import com.carrotsearch.hppc.IntArrayList;
@@ -222,5 +223,36 @@ abstract public class AbstractTrainSpace
 		}
 		
 		return true;
+	}
+	
+	public void printInstances(PrintStream fout)
+	{
+		int i, j, len, size = a_ys.size();
+		int[] xs; double[] vs;
+		StringBuilder build;
+		
+		for (i=0; i<size; i++)
+		{
+			build = new StringBuilder();
+			build.append(a_ys.get(i));
+			
+			xs  = a_xs.get(i);
+			vs  = (b_weight) ? a_vs.get(i) : null;
+			len = xs.length;
+			
+			for (j=0; j<len; j++)
+			{
+				build.append(DELIM_COL);
+				build.append(xs[j]);
+				
+				if (b_weight)
+				{
+					build.append(AbstractFeatureVector.DELIM);
+					build.append(vs[j]);
+				}
+			}
+			
+			fout.println(build.toString());
+		}
 	}
 }

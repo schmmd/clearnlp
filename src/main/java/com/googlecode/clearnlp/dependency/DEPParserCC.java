@@ -1,17 +1,17 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
-* 
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-* 
-*   http://www.apache.org/licenses/LICENSE-2.0
-*   
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
+ * Copyright 2012 University of Massachusetts Amherst
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *   
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 */
 package com.googlecode.clearnlp.dependency;
 
@@ -36,6 +36,9 @@ public class DEPParserCC extends AbstractDEPParser
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
 	protected int					n_models;
+	protected double                d_lower;
+	
+	public int n_total = 0, n_1st = 0;
 	
 	/** Constructs a dependency parser for training. */
 	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringTrainSpace[] spaces)
@@ -48,26 +51,28 @@ public class DEPParserCC extends AbstractDEPParser
 	}
 	
 	/** Constructs a dependency parser for cross-validation. */
-	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringModel[] models)
+	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringModel[] models, double lowerBound)
 	{
 		super(FLAG_PREDICT);
 		f_xmls   = xmls;
 		s_punc   = sPunc;
 		s_models = models;
 		n_models = f_xmls.length;
+		d_lower  = lowerBound;
 	}
 	
 	/** Constructs a dependency parser for predicting. */
-	public DEPParserCC(DEPFtrXml[] xmls, BufferedReader fin)
+	public DEPParserCC(DEPFtrXml[] xmls, BufferedReader fin, double lowerBound)
 	{
 		super(FLAG_PREDICT);
 		f_xmls   = xmls;
 		n_models = f_xmls.length;
+		d_lower  = lowerBound;
 		loadModel(fin);
 	}
 	
 	/** Constructs a dependency parser for bootstrapping. */
-	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringModel[] models, StringTrainSpace[] spaces)
+	public DEPParserCC(DEPFtrXml[] xmls, Set<String> sPunc, StringModel[] models, StringTrainSpace[] spaces, double lowerBound)
 	{
 		super(FLAG_BOOST);
 		f_xmls   = xmls;
@@ -75,6 +80,7 @@ public class DEPParserCC extends AbstractDEPParser
 		s_models = models;
 		s_spaces = spaces;
 		n_models = f_xmls.length;
+		d_lower  = lowerBound;
 	}
 	
 	/** Constructs a dependency parser for demonstration. */
@@ -161,16 +167,20 @@ public class DEPParserCC extends AbstractDEPParser
 		{
 			p = s_models[i].predictBest(vector[i]);
 			if (p.score > 0)	break;
+		//	if (p.score > d_lower)	break;
 		}
+		
+		n_total++;
+		if (i == 0)	n_1st++;
 		
 		return p.label.split(LB_DELIM);
 	}
 	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
 	{
+		int i, size = d_tree.size(), idx = n_models - 1;
 		StringFeatureVector vector;
 		List<StringPrediction> ps;
-		int i, size = d_tree.size(), idx = n_models - 1;
 		String deprel;
 		DEPNode head;
 		

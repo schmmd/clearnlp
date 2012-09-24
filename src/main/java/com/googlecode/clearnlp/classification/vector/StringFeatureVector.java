@@ -26,6 +26,7 @@ package com.googlecode.clearnlp.classification.vector;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.carrotsearch.hppc.DoubleArrayList;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 
 
@@ -104,6 +105,21 @@ public class StringFeatureVector extends AbstractFeatureVector
 		}
 		else
 			s_values.add(feature.substring(idx0+1));
+	}
+	
+	public void addFeatures(StringFeatureVector vector)
+	{
+		List<String> types  = vector.s_types;
+		List<String> values = vector.s_values;
+		DoubleArrayList weights = vector.d_weights;
+		int i, size = vector.size();
+		
+		for (i=0; i<size; i++)
+		{
+			s_types .add(types .get(i));
+			s_values.add(values.get(i));
+			if (weights != null)	d_weights.add(weights.get(i));
+		}
 	}
 	
 	/**

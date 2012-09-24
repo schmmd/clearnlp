@@ -77,6 +77,8 @@ public class DEPTrain extends AbstractRun
 	protected String s_modelFile;
 	@Option(name="-n", usage="the bootstrapping level (default: 2)", required=false, metaVar="<integer>")
 	protected int n_boot = 2;
+	@Option(name="-sb", usage="if set, save all bootstrapping models", required=false, metaVar="<boolean>")
+	protected boolean b_saveAllModels = false;
 	
 	public DEPTrain() {}
 	
@@ -94,83 +96,28 @@ public class DEPTrain extends AbstractRun
 	private void run(String configXml, String featureXml, String trainDir, String modelFile, int nBoot) throws Exception
 	{
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader reader = (DEPReader)getReader(eConfig);
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
+		Set<String> sPunc = getLexica(eConfig, trainFiles, -1);
 		DEPParser parser;
-		long st, et;
-		int i = 0;
+		int boot = 0;
 		
-		Set<String> sPunc = getLexica(reader, trainFiles, -1, getPunctInfo(eConfig));
+		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, null, -1, boot);
+		if (b_saveAllModels)	saveModels(modelFile+"."+boot, featureXml, parser);
 		
-		st = System.currentTimeMillis();
-		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, null, -1);
+		for (boot=1; boot<=nBoot; boot++)
+		{
+			parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, parser.getModel(), -1, boot);
+			if (b_saveAllModels)	saveModels(modelFile+"."+boot, featureXml, parser);
+		}
+		
 		saveModels(modelFile, featureXml, parser);
-		et = System.currentTimeMillis();
-		printTime(st, et);
-		
-		for (i=1; i<=nBoot; i++)
-		{
-			st = System.currentTimeMillis();
-			parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, parser.getModel(), -1);
-			saveModels(modelFile+"."+i, featureXml, parser);
-			et = System.currentTimeMillis();
-			printTime(st, et);	
-		}
 	}
 	
-	protected StringIntPair getPunctInfo(Element eConfig)
+	protected Set<String> getLexica(Element eConfig, String[] trainFiles, int devId) throws Exception
 	{
-		Element eLexica = UTXml.getFirstElementByTagName(eConfig, TAG_LEXICA);
-		NodeList   list = eLexica.getElementsByTagName(TAG_LEXICA_LEXICON);
-		int i, size = list.getLength();
-		Element eLexicon;
-
-		for (i=0; i<size; i++)
-		{
-			eLexicon = (Element)list.item(i);
-			
-			if (UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_TYPE).equals(LEXICON_PUNCTUATION))
-			{
-				String label  = UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_LABEL);
-				int    cutoff = Integer.parseInt(UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_CUTOFF));
-				return new StringIntPair(label, cutoff);
-			}
-		}
-		
-		return new StringIntPair("", 0);
-	}
-	
-	private void printTime(long st, long et)
-	{
-		long millis = et - st;
-		long mins   = TimeUnit.MILLISECONDS.toMinutes(millis);
-		long secs   = TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(mins);
-
-		System.out.println("Training time:");
-		System.out.println(String.format("- %d mins, %d secs", mins, secs));
-	}
-	
-	public void saveModels(String modelFile, String featureXml, DEPParser parser) throws Exception
-	{
-		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
-		PrintStream fout;
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
-		IOUtils.copy(new FileInputStream(featureXml), zout);
-		zout.closeArchiveEntry();
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
-		fout = new PrintStream(new BufferedOutputStream(zout));
-		parser.saveModel(fout);
-		fout.close();
-		zout.closeArchiveEntry();
-		
-		zout.close();
-	}
-	
-	protected Set<String> getLexica(DEPReader reader, String[] trainFiles, int devId, StringIntPair punctInfo)
-	{
+		DEPReader reader = (DEPReader)getReader(eConfig);
+		StringIntPair punctInfo = getPunctInfo(eConfig);
 		Prob1DMap mPunct = new Prob1DMap();
 		int i, size = trainFiles.length;
 		DEPTree tree;
@@ -192,7 +139,30 @@ public class DEPTrain extends AbstractRun
 		System.out.println();
 		return mPunct.toSet(punctInfo.i);
 	}
-
+	
+	private StringIntPair getPunctInfo(Element eConfig)
+	{
+		Element eLexica = UTXml.getFirstElementByTagName(eConfig, TAG_LEXICA);
+		NodeList list = eLexica.getElementsByTagName(TAG_LEXICA_LEXICON);
+		int i, size = list.getLength(), cutoff;
+		Element eLexicon;
+		String label;
+		
+		for (i=0; i<size; i++)
+		{
+			eLexicon = (Element)list.item(i);
+			
+			if (UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_TYPE).equals(LEXICON_PUNCTUATION))
+			{
+				label  = UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_LABEL);
+				cutoff = Integer.parseInt(UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_CUTOFF));
+				return new StringIntPair(label, cutoff);
+			}
+		}
+		
+		return new StringIntPair("", 0);
+	}
+	
 	/**
 	 * Retrieves lexica from the specific dependency tree and stores them to the specific map.
 	 * @param tree the dependency tree to collect lexica from.
@@ -245,12 +215,12 @@ public class DEPTrain extends AbstractRun
 	}*/
 	
 	/** @param devId if {@code -1}, train the models using all training files. */
-	public DEPParser getTrainedParser(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId) throws Exception
+	public DEPParser getTrainedParser(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId, int boot) throws Exception
 	{
+		int i, size = trainFiles.length, labelCutoff = xml.getLabelCutoff(0), featureCutoff = xml.getFeatureCutoff(0);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN);
 		int numThreads = getNumOfThreads(eTrain);
-		
-		int i, size = trainFiles.length, labelCutoff = xml.getLabelCutoff(0), featureCutoff = xml.getFeatureCutoff(0);
+
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 		List<StringTrainSpace> spaces = new ArrayList<StringTrainSpace>();
 		StringTrainSpace space;
@@ -287,8 +257,9 @@ public class DEPTrain extends AbstractRun
 			
 			for (StringTrainSpace s : spaces)
 			{
-				space.append(s);
+				space.addInstances(s);
 				System.out.print(".");
+				s.clear();
 			}
 			
 			System.out.println();			
@@ -296,10 +267,11 @@ public class DEPTrain extends AbstractRun
 		
 		model = null;
 		model = (StringModel)getModel(eTrain, space, 0);
+		
 		return new DEPParser(xml, sPunc, model);
 	}
 	
-	class TrainTask implements Runnable
+	private class TrainTask implements Runnable
 	{
 		DEPParser d_parser;
 		DEPReader d_reader;
@@ -328,6 +300,24 @@ public class DEPTrain extends AbstractRun
 		System.out.printf("- LAS: %5.2f (%d/%d)\n", 100d*counts[1]/counts[0], counts[1], counts[0]);
 		System.out.printf("- UAS: %5.2f (%d/%d)\n", 100d*counts[2]/counts[0], counts[2], counts[0]);
 		System.out.printf("- LS : %5.2f (%d/%d)\n", 100d*counts[3]/counts[0], counts[3], counts[0]);
+	}
+
+	public void saveModels(String modelFile, String featureXml, DEPParser parser) throws Exception
+	{
+		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
+		PrintStream fout;
+		
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
+		IOUtils.copy(new FileInputStream(featureXml), zout);
+		zout.closeArchiveEntry();
+		
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
+		fout = new PrintStream(new BufferedOutputStream(zout));
+		parser.saveModel(fout);
+		fout.close();
+		zout.closeArchiveEntry();
+		
+		zout.close();
 	}
 	
 	static public void main(String[] args)
