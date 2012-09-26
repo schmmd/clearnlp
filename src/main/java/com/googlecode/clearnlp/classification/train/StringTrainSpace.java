@@ -24,6 +24,7 @@
 package com.googlecode.clearnlp.classification.train;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -199,12 +200,15 @@ public class StringTrainSpace extends AbstractTrainSpace
 	private void initModelMaps()
 	{
 		// initialize label map
-		String label;
+		List<String> labels = new ArrayList<String>(); 
 		
 		for (ObjectCursor<String> cur : m_labels.keys())
+			labels.add(cur.value);
+		
+		Collections.sort(labels);
+		
+		for (String label : labels)
 		{
-			label = cur.value;
-			
 			if (m_labels.get(label) > l_cutoff)
 				s_model.addLabel(label);
 		}

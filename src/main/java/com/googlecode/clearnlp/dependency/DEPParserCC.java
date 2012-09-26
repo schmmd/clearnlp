@@ -166,6 +166,7 @@ public class DEPParserCC extends AbstractDEPParser
 		for (i=0; i<n_models; i++)
 		{
 			p = s_models[i].predictBest(vector[i]);
+			
 			if (p.score > 0)	break;
 		//	if (p.score > d_lower)	break;
 		}
