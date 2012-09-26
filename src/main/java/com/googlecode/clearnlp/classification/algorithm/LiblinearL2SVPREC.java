@@ -133,10 +133,11 @@ public class LiblinearL2SVPREC extends AbstractAlgorithm
 				i  = index[s];
 				yi = aY[i];
 				xi = xs.get(i);
+				
                 if(yi == 1)
-				    U  = p_bias * upper_bound[GETI(aY, i)];
+				    U = p_bias * upper_bound[GETI(aY, i)];
                 else
-                   U  = upper_bound[GETI(aY, i)];
+                	U = upper_bound[GETI(aY, i)];
 
 				G  = (d_bias > 0) ? weight[0] * d_bias : 0;
 								
