@@ -149,6 +149,29 @@ public class DEPParser extends AbstractDEPParser
 		return p.label.split(LB_DELIM);
 	}
 	
+/*	private String[] getAutoLabels(String[] gLabels, StringFeatureVector vector)
+	{
+		List<StringPrediction> ps = s_model.predictAll(vector);
+		String[] aLabels;	int i, j;
+		
+		T++;
+		
+		outer: for (i=0; i<K.length; i++)
+		{
+			aLabels = ps.get(i).label.split(LB_DELIM);
+			
+			for (j=0; j<aLabels.length; j++)
+			{
+				if (!aLabels[j].equals(gLabels[j]))
+					continue outer;
+			}
+			
+			K[i]++;
+		}
+		
+		return ps.get(0).label.split(LB_DELIM);
+	}*/
+	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
 	{
 		StringFeatureVector vector;

@@ -159,16 +159,15 @@ public class DEPParserCC extends AbstractDEPParser
 	}
 	
 	/** Called by {@link DEPParserCC#getLabels()}. */
-	private String[] getAutoLabels(StringFeatureVector[] vector)
+	private String[] getAutoLabels(StringFeatureVector[] vectors)
 	{
-		StringPrediction p = null;	int i;
+		StringPrediction p = null;
+		int i;
 		
 		for (i=0; i<n_models; i++)
 		{
-			p = s_models[i].predictBest(vector[i]);
-			
+			p = s_models[i].predictBest(vectors[i]);
 			if (p.score > 0)	break;
-		//	if (p.score > d_lower)	break;
 		}
 		
 		n_total++;
