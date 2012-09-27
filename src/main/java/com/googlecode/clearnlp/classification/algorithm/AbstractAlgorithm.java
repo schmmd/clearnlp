@@ -33,12 +33,11 @@ import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 abstract public class AbstractAlgorithm
 {
 	/** The flag to indicate L2-regularized L1-loss support vector classification (dual). */
-	static public final byte SOLVER_LIBLINEAR_LR2_L1_SV = 0;
+	static public final byte SOLVER_LIBLINEAR_LR2_L1_SV      = 0;
 	/** The flag to indicate L2-regularized L2-loss support vector classification (dual). */
-	static public final byte SOLVER_LIBLINEAR_LR2_L2_SV = 1;
+	static public final byte SOLVER_LIBLINEAR_LR2_L2_SV      = 1;
 	/** The flag to indicate L2-regularized logistic regression (dual). */
-	static public final byte SOLVER_LIBLINEAR_LR2_LR    = 2;
-
+	static public final byte SOLVER_LIBLINEAR_LR2_LR         = 2;
     /** The flag to indicate precision-biased L2-regularized L1-loss support vector classification (dual). */
 	static public final byte SOLVER_LIBLINEAR_LR2_L1_SV_PREC = 3;
 	

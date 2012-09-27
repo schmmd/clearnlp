@@ -147,9 +147,9 @@ public class DEPParserCC extends AbstractDEPParser
 		}
 		else if (i_flag == FLAG_BOOST)
 		{
-			String join = UTArray.join(getGoldLabels(), LB_DELIM);
-            LabelContainer labelsI = getAutoLabels(vectors);
-            labels = labelsI.string;
+		    String join = UTArray.join(getGoldLabels(), LB_DELIM);
+		    LabelContainer labelsI = getAutoLabels(vectors);
+		    labels = labelsI.string;
 
 
 			for (i=0; i<=labelsI.i; i++)
@@ -175,10 +175,8 @@ public class DEPParserCC extends AbstractDEPParser
 
 		for (i=0; i<n_models; i++)
 		{
-			p = s_models[i].predictBest(vector[i]);
-			
+			p = s_models[i].predictBest(vectors[i]);
 			if (p.score > 0)	break;
-		//	if (p.score > d_lower)	break;
 		}
 
 		n_total++;
