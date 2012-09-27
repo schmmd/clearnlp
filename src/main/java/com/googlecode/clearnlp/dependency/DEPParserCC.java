@@ -143,46 +143,37 @@ public class DEPParserCC extends AbstractDEPParser
 		}
 		else if (i_flag == FLAG_PREDICT)
 		{
-			labels = getAutoLabels(vectors).string;
+			labels = getAutoLabels(vectors);
 		}
 		else if (i_flag == FLAG_BOOST)
 		{
-		    String join = UTArray.join(getGoldLabels(), LB_DELIM);
-		    LabelContainer labelsI = getAutoLabels(vectors);
-		    labels = labelsI.string;
-
-
-			for (i=0; i<=labelsI.i; i++)
+			String join = UTArray.join(getGoldLabels(), LB_DELIM);
+			
+			for (i=0; i<n_models; i++)
 				s_spaces[i].addInstance(join, vectors[i]);
 			
+			labels = getAutoLabels(vectors);
 		}
 
 		return labels;
 	}
-	class LabelContainer {
-        String[] string;
-        int i;
-        public LabelContainer(String[] str,int ii){
-            string = str;
-            i = ii;
-        }
-
-}
+	
 	/** Called by {@link DEPParserCC#getLabels()}. */
-	private LabelContainer getAutoLabels(StringFeatureVector[] vector)
+	private String[] getAutoLabels(StringFeatureVector[] vectors)
 	{
-		StringPrediction p = null;	int i;
-
+		StringPrediction p = null;
+		int i;
+		
 		for (i=0; i<n_models; i++)
 		{
 			p = s_models[i].predictBest(vectors[i]);
 			if (p.score > 0)	break;
 		}
-
+		
 		n_total++;
 		if (i == 0)	n_1st++;
 		
-		return new LabelContainer(p.label.split(LB_DELIM),i);
+		return p.label.split(LB_DELIM);
 	}
 	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
