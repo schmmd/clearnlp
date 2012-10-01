@@ -90,7 +90,7 @@ public class SparseTrainSpace extends AbstractTrainSpace
 		for (String label : s_ys)
 			a_ys.add(s_model.getLabelIndex(label));
 		
-		s_ys = null;
+		s_ys.clear();
 		System.out.println("- # of labels   : "+s_model.getLabelSize());
 		System.out.println("- # of features : "+s_model.getFeatureSize());
 		System.out.println("- # of instances: "+a_ys.size());

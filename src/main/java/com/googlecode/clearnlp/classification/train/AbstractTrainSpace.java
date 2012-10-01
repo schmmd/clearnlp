@@ -32,7 +32,9 @@ import java.util.ArrayList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.vector.AbstractFeatureVector;
+import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.util.pair.IntIntPair;
 
 
 /**
@@ -253,6 +255,45 @@ abstract public class AbstractTrainSpace
 			}
 			
 			fout.println(build.toString());
+		}
+	}
+	
+	public void printAccuracies()
+	{
+		int y, i, j, len, lSize = m_model.getLabelSize(), tSize = a_ys.size();
+		IntIntPair[] counts = new IntIntPair[lSize];
+		SparseFeatureVector vector;
+		int[] x; double[] v = null;
+		IntIntPair c;
+		
+		for (i=0; i<lSize; i++)
+			counts[i] = new IntIntPair(0, 0);
+			
+		for (i=0; i<tSize; i++)
+		{
+			y = a_ys.get(i);
+			x = a_xs.get(i);
+			if (b_weight)	v = a_vs.get(i);
+			
+			vector = new SparseFeatureVector(b_weight);
+			len = x.length;
+			
+			for (j=0; j<len; j++)
+			{
+				if (b_weight)	vector.addFeature(x[j], v[j]);
+				else			vector.addFeature(x[j]);
+			}
+			
+			if (m_model.getLabel(y).equals(m_model.predictBest(vector).label))
+				counts[y].i1++;
+
+			counts[y].i2++;
+		}
+
+		for (i=0; i<lSize; i++)
+		{
+			c = counts[i];
+			System.out.printf("%25s: %5.2f (%d/%d)\n", m_model.getLabel(i), 100d*c.i1/c.i2, c.i1, c.i2);
 		}
 	}
 }

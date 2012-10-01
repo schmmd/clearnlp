@@ -28,6 +28,7 @@ import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
+import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.triple.Triple;
 
 public class DEPParserCC extends AbstractDEPParser
@@ -143,37 +144,46 @@ public class DEPParserCC extends AbstractDEPParser
 		}
 		else if (i_flag == FLAG_PREDICT)
 		{
-			labels = getAutoLabels(vectors);
+			labels = getAutoLabels(vectors).o1;
 		}
 		else if (i_flag == FLAG_BOOST)
 		{
-			String join = UTArray.join(getGoldLabels(), LB_DELIM);
+			String[] gLabels = getGoldLabels();
+			String join = UTArray.join(gLabels, LB_DELIM);
 			
 			for (i=0; i<n_models; i++)
 				s_spaces[i].addInstance(join, vectors[i]);
 			
-			labels = getAutoLabels(vectors);
+			labels = getAutoLabels(vectors).o1;
 		}
 
 		return labels;
 	}
 	
-	/** Called by {@link DEPParserCC#getLabels()}. */
-	private String[] getAutoLabels(StringFeatureVector[] vectors)
+	/** Called by {@link DEPParserCC#getLabels()}. */	
+	private Pair<String[],Integer> getAutoLabels(StringFeatureVector[] vectors)
 	{
+		List<StringPrediction> ps;
 		StringPrediction p = null;
 		int i;
 		
 		for (i=0; i<n_models; i++)
 		{
-			p = s_models[i].predictBest(vectors[i]);
-			if (p.score > 0)	break;
+			ps = s_models[i].predictAll(vectors[i]);
+			
+			if ((p = ps.get(0)).score > 0 && ps.get(1).score <= 0)
+				break;
 		}
 		
 		n_total++;
-		if (i == 0)	n_1st++;
 		
-		return p.label.split(LB_DELIM);
+		if (i == 0)
+		{
+			n_1st++;
+		}
+		
+		if (i == n_models)	i--;
+		return new Pair<String[],Integer>(p.label.split(LB_DELIM), i);
 	}
 	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)

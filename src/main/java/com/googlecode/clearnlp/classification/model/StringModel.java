@@ -26,15 +26,12 @@ package com.googlecode.clearnlp.classification.model;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
-import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
@@ -224,36 +221,13 @@ public class StringModel extends AbstractModel
 		return sparse;
 	}
 	
-	/**
-	 * Returns the best prediction given the feature vector.
-	 * @param x the feature vector.
-	 * @return the best prediction given the feature vector.
-	 */
 	public StringPrediction predictBest(StringFeatureVector x)
 	{
-		return predictAll(x).get(0);
+		return predictBest(toSparseFeatureVector(x));
 	}
 	
-	/**
-	 * Returns all predictions given the feature vector.
-	 * Predictions are sorted in descending order by their scores. 
-	 * @param x the feature vector.
-	 * @return all predictions given the feature vector.
-	 */
 	public List<StringPrediction> predictAll(StringFeatureVector x)
 	{
-	//	SortedStringPredictionArrayList list = new SortedStringPredictionArrayList(n_labels);
-		List<StringPrediction> list = new ArrayList<StringPrediction>(n_labels);
-		double[] scores = getScores(toSparseFeatureVector(x));
-		int i;
-		
-		for (i=0; i<n_labels; i++)
-			list.add(new StringPrediction(a_labels[i], scores[i]));
-		
-		Collections.sort(list);
-		if (i_solver == AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_LR)
-			toProbability(list);
-		
-		return list;
+		return predictAll(toSparseFeatureVector(x));
 	}
 }

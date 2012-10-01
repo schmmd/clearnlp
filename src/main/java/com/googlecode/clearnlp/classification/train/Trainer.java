@@ -55,6 +55,8 @@ public class Trainer
 			trainBinary();
 		else
 			trainMulti(numThreads);
+		
+		space.printAccuracies();
 	}
 	
 	private void trainBinary()
@@ -101,43 +103,4 @@ public class Trainer
 			m_model.copyWeightVector(curr_label, weights);
 		}
     }
-	
-/*	private void trainMulti(int numThreads)
-	{
-		int currLabel, size = t_space.getLabelSize(), qSize = size - numThreads;
-		if (qSize < 0)	qSize = 0;
-		
-		Executor executor = new ThreadPoolExecutor(numThreads, numThreads, 1, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(qSize));
-		CompletionService<Pair<Integer,double[]>> ecs = new ExecutorCompletionService<Pair<Integer,double[]>>(executor);
-		Pair<Integer,double[]> p;
-		
-		for (currLabel=0; currLabel<size; currLabel++)
-			ecs.submit(new TrainTask(currLabel));
-
-		try
-		{
-			for (currLabel=0; currLabel<size; currLabel++)
-			{
-				p = ecs.take().get();
-				m_model.copyWeightVector(p.o1, p.o2);
-			}
-		}
-		catch (Exception e) {e.printStackTrace();}	
-    }
-
-	class TrainTask implements Callable<Pair<Integer,double[]>>
-	{
-		int curr_label;
-		
-		public TrainTask(int currLabel)
-		{
-			curr_label = currLabel;
-		}
-
-		@Override
-		public Pair<Integer,double[]> call() throws Exception
-		{
-			return new Pair<Integer,double[]>(curr_label, a_algorithm.getWeight(t_space, curr_label));
-		}
-	}*/
 }

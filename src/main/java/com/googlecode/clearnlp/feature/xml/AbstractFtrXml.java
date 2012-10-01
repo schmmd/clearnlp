@@ -48,7 +48,6 @@ abstract public class AbstractFtrXml
 	static protected final String XML_TYPE		= "type";
 	static protected final String XML_FEATURE	= "feature";
 	static protected final String XML_LEXICA	= "lexica";
-	static protected final String XML_REGEX		= "regex";
 	
 	/** The type of feature. */
 	static protected final String XML_FEATURE_T	= "t";

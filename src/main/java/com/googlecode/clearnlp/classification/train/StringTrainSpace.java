@@ -24,7 +24,6 @@
 package com.googlecode.clearnlp.classification.train;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,10 +95,59 @@ public class StringTrainSpace extends AbstractTrainSpace
 		addInstance(instance.o1, instance.o2);
 	}
 	
-	public void addInstances(StringTrainSpace space)
+/*	public void appendSpace(StringTrainSpace space)
 	{
 		for (Pair<String,StringFeatureVector> instance : space.s_instances)
 			addInstance(instance.o1, instance.o2);
+	}*/
+	
+	public void appendSpace(StringTrainSpace space)
+	{
+		appendSpaceLabels(space);
+		appendSpaceFeatures(space);
+		appendSpaceInstances(space);
+	}
+	
+	private void appendSpaceLabels(StringTrainSpace space)
+	{
+		ObjectIntOpenHashMap<String> mLabels = space.m_labels;
+		String label;
+		
+		for (ObjectCursor<String> cur : mLabels.keys())
+		{
+			label = cur.value;
+			m_labels.put(label, m_labels.get(label) + mLabels.get(label));
+		}
+	}
+	
+	private void appendSpaceFeatures(StringTrainSpace space)
+	{
+		Map<String,ObjectIntOpenHashMap<String>> mFeatures = space.m_features;
+		ObjectIntOpenHashMap<String> tMap, sMap;
+		String value;
+		
+		for (String type : mFeatures.keySet())
+		{
+			sMap = mFeatures.get(type);
+			
+			if (m_features.containsKey(type))
+			{
+				tMap = m_features.get(type);
+				
+				for (ObjectCursor<String> cur : sMap.keys())
+				{
+					value = cur.value;
+					tMap.put(value, tMap.get(value) + sMap.get(value));
+				}
+			}
+			else
+				m_features.put(type, sMap);
+		}
+	}
+	
+	private void appendSpaceInstances(StringTrainSpace space)
+	{
+		s_instances.addAll(space.s_instances);
 	}
 	
 	public void clear()
@@ -109,28 +157,13 @@ public class StringTrainSpace extends AbstractTrainSpace
 		m_features .clear();
 	}
 	
-/*	public void appendInstances(StringTrainSpace space)
-	{
-		StringFeatureVector tFeatures, sFeatures;
-		int i, size = space.s_instances.size();
-		
-		for (i=0; i<size; i++)
-		{
-			tFeatures = this .s_instances.get(i).o2;
-			sFeatures = space.s_instances.get(i).o2;
-			
-			addLexicaFeatures(sFeatures);
-			tFeatures.addFeatures(sFeatures);
-		}
-	}*/
-	
 	/** 
 	 * Called by {@link StringTrainSpace#addInstance(String, StringFeatureVector)}.
 	 * Called by {@link StringTrainSpace#addInstance(String)}.
 	 */
 	private void addLexica(String label, StringFeatureVector vector)
 	{
-		addLexicaLabel   (label);
+		addLexicaLabel(label);
 		addLexicaFeatures(vector);
 	}
 	
@@ -172,10 +205,14 @@ public class StringTrainSpace extends AbstractTrainSpace
 		System.out.println("Building:");
 		initModelMaps();
 		
-		int y;	SparseFeatureVector x;
+		Pair<String,StringFeatureVector> instance;
+		int y, i, size = s_instances.size();
+		SparseFeatureVector x;
 		
-		for (Pair<String,StringFeatureVector> instance : s_instances)
+		for (i=0; i<size; i++)
 		{
+			instance = s_instances.get(i);
+			
 			if ((y = s_model.getLabelIndex(instance.o1)) < 0)
 				continue;
 			
@@ -184,13 +221,16 @@ public class StringTrainSpace extends AbstractTrainSpace
 			a_ys.add(y);
 			a_xs.add(x.getIndices());
 			if (b_weight)	a_vs.add(x.getWeights());
+			
+			if (i%100000 == 0)	System.out.print(".");
 		}
 		
 		a_ys.trimToSize();
 		a_xs.trimToSize();
 		if (b_weight)	a_vs.trimToSize();
 		
-		s_instances = null;
+		s_instances.clear();
+		System.out.println();
 		System.out.println("- # of labels   : "+s_model.getLabelSize());
 		System.out.println("- # of features : "+s_model.getFeatureSize());
 		System.out.println("- # of instances: "+a_ys.size());
@@ -200,15 +240,12 @@ public class StringTrainSpace extends AbstractTrainSpace
 	private void initModelMaps()
 	{
 		// initialize label map
-		List<String> labels = new ArrayList<String>(); 
+		String label;
 		
 		for (ObjectCursor<String> cur : m_labels.keys())
-			labels.add(cur.value);
-		
-		Collections.sort(labels);
-		
-		for (String label : labels)
 		{
+			label = cur.value;
+
 			if (m_labels.get(label) > l_cutoff)
 				s_model.addLabel(label);
 		}

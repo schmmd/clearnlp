@@ -26,7 +26,9 @@ package com.googlecode.clearnlp.classification.model;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
@@ -88,6 +90,18 @@ abstract public class AbstractModel
 		m_labels   = new ObjectIntOpenHashMap<String>(model.m_labels);
 		i_solver   = model.i_solver;
 	}
+	
+	/**
+	 * Loads this model from the specific reader.
+	 * @param reader the reader to load the model from.
+	 */
+	abstract public void load(BufferedReader reader);
+	
+	/**
+	 * Saves this model to the specific stream.
+	 * @param fout the stream to save this model to.
+	 */
+	abstract public void save(PrintStream fout);
 	
 	public void setSolver(byte solver)
 	{
@@ -158,6 +172,11 @@ abstract public class AbstractModel
 		return n_features;
 	}
 	
+	public String getLabel(int index)
+	{
+		return a_labels[index];
+	}
+	
 	public String[] getLabels()
 	{
 		return a_labels;
@@ -189,6 +208,17 @@ abstract public class AbstractModel
 		
 		for (i=0; i<n_features; i++)
 			d_weights[getWeightIndex(label, i)] = weights[i];
+	}
+	
+	public double[] getWeightVector(int label)
+	{
+		double[] weights = new double[n_features];
+		int i;
+		
+		for (i=0; i<n_features; i++)
+			weights[i] = d_weights[getWeightIndex(label, i)];
+		
+		return weights;
 	}
 	
 	/**
@@ -380,14 +410,55 @@ abstract public class AbstractModel
 	}
 	
 	/**
-	 * Loads this model from the specific reader.
-	 * @param reader the reader to load the model from.
+	 * Returns the best prediction given the feature vector.
+	 * @param x the feature vector.
+	 * @return the best prediction given the feature vector.
 	 */
-	abstract public void load(BufferedReader reader);
+	public StringPrediction predictBest(SparseFeatureVector x)
+	{
+		List<StringPrediction> list = getPredictions(x);
+		StringPrediction max = list.get(0), p;
+		int i, size = list.size();
+		
+		for (i=1; i<size; i++)
+		{
+			p = list.get(i);
+			if (max.score < p.score) max = p;
+		}
+		
+		return max;
+	}
 	
 	/**
-	 * Saves this model to the specific stream.
-	 * @param fout the stream to save this model to.
+	 * Returns a sorted list of predictions given the specific feature vector.
+	 * @param x the feature vector.
+	 * @return a sorted list of predictions given the specific feature vector.
 	 */
-	abstract public void save(PrintStream fout);
+	public List<StringPrediction> predictAll(SparseFeatureVector x)
+	{
+		List<StringPrediction> list = getPredictions(x);
+		Collections.sort(list);
+		
+		return list;
+	}
+	
+	/**
+	 * Returns an unsorted list of predictions given the specific feature vector.
+	 * @param x the feature vector.
+	 * @return an unsorted list of predictions given the specific feature vector.
+	 */
+	public List<StringPrediction> getPredictions(SparseFeatureVector x)
+	{
+		List<StringPrediction> list = new ArrayList<StringPrediction>(n_labels);
+		double[] scores = getScores(x);
+		int i;
+		
+		for (i=0; i<n_labels; i++)
+			list.add(new StringPrediction(a_labels[i], scores[i]));
+		
+	//	if (i_solver == AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_LR)
+	//		toProbability(list);
+		
+		return list;		
+	}
 }

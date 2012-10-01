@@ -124,8 +124,7 @@ public class DEPParser extends AbstractDEPParser
 		
 		if (i_flag == FLAG_TRAIN)
 		{
-			String join = UTArray.join(labels = getGoldLabels(), LB_DELIM);
-			s_space.addInstance(join, vector);
+			s_space.addInstance(UTArray.join(labels = getGoldLabels(), LB_DELIM), vector);
 		}
 		else if (i_flag == FLAG_PREDICT)
 		{
@@ -133,13 +132,26 @@ public class DEPParser extends AbstractDEPParser
 		}
 		else if (i_flag == FLAG_BOOST)
 		{
-			String join = UTArray.join(getGoldLabels(), LB_DELIM);
-			s_space.addInstance(join, vector);
-			
+			String[] gLabels = getGoldLabels();
 			labels = getAutoLabels(vector);
+			
+			s_space.addInstance(UTArray.join(gLabels, LB_DELIM), vector);
 		}
 
 		return labels;
+	}
+	
+	protected boolean isSameLabels(String[] gLabels, String[] aLabels)
+	{
+		int i, size = aLabels.length;
+		
+		for (i=0; i<size; i++)
+		{
+			if (!aLabels[i].equals(gLabels[i]))
+				return false;
+		}
+		
+		return true;
 	}
 	
 	/** Called by {@link DEPParser#getLabels()}. */
@@ -148,29 +160,6 @@ public class DEPParser extends AbstractDEPParser
 		StringPrediction p = s_model.predictBest(vector);
 		return p.label.split(LB_DELIM);
 	}
-	
-/*	private String[] getAutoLabels(String[] gLabels, StringFeatureVector vector)
-	{
-		List<StringPrediction> ps = s_model.predictAll(vector);
-		String[] aLabels;	int i, j;
-		
-		T++;
-		
-		outer: for (i=0; i<K.length; i++)
-		{
-			aLabels = ps.get(i).label.split(LB_DELIM);
-			
-			for (j=0; j<aLabels.length; j++)
-			{
-				if (!aLabels[j].equals(gLabels[j]))
-					continue outer;
-			}
-			
-			K[i]++;
-		}
-		
-		return ps.get(0).label.split(LB_DELIM);
-	}*/
 	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
 	{

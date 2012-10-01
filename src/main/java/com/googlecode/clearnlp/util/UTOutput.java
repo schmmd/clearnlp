@@ -51,7 +51,7 @@ public class UTOutput
 	}
 	
 	/** @return new PrintStream(new BufferedOutputStream(new GZIPOutputStream(new FileOutputStream(filename)))) */
-	static public PrintStream createPrintBufferedGzipFileStream(String filename)
+	static public PrintStream createPrintBufferedGZipFileStream(String filename)
 	{
 		PrintStream fout = null;
 		

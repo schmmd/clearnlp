@@ -76,7 +76,7 @@ public class DEPDevelop extends DEPTrain
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
 		String[]  devFiles = UTFile.getSortedFileList(devDir); 
-		Set<String> sPunc = getLexica(eConfig, trainFiles, -1);
+		Set<String> sPunc = getLexica(eConfig, xml, trainFiles, -1);
 		
 		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);
 		double prevScore;	int i = 0;

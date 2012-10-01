@@ -48,9 +48,9 @@ public class POSFtrXml extends AbstractFtrXml
 	static public final Pattern P_PREFIX  	= Pattern.compile("^pf(\\d+)$");
 	static public final Pattern P_SUFFIX  	= Pattern.compile("^sf(\\d+)$");
 	
-	static private final Pattern P_FIELD = Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_AMBIGUITY);
-	static private final String  CUTOFF_AMBIGUITY = "ambiguity";
-	static private final String  CUTOFF_DOCUMENT_FREQUENCY = "df";
+	static protected final Pattern P_FIELD = Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_AMBIGUITY);
+	static protected final String CUTOFF_AMBIGUITY = "ambiguity";
+	static protected final String CUTOFF_DOCUMENT_FREQUENCY = "df";
 	
 	private double[] cutoff_ambiguity;
 	private int[]    cutoff_df;

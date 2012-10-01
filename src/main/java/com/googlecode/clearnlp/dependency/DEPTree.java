@@ -425,6 +425,20 @@ public class DEPTree extends ArrayList<DEPNode>
 		return build.substring(DEPReader.DELIM_SENTENCE.length());
 	}
 	
+	public String toStringRaw()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(" ");
+			build.append(get(i).form);
+		}
+		
+		return build.substring(1);
+	}
+	
 	public DEPNode getNextPredicate(int prevId)
 	{
 		int i, size = size();

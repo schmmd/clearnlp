@@ -24,9 +24,12 @@
 package com.googlecode.clearnlp.experiment;
 
 import java.io.FileInputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import com.googlecode.clearnlp.util.*;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
@@ -37,11 +40,6 @@ import com.googlecode.clearnlp.dependency.DEPParserCC;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.reader.DEPReader;
-import com.googlecode.clearnlp.run.DEPTrainCC;
-import com.googlecode.clearnlp.util.UTArray;
-import com.googlecode.clearnlp.util.UTFile;
-import com.googlecode.clearnlp.util.UTInput;
-import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -56,6 +54,8 @@ public class DEPDevelopCC extends DEPTrainCC
 {
 	@Option(name="-d", usage="the directory containing development file (input; required)", required=true, metaVar="<filename>")
 	private String s_devDir;
+    @Option(name="-b", usage="if true, do bootstrapping only (default: false)", required=true, metaVar="<filename>")
+	private byte b_boot = 0;
 	
 	public DEPDevelopCC() {}
 	
@@ -65,12 +65,67 @@ public class DEPDevelopCC extends DEPTrainCC
 		
 		try
 		{
-			run(s_configFile, s_featureFiles, s_trainDir, s_devDir);	
+            if (b_boot == 0)
+                runInit(s_configFile, s_featureFiles, s_trainDir, s_devDir, s_modelFile);
+            else if (b_boot == 1)
+                run(s_configFile, s_featureFiles, s_trainDir, s_devDir, s_modelFile);
+            else
+                run(s_configFile, s_featureFiles, s_trainDir, s_devDir);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
+
+    private void runInit(String configFile, String featureFiles, String trainDir, String devDir, String modelFile) throws Exception
+    {
+        Element      eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
+		DEPReader     reader = (DEPReader)getReader(eConfig);
+		DEPFtrXml[]     xmls = getFeatureTemplates(featureFiles);	// initialize MODEL_SIZE
+		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
+		String[]    devFiles = UTFile.getSortedFileList(devDir);
+		Set<String>    sPunc = getLexica(eConfig, trainFiles, -1);
+		IntIntPair[] cutoffs = getCutoffs(xmls);
+
+		Pair<StringModel[],Double> model = new Pair<StringModel[],Double>(null, 0d);
+		develop(eConfig, reader, xmls, sPunc, trainFiles, devFiles, cutoffs, model, 0);
+
+		int i, size = model.o1.length;
+		PrintStream fout;
+		
+		for (i=0; i<size; i++)
+		{
+        	model.o1[i].save(fout = UTOutput.createPrintBufferedGZipFileStream(modelFile+"."+i+".gz"));
+        	fout.close();
+		}
+    }
 	
-	private void run(String configFile, String featureFiles, String trainDir, String devDir) throws Exception
+	private void run(String configFile, String featureFiles, String trainDir, String devDir, String modelFile) throws Exception
+	{
+		Element      eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
+		DEPReader     reader = (DEPReader)getReader(eConfig);
+		DEPFtrXml[]     xmls = getFeatureTemplates(featureFiles);	// initialize MODEL_SIZE
+		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
+		String[]    devFiles = UTFile.getSortedFileList(devDir); 
+		Set<String>    sPunc = getLexica(eConfig, trainFiles, -1);
+		IntIntPair[] cutoffs = getCutoffs(xmls);
+        int i = 0;
+
+        StringModel[] models = new StringModel[xmls.length];
+
+        for (i=0; i<models.length; i++)
+            models[i] = new StringModel(UTInput.createBufferedGZipFileReader(modelFile+"."+i+".gz"));
+
+		Pair<StringModel[],Double> model = new Pair<StringModel[],Double>(models, 0d);
+		double prevScore;
+
+		do
+		{
+			prevScore = model.o2;
+			develop(eConfig, reader, xmls, sPunc, trainFiles, devFiles, cutoffs, model, i++);
+		}
+		while (model.o2 > prevScore);
+	}
+    
+    private void run(String configFile, String featureFiles, String trainDir, String devDir) throws Exception
 	{
 		Element      eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
 		DEPReader     reader = (DEPReader)getReader(eConfig);
@@ -94,7 +149,6 @@ public class DEPDevelopCC extends DEPTrainCC
 		while (model.o2 > prevScore);
 	}
 	
-	/** @param devId if {@code -1}, train the models using all training files. */
 	protected void develop(Element eConfig, DEPReader reader, DEPFtrXml[] xmls, Set<String> sPunc, String[] trainFiles, String[] devFiles, IntIntPair[] cutoffs, Pair<StringModel[],Double> model, int boost) throws Exception
 	{
 		long st = System.currentTimeMillis();

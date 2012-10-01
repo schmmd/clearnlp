@@ -39,7 +39,6 @@ import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -52,7 +51,6 @@ import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
-import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 
 /**
@@ -98,7 +96,7 @@ public class DEPTrain extends AbstractRun
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
-		Set<String> sPunc = getLexica(eConfig, trainFiles, -1);
+		Set<String> sPunc = getLexica(eConfig, xml, trainFiles, -1);
 		DEPParser parser;
 		int boot = 0;
 		
@@ -114,10 +112,9 @@ public class DEPTrain extends AbstractRun
 		saveModels(modelFile, featureXml, parser);
 	}
 	
-	protected Set<String> getLexica(Element eConfig, String[] trainFiles, int devId) throws Exception
+	protected Set<String> getLexica(Element eConfig, DEPFtrXml xml, String[] trainFiles, int devId) throws Exception
 	{
 		DEPReader reader = (DEPReader)getReader(eConfig);
-		StringIntPair punctInfo = getPunctInfo(eConfig);
 		Prob1DMap mPunct = new Prob1DMap();
 		int i, size = trainFiles.length;
 		DEPTree tree;
@@ -130,37 +127,14 @@ public class DEPTrain extends AbstractRun
 			reader.open(UTInput.createBufferedFileReader(trainFiles[i]));
 			
 			while ((tree = reader.next()) != null)
-				collectLexica(tree, mPunct, punctInfo.s);
+				collectLexica(tree, mPunct, xml.getPunctuationLabel());
 			
 			System.out.print(".");
 			reader.close();
 		}
 		
 		System.out.println();
-		return mPunct.toSet(punctInfo.i);
-	}
-	
-	private StringIntPair getPunctInfo(Element eConfig)
-	{
-		Element eLexica = UTXml.getFirstElementByTagName(eConfig, TAG_LEXICA);
-		NodeList list = eLexica.getElementsByTagName(TAG_LEXICA_LEXICON);
-		int i, size = list.getLength(), cutoff;
-		Element eLexicon;
-		String label;
-		
-		for (i=0; i<size; i++)
-		{
-			eLexicon = (Element)list.item(i);
-			
-			if (UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_TYPE).equals(LEXICON_PUNCTUATION))
-			{
-				label  = UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_LABEL);
-				cutoff = Integer.parseInt(UTXml.getTrimmedAttribute(eLexicon, TAG_LEXICA_LEXICON_CUTOFF));
-				return new StringIntPair(label, cutoff);
-			}
-		}
-		
-		return new StringIntPair("", 0);
+		return mPunct.toSet(xml.getPunctuationCutoff());
 	}
 	
 	/**
@@ -257,7 +231,64 @@ public class DEPTrain extends AbstractRun
 			
 			for (StringTrainSpace s : spaces)
 			{
-				space.addInstances(s);
+				space.appendSpace(s);
+				System.out.print(".");
+				s.clear();
+			}
+			
+			System.out.println();			
+		}
+		
+		model = null;
+		model = (StringModel)getModel(eTrain, space, 0);
+		
+		return new DEPParser(xml, sPunc, model);
+	}
+	
+	/** @param devId if {@code -1}, train the models using all training files. */
+	public DEPParser getTrainedParser(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId, int boot, StringTrainSpace gSpace) throws Exception
+	{
+		int i, size = trainFiles.length, labelCutoff = xml.getLabelCutoff(0), featureCutoff = xml.getFeatureCutoff(0);
+		Element eTrain = UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN);
+		int numThreads = getNumOfThreads(eTrain);
+
+		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+		List<StringTrainSpace> spaces = new ArrayList<StringTrainSpace>();
+		StringTrainSpace space;
+		
+		System.out.println("Collecting training instances:");
+		
+		for (i=0; i<size; i++)
+		{
+			if (devId != i)
+			{
+				spaces.add(space = new StringTrainSpace(false, labelCutoff, featureCutoff));
+				executor.execute(new TrainTask(eConfig, xml, sPunc, trainFiles[i], model, space));
+			}
+		}
+		
+		executor.shutdown();
+		
+		try
+		{
+			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+		}
+		catch (InterruptedException e) {e.printStackTrace();}
+		
+		System.out.println();
+		
+		if (spaces.size() == 1)
+		{
+			space = spaces.get(0);
+		}
+		else
+		{
+			System.out.println("Merging training instances:");
+			space = new StringTrainSpace(false, labelCutoff, featureCutoff);
+			
+			for (StringTrainSpace s : spaces)
+			{
+				space.appendSpace(s);
 				System.out.print(".");
 				s.clear();
 			}

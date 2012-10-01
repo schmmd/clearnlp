@@ -38,10 +38,10 @@ import com.googlecode.clearnlp.util.UTArray;
  */
 public class LiblinearL2SV extends AbstractAlgorithm
 {
-	private byte   i_lossType;
-	private double d_cost;
-	private double d_eps;
-	private double d_bias;
+	protected byte   i_lossType;
+	protected double d_cost;
+	protected double d_eps;
+	protected double d_bias;
 	
 	/**
 	 * Constructs the liblinear L2-regularized support vector classification algorithm.
@@ -141,7 +141,8 @@ public class LiblinearL2SV extends AbstractAlgorithm
 				i  = index[s];
 				yi = aY[i];
 				xi = xs.get(i);
-				U  = upper_bound[GETI(aY, i)];
+			//	U  = upper_bound[GETI(aY, i)];
+				U  = getU(upper_bound, aY, i);
 				G  = (bBias) ? weight[0] * d_bias : 0;
 								
 				if (space.hasWeight())
@@ -245,6 +246,11 @@ public class LiblinearL2SV extends AbstractAlgorithm
 		System.out.println(build.toString());
 		
 		return weight;
+	}
+	
+	protected double getU(double[] upper_bound, byte[] aY, int i)
+	{
+		return upper_bound[GETI(aY, i)];
 	}
 }
 	

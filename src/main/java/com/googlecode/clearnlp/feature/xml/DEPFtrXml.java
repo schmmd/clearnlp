@@ -41,8 +41,6 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  */
 public class DEPFtrXml extends AbstractFtrXml
 {
-	static protected final String XML_LEXICA_PUNCTUATION = "punctuation";
-	
 	static public final char   S_LAMBDA	= 'l';
 	static public final char   S_STACK	= 's';
 	static public final char   S_BETA	= 'b';
@@ -66,6 +64,7 @@ public class DEPFtrXml extends AbstractFtrXml
 	static protected final Pattern P_REL	= Pattern.compile(R_H+"|"+R_LMD+"|"+R_RMD);
 	static protected final Pattern P_FIELD	= Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_DEPREL+"|"+F_LNPL+"|"+F_RNPL+"|"+F_LNPB+"|"+F_RNPB);
 	
+	protected final String XML_LEXICA_PUNCTUATION = "punctuation";
 	private StringIntPair p_punc;
 	
 	public DEPFtrXml(InputStream fin)
@@ -102,6 +101,8 @@ public class DEPFtrXml extends AbstractFtrXml
 		String type, label;
 		Element eLexica;
 		
+		p_punc = new StringIntPair("", 0);
+		
 		for (i=0; i<size; i++)
 		{
 			eLexica = (Element)eList.item(i);
@@ -110,11 +111,8 @@ public class DEPFtrXml extends AbstractFtrXml
 			cutoff  = Integer.parseInt(UTXml.getTrimmedAttribute(eLexica, XML_CUTOFF));
 			
 			if (type.equals(XML_LEXICA_PUNCTUATION))
-				p_punc = new StringIntPair(label, cutoff);
+				p_punc.set(label, cutoff);
 		}
-		
-		if (p_punc == null)
-			p_punc = new StringIntPair("", 0);
 	}
 	
 	protected boolean validSource(char source)

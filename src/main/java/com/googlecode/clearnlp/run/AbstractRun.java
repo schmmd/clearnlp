@@ -31,6 +31,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
@@ -304,22 +305,18 @@ abstract public class AbstractRun
 		
 		if (name.equals("liblinear"))
 		{
-			byte solver  = Byte  .parseByte  (UTXml.getTrimmedAttribute(eAlgorithm, "solver"));
-			double cost  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "cost"));
-			double eps   = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "eps"));
-			double bias  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "bias"));
-			
-			return getLiblinearModel(space, numThreads, solver, cost, eps, bias);
-		}
-		else if (name.equals("liblinearPrec"))
-		{
-			byte solver  = Byte  .parseByte  (UTXml.getTrimmedAttribute(eAlgorithm, "solver"));
-			double cost  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "cost"));
-			double eps   = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "eps"));
-			double bias  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "bias"));
-			double pBias = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "pBias"));
-			
-			return getLiblinearPrecModel(space, numThreads, solver, cost, eps, bias, pBias);
+			byte solver = Byte  .parseByte  (UTXml.getTrimmedAttribute(eAlgorithm, "solver"));
+			double cost = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "cost"));
+			double eps  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "eps"));
+			double bias = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "bias"));
+
+			if (solver == AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV_PREC)
+			{
+				double pBias = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "pBias"));
+				return getLiblinearModel(space, numThreads, cost, eps, bias, pBias);
+			}
+			else
+				return getLiblinearModel(space, numThreads, solver, cost, eps, bias);	
 		}
 		
 		return null;
@@ -334,13 +331,12 @@ abstract public class AbstractRun
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
 	}
 	
-	protected AbstractModel getLiblinearPrecModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias, double pBias)
+	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, double cost, double eps, double bias, double pBias)
 	{
 		space.build();
 		System.out.println("LiblinearPrec:");
-		System.out.printf("- solver=%d, cost=%f, eps=%f, bias=%f, pBias=%f\n", solver, cost, eps, bias, pBias);
-		
-		return LiblinearTrainPrec.getModel(space, numThreads, solver, cost, eps, bias, pBias);
+		System.out.printf("- cost=%f, eps=%f, bias=%f, pBias=%f\n", cost, eps, bias, pBias);
+		return LiblinearTrain.getModel(space, numThreads, cost, eps, bias, pBias);
 	}
 	
 	protected AbstractMPAnalyzer getMPAnalyzer(Element eConfig)

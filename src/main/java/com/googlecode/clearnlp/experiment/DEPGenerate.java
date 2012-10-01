@@ -79,7 +79,7 @@ public class DEPGenerate extends DEPTrain
 		DEPFtrXml     xml = new DEPFtrXml(new FileInputStream(featureXml));
 		
 		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);
-		Set<String> sPunc = getLexica(eConfig, trainFiles, -1);
+		Set<String> sPunc = getLexica(eConfig, xml, trainFiles, -1);
 		double prevScore;	int i = 0;
 		
 		develop(eConfig, reader, xml, sPunc, trainFiles, devId, model, i++);

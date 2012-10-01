@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-package com.googlecode.clearnlp.run;
+package com.googlecode.clearnlp.experiment;
 
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
@@ -40,6 +40,7 @@ import com.googlecode.clearnlp.dependency.DEPParserCC;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.reader.DEPReader;
+import com.googlecode.clearnlp.run.AbstractRun;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTXml;
@@ -295,7 +296,7 @@ public class DEPTrainCC extends AbstractRun
 		for (StringTrainSpace[] s : lSpaces)
 		{
 			lSpace = s[index];
-			gSpace.addInstances(lSpace);
+			gSpace.appendSpace(lSpace);
 			lSpace.clear();
 		}
 		

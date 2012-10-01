@@ -32,8 +32,8 @@ public class DefaultTokenizerTest
 	@Test
 	public void testPatterns()
 	{
-		DefaultTokenizer tok = new DefaultTokenizer();
-		
-		assertEquals(tok.tokenize("..A.B...C...."), " ELIPSIS_MARKER_2 A.B ELIPSIS_MARKER_3 C ELIPSIS_MARKER_4 ");
+		LDCTokenizer tok = new LDCTokenizer();
+
+		assertEquals(tok.tokenize("..A.B---C*D**E~~~~F!!"), " MARKER_PERIOD_2 A.B MARKER_HYPHEN_3 C*D MARKER_ASTERISK_2 E MARKER_TILDA_4 F MARKER_EXCLAMATION_2 ");
 	}
 }

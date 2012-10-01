@@ -97,7 +97,7 @@ abstract public class AbstractDEPParser extends AbstractEngine
 		i_beta   = 1;
 		s_reduce = new IntOpenHashSet();
 		
-	//	if (i_flag != FLAG_PREDICT)
+		if (i_flag != FLAG_PREDICT)
 			g_heads = d_tree.getHeads();
 
 		initArcs();
