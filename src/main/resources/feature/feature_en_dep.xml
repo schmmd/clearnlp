@@ -2,47 +2,28 @@
 <feature_template>
 	<cutoff label="4" feature="2"/>
 	<lexica type="punctuation" label="punct" cutoff="1"/>
+	<lexica type="root" label="root" cutoff="0"/>
+
+	<!-- ================== non-lexicalized features ================== -->
 
 	<!-- basic features -->
-	<feature n="1" f0="l:f"/>
-	<feature n="1" f0="l:m"/>
 	<feature n="1" f0="l:p"/>
-	<feature n="1" f0="b:f"/>
-	<feature n="1" f0="b:m"/>
 	<feature n="1" f0="b:p"/>
 
-	<feature n="2" f0="l:p" f1="l:m"/>
-	<feature n="2" f0="b:p" f1="b:m"/>
-	
 	<feature n="2" f0="l:p" f1="b:p"/>
-	<feature n="2" f0="l:p" f1="b:m"/>
-	<feature n="2" f0="l:m" f1="b:p"/>
-	<feature n="2" f0="l:m" f1="b:m"/>
 
 	<!-- 1-gram features -->
-	<feature n="1" f0="s-2:f"/>
-	<feature n="1" f0="l-2:f"/>
-	<feature n="1" f0="l-1:f"/>
-	<feature n="1" f0="l+1:f"/>
-	<feature n="1" f0="l+2:f"/>
-	<feature n="1" f0="b-2:f"/>
-	<feature n="1" f0="b-1:f"/>
-	<feature n="1" f0="b+1:f"/>
-	<feature n="1" f0="b+2:f"/>
+	<feature n="1" f0="l-2:p"/>
+	<feature n="1" f0="l-1:p"/>
+	<feature n="1" f0="l+1:p"/>
+	<feature n="1" f0="l+2:p"/>
+	<feature n="1" f0="b-1:p"/>
+	<feature n="1" f0="b+1:p"/>
 
 	<!-- 2-gram features -->
-	<feature n="2" f0="s-1:p" f1="l:p"/>
-	<feature n="2" f0="s-1:m" f1="l:m"/>
-	<feature n="2" f0="s-1:p" f1="b:p"/>
-	<feature n="2" f0="s-1:m" f1="b:p"/>
-	<feature n="2" f0="s-1:p" f1="b:m"/>
-	
 	<feature n="2" f0="b+1:p" f1="l:p"/>
-	<feature n="2" f0="b+1:p" f1="l:m"/>
-	<feature n="2" f0="b+1:p" f1="b:m"/>
-	<feature n="2" f0="b+1:m" f1="b:m"/>
-
-	<feature n="2" f0="b-1:p" f1="b:m"/>
+	<feature n="2" f0="s-1:p" f1="l:p"/>
+	<feature n="2" f0="s-1:p" f1="b:p"/>
 
 	<!-- 3-gram features -->
 	<feature n="3" f0="s-2:p" f1="s-1:p" f2="l:p"/>
@@ -54,22 +35,26 @@
 
 	<feature n="3" f0="s-3:p" f1="l:p" f2="b:p"/>
 	<feature n="3" f0="s-2:p" f1="l:p" f2="b:p"/>
+	<feature n="3" f0="l-1:p" f1="l:p" f2="b:p"/>
 	<feature n="3" f0="l+1:p" f1="l:p" f2="b:p"/>
 	<feature n="3" f0="b-2:p" f1="l:p" f2="b:p"/>
 	<feature n="3" f0="b-1:p" f1="l:p" f2="b:p"/>
 	<feature n="3" f0="b+1:p" f1="l:p" f2="b:p"/>
+	<feature n="3" f0="b+2:p" f1="l:p" f2="b:p"/>
 	<feature n="3" f0="b+3:p" f1="l:p" f2="b:p"/>
 	
 	<!-- dependency features -->
 	<feature n="1" f0="l:d"/>
 	<feature n="1" f0="l_lmd:d"/>
 	<feature n="1" f0="l_rmd:d"/>
-	
-	<feature n="2" f0="l_h:m" f1="l:p"/>
-		
+	<feature n="1" f0="b_lmd:d"/>
+
+	<feature n="1" f0="l_h:p"/>
+
 	<feature n="3" f0="l_h:p"   f1="l:p" f2="b:p"/>
 	<feature n="3" f0="l_lmd:p" f1="l:p" f2="b:p"/>
 	<feature n="3" f0="b_lmd:p" f1="l:p" f2="b:p"/>
+	<feature n="3" f0="l_lmd:d" f1="l:p" f2="b:p"/>
 
 	<!-- binary features -->
 	<feature t="b" n="1" f0="l:b0" note="lambda is the leftmost token"/>
@@ -77,8 +62,46 @@
 	<feature t="b" n="1" f0="l:b2" note="lambda and beta are adjacent"/>
 	
 	<!-- punctuation features -->
-	<feature n="1" f0="b:lnpb" note="left-nearest punctuation of beta"/>
+	<feature n="1" f0="l:lnpl" note="left-nearest  punctuation of lambda"/>
+	<feature n="1" f0="b:lnpb" note="left-nearest  punctuation of beta"/>
+	<feature n="1" f0="b:rnpb" note="right-nearest punctuation of beta"/>
 	<feature n="1" f0="l:rnpl" note="right-nearest punctuation of lambda" visible="false"/>
-	<feature n="1" f0="l:lnpl" note="left-nearest punctuation of lambda"  visible="false"/>
-	<feature n="1" f0="b:rnpb" note="right-nearest punctuation of beta"   visible="false"/>
+
+	<!-- ================== lexicalized features ================== -->
+    
+	<!-- basic features -->
+	<feature n="1" f0="l:f"/>
+	<feature n="1" f0="b:f"/>
+	<feature n="1" f0="l:m"/>
+	<feature n="1" f0="b:m"/>
+
+	<feature n="2" f0="l:p" f1="l:m"/>
+	<feature n="2" f0="b:p" f1="b:m"/>
+	
+	<feature n="2" f0="l:p" f1="b:m"/>
+	<feature n="2" f0="l:m" f1="b:p"/>
+	<feature n="2" f0="l:m" f1="b:m"/>
+
+	<!-- 1-gram features -->
+	<feature n="1" f0="s-1:m"/>
+	<feature n="1" f0="l-1:m"/>
+	<feature n="1" f0="l+1:m"/>
+	<feature n="1" f0="b-2:m"/>
+	<feature n="1" f0="b-1:m"/>
+	<feature n="1" f0="b+1:m"/>
+	<feature n="1" f0="b+2:m"/>
+	
+	<!-- 2-gram features -->
+	<feature n="2" f0="b-1:p" f1="l:m"/>
+	<feature n="2" f0="b+1:p" f1="l:m"/>
+	<feature n="2" f0="b+1:p" f1="b:m"/>
+
+	<feature n="2" f0="b+1:m" f1="l:p"/>
+	<feature n="2" f0="b+1:m" f1="b:p"/>
+
+	<feature n="2" f0="l+1:m" f1="l:m"/>
+	<feature n="2" f0="l+1:m" f1="b:m"/>
+
+	<!-- dependency features -->
+	<feature n="2" f0="l:d"     f1="b:m"/>
 </feature_template>

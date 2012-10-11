@@ -47,7 +47,9 @@ abstract public class AbstractReader<T>
 	/** The flag for raw-text reader. */
 	static final public String TYPE_RAW = "raw";
 	/** The flag for sentence reader. */
-	static final public String TYPE_SEN = "sen";
+	static final public String TYPE_LINE = "line";
+	/** The flag for token reader. */
+	static final public String TYPE_TOK = "tok";
 	/** The flag for part-of-speech reader. */
 	static final public String TYPE_POS = "pos";
 	/** The flag for dependency reader. */

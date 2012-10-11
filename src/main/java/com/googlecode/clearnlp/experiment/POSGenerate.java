@@ -62,8 +62,8 @@ public class POSGenerate extends POSTrain
 			sDev.clear();	sDev.add(devId);
 			Arrays.fill(counts, 0);
 			
-		//	POSTagger[] taggers = {getTrainedTagger(eConfig, reader, xml, trnFiles, sDev, FLAG_GENERAL)};
-			POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, sDev);
+			POSTagger[] taggers = {getTrainedTagger(eConfig, reader, xml, trnFiles, sDev, FLAG_GENERAL)};
+		//	POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, sDev);
 			POSPredict.predict(trnFiles[devId], outDir+File.separator+devFile+".tagged", reader, taggers, threshold, counts);
 		}
 	}

@@ -24,6 +24,7 @@
 package com.googlecode.clearnlp.morphology;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,6 +39,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.constituent.CTLibEn;
+import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.util.pair.Pair;
 
 
@@ -50,20 +52,21 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 {
 	final public String FIELD_DELIM = "_";
 	
-	static final String NOUN_EXC  = "noun.exc";
-	static final String VERB_EXC  = "verb.exc";
-	static final String ADJ_EXC   = "adj.exc";
-	static final String ADV_EXC   = "adv.exc";
-	static final String NOUN_BASE = "noun.txt";
-	static final String VERB_BASE = "verb.txt";
-	static final String ADJ_BASE  = "adj.txt";
-	static final String ADV_BASE  = "adv.txt";
-	static final String ORD_BASE  = "ordinal.txt";
-	static final String CRD_BASE  = "cardinal.txt";
-	static final String NOUN_RULE = "noun.rule";
-	static final String VERB_RULE = "verb.rule";
-	static final String ADJ_RULE  = "adj.rule";
-	static final String ABBR_RULE = "abbr.rule";
+	final String LANG_DIR  = AbstractReader.LANG_EN + File.separator;
+	final String NOUN_EXC  = LANG_DIR+"noun.exc";
+	final String VERB_EXC  = LANG_DIR+"verb.exc";
+	final String ADJ_EXC   = LANG_DIR+"adj.exc";
+	final String ADV_EXC   = LANG_DIR+"adv.exc";
+	final String NOUN_BASE = LANG_DIR+"noun.txt";
+	final String VERB_BASE = LANG_DIR+"verb.txt";
+	final String ADJ_BASE  = LANG_DIR+"adj.txt";
+	final String ADV_BASE  = LANG_DIR+"adv.txt";
+	final String ORD_BASE  = LANG_DIR+"ordinal.txt";
+	final String CRD_BASE  = LANG_DIR+"cardinal.txt";
+	final String NOUN_RULE = LANG_DIR+"noun.rule";
+	final String VERB_RULE = LANG_DIR+"verb.rule";
+	final String ADJ_RULE  = LANG_DIR+"adj.rule";
+	final String ABBR_RULE = LANG_DIR+"abbr.rule";
 	
 	/** Noun exceptions */
 	Map<String,String> m_noun_exc;
@@ -252,8 +255,8 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 	@Override
 	public String getLemma(String form, String pos)
 	{
-		form = getNormalizedForm(form, true);
-		return getLemmaAux(form, pos);
+		form = MPLib.normalizeBasic(form);
+		return getLemmaAux(form.toLowerCase(), pos);
 	}
 	
 	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */

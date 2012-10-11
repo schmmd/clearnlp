@@ -34,26 +34,13 @@ import org.junit.Test;
 public class MPLibTest
 {
 	@Test
-	public void containsURLTest()
-	{
-		assertEquals(true , MPLib.containsURL("http://colorado"));
-		assertEquals(false, MPLib.containsURL("htp://colorado"));
-		assertEquals(false, MPLib.containsURL("http://"));
-		assertEquals(true , MPLib.containsURL("colorado.edu"));
-		assertEquals(false, MPLib.containsURL(".edu"));
-		assertEquals(false, MPLib.containsURL("korea.ac"));
-		assertEquals(true , MPLib.containsURL("korea.ac.kr"));
-		assertEquals(false, MPLib.containsURL(".ac.kr"));
-		assertEquals(true , MPLib.containsURL("index.html"));
-		assertEquals(false, MPLib.containsURL(".html"));
-		assertEquals(false, MPLib.containsURL("index.java"));
-	}
-	
-	@Test
 	public void normalizePunctuationTest()
 	{
 		String form = "...!!!???---***===~~~,,,";
-		assertEquals(".!?-*=~,", MPLib.normalizePunctuation(form));
+		assertEquals("..!!??--**==~~,,", MPLib.normalizePunctuation(form));
+		
+		form = ". .. ... !!! ??? ---- ***** === ~~~ , ,, ,,,";
+		assertEquals(". .. .. !! ?? -- ** == ~~ , ,, ,,", MPLib.normalizePunctuation(form));
 	}
 	
 	@Test

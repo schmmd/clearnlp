@@ -23,23 +23,16 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
-import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLParser;
-import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
+import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.util.UTFile;
@@ -83,7 +76,7 @@ public class SRLPredict extends AbstractRun
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		SRLReader reader = (SRLReader)getReader(eConfig);
-		SRLParser  parser = getLabeler(modelFile);
+		SRLParser  parser = EngineGetter.getSRLabeler(modelFile);
 		
 		if (new File(inputPath).isFile())
 		{
@@ -95,61 +88,6 @@ public class SRLPredict extends AbstractRun
 			for (String filename : UTFile.getSortedFileList(inputPath))
 				predict(filename, filename+EXT, reader, parser);
 		}		
-	}
-	
-	static public SRLParser getLabeler(String modelFile) throws Exception
-	{
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
-		StringModel[] models = new StringModel[SRLParser.MODEL_SIZE];
-		Set<String> sDown = null, sUp = null;
-		SRLFtrXml xml = null;
-		BufferedReader fin;
-		ZipEntry zEntry;
-		String name;
-		
-		while ((zEntry = zin.getNextEntry()) != null)
-		{
-			name = zEntry.getName();
-						
-			if (name.equals(ENTRY_FEATURE))
-			{
-				System.out.println("Loading feature template.");
-				fin = new BufferedReader(new InputStreamReader(zin));
-				StringBuilder build = new StringBuilder();
-				String string;
-
-				while ((string = fin.readLine()) != null)
-				{
-					build.append(string);
-					build.append("\n");
-				}
-				
-				xml = new SRLFtrXml(new ByteArrayInputStream(build.toString().getBytes()));
-			}
-			else if (name.equals(SRLTrain.ENTRY_SET_DOWN))
-			{
-				fin = new BufferedReader(new InputStreamReader(zin));
-				sDown = UTInput.getStringSet(fin);
-			}
-			else if (name.equals(SRLTrain.ENTRY_SET_UP))
-			{
-				fin = new BufferedReader(new InputStreamReader(zin));
-				sUp = UTInput.getStringSet(fin);
-			}
-			else if (name.startsWith(ENTRY_MODEL+"."+SRLParser.MODEL_LEFT))
-			{
-				fin = new BufferedReader(new InputStreamReader(zin));
-				models[SRLParser.MODEL_LEFT] = new StringModel(fin);
-			}
-			else if (name.startsWith(ENTRY_MODEL+"."+SRLParser.MODEL_RIGHT))
-			{
-				fin = new BufferedReader(new InputStreamReader(zin));
-				models[SRLParser.MODEL_RIGHT] = new StringModel(fin);
-			}
-		}
-		
-		zin.close();
-		return new SRLParser(xml, models, sDown, sUp);
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */

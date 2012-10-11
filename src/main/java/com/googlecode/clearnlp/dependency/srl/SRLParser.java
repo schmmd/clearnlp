@@ -42,7 +42,6 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.AbstractEngine;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
-import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -131,6 +130,8 @@ public class SRLParser extends AbstractEngine
 		f_trans = fout;
 	}
 	
+	public void saveModel(PrintStream fout) {}
+	
 	/** Saves a semantic role labeling model to the specific output-stream. */
 	public void saveModel(PrintStream fout, int idx)
 	{
@@ -139,12 +140,12 @@ public class SRLParser extends AbstractEngine
 	
 	public void saveDownSet(PrintStream fout)
 	{
-		UTOutput.printSet(fout, s_down);
+		printSet(fout, s_down);
 	}
 	
 	public void saveUpSet(PrintStream fout)
 	{
-		UTOutput.printSet(fout, s_up);
+		printSet(fout, s_up);
 	}
 	
 	/** @return the semantic role labeling models. */

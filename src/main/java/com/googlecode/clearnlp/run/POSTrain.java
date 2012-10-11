@@ -23,17 +23,11 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
@@ -41,6 +35,7 @@ import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
+import com.googlecode.clearnlp.engine.EngineSetter;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
@@ -61,7 +56,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class POSTrain extends AbstractRun
 {
-	static final int MODEL_SIZE = 2;
+	public static final int MODEL_SIZE = 2;
 	
 	protected final int FLAG_DOMAIN  = 0;
 	protected final int FLAG_GENERAL = 1;
@@ -99,20 +94,18 @@ public class POSTrain extends AbstractRun
 		POSReader    reader = (POSReader)getReader(eConfig);
 		POSFtrXml       xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[] trainFiles = UTFile.getSortedFileList(trainDir);
-		POSTagger[] taggers = null;
 		
 		if (flag == FLAG_DYNAMIC)
 		{
 			if (threshold < 0)	threshold = crossValidate(trainFiles, reader, xml, eConfig);
-			taggers = getTrainedTaggers(eConfig, reader, xml, trainFiles, null);
+			POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trainFiles, null);
+			EngineSetter.setPOSTaggers(modelFile, featureXml, taggers, threshold);
 		}
 		else
 		{
-			taggers    = new POSTagger[1];
-			taggers[0] = getTrainedTagger(eConfig, reader, xml, trainFiles, null, flag);
+			POSTagger tagger = getTrainedTagger(eConfig, reader, xml, trainFiles, null, flag);
+			EngineSetter.saveModel(modelFile, featureXml, tagger);
 		}
-		
-		saveModels(modelFile, featureXml, taggers, threshold);
 	}
 	
 	/** @return a single POS tagging model using {@code modId}. */
@@ -144,35 +137,6 @@ public class POSTrain extends AbstractRun
 		}
 		
 		return taggers;
-	}
-	
-	/** Saves POS tagging models. */
-	public void saveModels(String modelFile, String featureXml, POSTagger[] taggers, double threshold) throws Exception
-	{
-		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
-		PrintStream fout;
-		
-		if (taggers.length > 1)
-		{
-			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_CONFIGURATION));
-			fout = new PrintStream(zout);
-			fout.println(threshold);
-			fout.close();
-			zout.closeArchiveEntry();			
-		}
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
-		IOUtils.copy(new FileInputStream(featureXml), zout);
-		zout.closeArchiveEntry();
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
-		fout = new PrintStream(new BufferedOutputStream(zout));
-		fout.println(taggers.length);
-		for (POSTagger tagger : taggers) tagger.saveModel(fout);
-		fout.close();
-		zout.closeArchiveEntry();		
-		
-		zout.close();
 	}
 
 	/** Called by {@link POSTrain#getTrainedTaggers(Element, POSReader, POSFtrXml, String[], IntOpenHashSet)}. */

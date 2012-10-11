@@ -79,6 +79,11 @@ public class DEPNode extends POSNode implements Comparable<DEPNode>
 		init(id, form, lemma, pos, feats);
 	}
 	
+	public DEPNode(int id, POSNode node)
+	{
+		init(id, node.form, node.lemma, node.pos, new DEPFeat());
+	}
+	
 	/** Initializes this node as an artificial root node. */
 	public void initRoot()
 	{

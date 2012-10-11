@@ -57,7 +57,7 @@ public class POSLib
 		
 		for (POSNode node : nodes)
 		{
-			node.simplifiedForm = MPLib.normalizeDigits(node.form);
+			node.simplifiedForm = MPLib.normalizeBasic(node.form);
 			node.lemma = node.simplifiedForm.toLowerCase();
 		}
 	}

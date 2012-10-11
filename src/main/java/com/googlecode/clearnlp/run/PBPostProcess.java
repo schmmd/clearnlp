@@ -70,8 +70,6 @@ public class PBPostProcess extends AbstractRun
 	@Option(name="-l", usage="language (default: "+AbstractReader.LANG_EN+")", required=false, metaVar="<language>")
 	private String s_language = AbstractReader.LANG_EN;
 	
-	public PBPostProcess() {}
-	
 	public PBPostProcess(String[] args)
 	{
 		initArgs(args);
@@ -88,6 +86,7 @@ public class PBPostProcess extends AbstractRun
 		
 		for (PBInstance instance : instances)
 		{
+			System.out.println(instance.getKey());
 			tree = instance.getTree();
 			
 			// LINK-SLC, LINK-PSV are found here
@@ -110,16 +109,16 @@ public class PBPostProcess extends AbstractRun
 			fixCyclicLocs(instance);
 			removeRedundantLocs(instance);
 			// annotating NP(PRO) under S following the verb
-			if (instance.isVerbPredicate())	// English only
-				fixIllegalPROs(instance); 
-			aDSP = getArgDSP(instance);		// English only
+			if (instance.isVerbPredicate())				// English only
+				fixIllegalPROs(instance);
+			aDSP = getArgDSP(instance);					// English only
 			getLinks(instance);
-			normalizeLinks(instance);		// varies by languages
+			normalizeLinks(instance);					// varies by languages
 			instance.sortArgs();
 			removeRedundantLocs(instance);
 			findOverlappingArguments(instance);
 			addLinks(instance);
-			raiseEmptyArguments(instance);	// English only
+			raiseEmptyArguments(instance);				// English only
 			if (aDSP != null)	instance.addArg(aDSP);	// English only
 		}
 		
@@ -140,6 +139,9 @@ public class PBPostProcess extends AbstractRun
 	 */
 	private boolean isSkip(PBInstance instance, CTTree tree)
 	{
+		if (PBLib.ILLEGAL_ROLESET.matcher(instance.roleset).find())
+			return true;
+		
 		if (findMisalignedArgs(instance))
 			return true;
 		

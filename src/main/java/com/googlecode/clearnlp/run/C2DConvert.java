@@ -25,6 +25,7 @@ package com.googlecode.clearnlp.run;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.List;
 
 import org.kohsuke.args4j.Option;
 
@@ -32,14 +33,11 @@ import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
-import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.headrule.HeadRuleMap;
-import com.googlecode.clearnlp.io.FileExtFilter;
+import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
-import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -47,56 +45,40 @@ import com.googlecode.clearnlp.util.UTOutput;
 
 public class C2DConvert extends AbstractRun
 {
-	@Option(name="-i", usage="the input path containing constituent trees (input; required)", required=true, metaVar="<filepath>")
+	@Option(name="-i", usage="input path (required)", required=true, metaVar="<filepath>")
 	private String s_inputPath;
-	@Option(name="-h", usage="the name of a headrule file (required)", required=true, metaVar="<filename>")
-	private String s_headruleFile;
-	@Option(name="-d", usage="the name of a dictionary file for lemmatization (optional)", required=false, metaVar="<filename>")
-	private String s_dictFile = null;
-	@Option(name="-ie", usage="the input file extension (default: .*)", required=false, metaVar="<regex>")
-	private String s_inputExt = "parse";
-	@Option(name="-oe", usage="the output file extension (default: dep)", required=false, metaVar="<string>")
+	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
+	private String s_inputExt = ".*";
+	@Option(name="-oe", usage="output file extension (default: dep)", required=false, metaVar="<string>")
 	private String s_outputExt = "dep";
 	@Option(name="-l", usage="language (default: "+AbstractReader.LANG_EN+")", required=false, metaVar="<language>")
 	private String s_language = AbstractReader.LANG_EN;
+	@Option(name="-h", usage="name of a headrule file (required)", required=true, metaVar="<filename>")
+	private String s_headruleFile;
+	@Option(name="-d", usage="name of a dictionary file (required)", required=true, metaVar="<filename>")
+	private String s_dictFile;
 	@Option(name="-m", usage="merge labels (default: null)", required=false, metaVar="<string>")
 	private String s_mergeLabels = null;
-	
-	public C2DConvert() {}
 
 	public C2DConvert(String[] args)
 	{
 		initArgs(args);
-		convert(s_headruleFile, s_dictFile, s_language, s_mergeLabels, s_inputPath, s_inputExt, s_outputExt);
+		
+		AbstractC2DConverter c2d = EngineGetter.getC2DConverter(s_language, s_headruleFile, s_mergeLabels);
+		AbstractMPAnalyzer morph = EngineGetter.getMPAnalyzer(s_language, s_dictFile);
+		List<String[]> filenames = getFilenames(s_inputPath, s_inputExt, s_outputExt);
+		
+		for (String[] io : filenames)
+			convert(c2d, morph, s_language, io[0], io[1]);
 	}
 	
-	public void convert(String headruleFile, String dictFile, String language, String mergeLabels, String inputPath, String inputExt, String outputExt)
+	protected void convert(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputFile, String outputFile)
 	{
-		AbstractMPAnalyzer morph = null;
-		AbstractC2DConverter c2d = null;
-		
-		if (s_language.equals(AbstractReader.LANG_EN))
-		{
-			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)), mergeLabels);
-			if (dictFile != null)	morph = new EnglishMPAnalyzer(dictFile);
-		}
-		
-		File f = new File(inputPath);
-		
-		if (f.isDirectory())
-		{
-			for (String inputFile : f.list(new FileExtFilter(inputExt)))
-				convertAux(c2d, morph, language, inputPath+File.separator+inputFile, outputExt);
-		}
-		else
-			convertAux(c2d, morph, language, inputPath, outputExt);
-	}
-	
-	private void convertAux(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputFile, String outputExt)
-	{
-		PrintStream fout = UTOutput.createPrintBufferedFileStream(inputFile+"."+outputExt);
-		CTReader reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
-		CTTree cTree; DEPTree dTree; int n;
+		CTReader  reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		CTTree  cTree;
+		DEPTree dTree;
+		int n;
 		
 		for (n=0; (cTree = reader.nextTree()) != null; n++)
 		{
@@ -111,14 +93,13 @@ public class C2DConvert extends AbstractRun
 			}
 			else
 			{
-				if (morph != null)	morph.lemmatize(dTree);
+				morph.lemmatize(dTree);
 				fout.println(dTree.toStringDAG()+"\n");
 			}
 		}
 		
-		fout.close();
 		reader.close();
-		
+		fout.close();
 		System.out.printf("%s -> %d trees\n", inputFile.substring(inputFile.lastIndexOf(File.separator)), n);
 	}
 	

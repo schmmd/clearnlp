@@ -23,6 +23,9 @@
 */
 package com.googlecode.clearnlp.run;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.kohsuke.args4j.CmdLineException;
@@ -34,6 +37,7 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
+import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.morphology.DefaultMPAnalyzer;
 import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
@@ -45,37 +49,31 @@ import com.googlecode.clearnlp.reader.POSReader;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.util.UTXml;
 
-
 /**
- * Abstract run.
  * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 abstract public class AbstractRun
 {
-	static final protected String ENTRY_CONFIGURATION		= "CONFIGURATION";
-	static final protected String ENTRY_FEATURE				= "FEATURE";
-	static final protected String ENTRY_MODEL				= "MODEL";
+	final public String TAG_READER					= "reader";
+	final public String TAG_READER_TYPE				= "type";
+	final public String TAG_READER_COLUMN			= "column";
+	final public String TAG_READER_COLUMN_INDEX		= "index";
+	final public String TAG_READER_COLUMN_FIELD		= "field";
 	
-	static final public String TAG_READER					= "reader";
-	static final public String TAG_READER_TYPE				= "type";
-	static final public String TAG_READER_COLUMN			= "column";
-	static final public String TAG_READER_COLUMN_INDEX		= "index";
-	static final public String TAG_READER_COLUMN_FIELD		= "field";
+	final public String TAG_LEXICA					= "lexica";
+	final public String TAG_LEXICA_LEXICON			= "lexicon";
+	final public String TAG_LEXICA_LEXICON_TYPE		= "type";
+	final public String TAG_LEXICA_LEXICON_LABEL		= "label";
+	final public String TAG_LEXICA_LEXICON_CUTOFF	= "cutoff";
 	
-	static final public String TAG_LEXICA					= "lexica";
-	static final public String TAG_LEXICA_LEXICON			= "lexicon";
-	static final public String TAG_LEXICA_LEXICON_TYPE		= "type";
-	static final public String TAG_LEXICA_LEXICON_LABEL		= "label";
-	static final public String TAG_LEXICA_LEXICON_CUTOFF	= "cutoff";
+	final public String TAG_TRAIN					= "train";
+	final public String TAG_TRAIN_ALGORITHM			= "algorithm";
+	final public String TAG_TRAIN_ALGORITHM_NAME	= "name";
+	final public String TAG_TRAIN_THREADS			= "threads";
 	
-	static final public String TAG_TRAIN					= "train";
-	static final public String TAG_TRAIN_ALGORITHM			= "algorithm";
-	static final public String TAG_TRAIN_ALGORITHM_NAME		= "name";
-	static final public String TAG_TRAIN_THREADS			= "threads";
-	
-	static final public String TAG_LANGUAGE		= "language";
-	static final public String TAG_MORPH_DICT	= "morph_dict";
+	final public String TAG_LANGUAGE				= "language";
+	final public String TAG_MORPH_DICT				= "morph_dict";
 	
 	/** Initializes arguments using args4j. */
 	protected void initArgs(String[] args)
@@ -93,6 +91,28 @@ abstract public class AbstractRun
 			System.exit(1);
 		}
 		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	/** String[0]: input filename, String[1]: output filename. */
+	protected List<String[]> getFilenames(String inputPath, String inputExt, String outputExt)
+	{
+		List<String[]> filenames = new ArrayList<String[]>();
+		File f = new File(inputPath);
+		String outputFile;
+		
+		if (f.isDirectory())
+		{
+			for (String inputFile : f.list(new FileExtFilter(inputExt)))
+			{
+				inputFile  = inputPath + File.separator + inputFile;
+				outputFile = inputFile + "." + outputExt;
+				filenames.add(new String[]{inputFile, outputFile});
+			}
+		}
+		else
+			filenames.add(new String[]{inputPath, inputPath+"."+outputExt});
+		
+		return filenames;
 	}
 	
 	protected String getLanguage(Element eConfig)

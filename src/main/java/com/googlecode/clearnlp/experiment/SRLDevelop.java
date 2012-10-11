@@ -101,7 +101,8 @@ public class SRLDevelop extends SRLTrain
 		DEPTree tree;
 		int i, n, size, N = 10;
 		int[][] spaces = new int[2][N];
-		IntIntPair p, lArgs, gArgs = new IntIntPair(0, 0);
+		IntIntPair p;
+	//	IntIntPair lArgs, gArgs = new IntIntPair(0, 0);
 		
 		parser = getTrainedParser(eConfig, reader, xml, trainFiles, model.o1, sDown, sUp, -1);
 		model.o1 = parser.getModels();
@@ -112,7 +113,7 @@ public class SRLDevelop extends SRLTrain
 			reader.open(UTInput.createBufferedFileReader(devFile));
 	//		fout  = UTOutput.createPrintBufferedFileStream(devFile+".labeled."+boost);
 			lEval = new SRLEval();
-			lArgs = new IntIntPair(0, 0);
+	//		lArgs = new IntIntPair(0, 0);
 			
 			System.out.println("Predicting: "+devFile);
 
@@ -134,9 +135,9 @@ public class SRLDevelop extends SRLTrain
 				spaces[0][n] += p.i1;
 				spaces[1][n] += p.i2;
 				
-				p = parser.getArgCoverage(gHeads);
-				lArgs.i1 += p.i1;
-				lArgs.i2 += p.i2;
+	//			p = parser.getArgCoverage(gHeads);
+	//			lArgs.i1 += p.i1;
+	//			lArgs.i2 += p.i2;
 				
 	//			fout.println(tree.toStringSRL()+"\n");
 			}
@@ -145,10 +146,10 @@ public class SRLDevelop extends SRLTrain
 			reader.close();
 	//		fout.close();
 
-			gArgs.i1 += lArgs.i1;
-			gArgs.i2 += lArgs.i2;
+	//		gArgs.i1 += lArgs.i1;
+	//		gArgs.i2 += lArgs.i2;
 			
-			System.out.printf("Coverage: %5d %5d = %f\n", lArgs.i1, lArgs.i2, 100d*lArgs.i1/lArgs.i2);
+	//		System.out.printf("Coverage: %5d %5d = %f\n", lArgs.i1, lArgs.i2, 100d*lArgs.i1/lArgs.i2);
 			lEval.printOverall();
 		}
 		
@@ -156,7 +157,7 @@ public class SRLDevelop extends SRLTrain
 		gEval.printOverall();
 		model.o2 = gEval.getF1(SRLEval.LAS);
 		
-		System.out.printf("Coverage: %5d %5d = %f\n", gArgs.i1, gArgs.i2, 100d*gArgs.i1/gArgs.i2);
+//		System.out.printf("Coverage: %5d %5d = %f\n", gArgs.i1, gArgs.i2, 100d*gArgs.i1/gArgs.i2);
 		
 		for (i=0; i<N; i++)
 			System.out.printf("%3d: %5d %5d\n", i, spaces[0][i], spaces[1][i]);

@@ -34,8 +34,6 @@ import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.util.UTArray;
-import com.googlecode.clearnlp.util.UTInput;
-import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.triple.Triple;
 
 public class DEPParser extends AbstractDEPParser
@@ -92,7 +90,7 @@ public class DEPParser extends AbstractDEPParser
 	{
 		try
 		{
-			s_punc = UTInput.getStringSet(fin);
+			s_punc = getStringSet(fin);
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
@@ -102,7 +100,7 @@ public class DEPParser extends AbstractDEPParser
 	/** Saves collections and a dependency parsing model to the specific output stream. */
 	public void saveModel(PrintStream fout)
 	{
-		UTOutput.printSet(fout, s_punc);
+		printSet(fout, s_punc);
 		s_model.save(fout);
 	}
 	
@@ -158,7 +156,8 @@ public class DEPParser extends AbstractDEPParser
 	private String[] getAutoLabels(StringFeatureVector vector)
 	{
 		StringPrediction p = s_model.predictBest(vector);
-		return p.label.split(LB_DELIM);
+		return P_LABELS.split(p.label);
+	//	return p.label.split(LB_DELIM);
 	}
 	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
@@ -191,7 +190,8 @@ public class DEPParser extends AbstractDEPParser
 				
 				if ((dir < 0 && p.label.startsWith(LB_RIGHT)) || (dir > 0 && p.label.startsWith(LB_LEFT)))
 				{
-					deprel = p.label.split(LB_DELIM)[IDX_DEPREL];
+				//	deprel = p.label.split(LB_DELIM)[IDX_DEPREL];
+					deprel = P_LABELS.split(p.label)[IDX_DEPREL];
 					max.set(head, deprel, p.score);
 					break;
 				}

@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.PrintStream;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.engine.AbstractEngine;
@@ -29,17 +30,18 @@ import com.googlecode.clearnlp.util.triple.Triple;
 
 abstract public class AbstractDEPParser extends AbstractEngine
 { 
-	static final protected String LB_LEFT		= "L";
-	static final protected String LB_RIGHT		= "R";
-	static final protected String LB_NO			= "N";
-	static final protected String LB_SHIFT		= "S";
-	static final protected String LB_REDUCE		= "R";
-	static final protected String LB_PASS		= "P";
-	static final protected String LB_DELIM		= "_";
+	protected final String LB_LEFT		= "L";
+	protected final String LB_RIGHT		= "R";
+	protected final String LB_NO		= "N";
+	protected final String LB_SHIFT		= "S";
+	protected final String LB_REDUCE	= "R";
+	protected final String LB_PASS		= "P";
+	protected final String LB_DELIM		= "_";
+	protected final Pattern P_LABELS 	= Pattern.compile(LB_DELIM);
 	
-	static final protected int    IDX_ARC		= 0;
-	static final protected int    IDX_LIST		= 1;
-	static final protected int    IDX_DEPREL	= 2;
+	protected final int    IDX_ARC		= 0;
+	protected final int    IDX_LIST		= 1;
+	protected final int    IDX_DEPREL	= 2;
 	
 	protected DEPTree			d_tree;
 	protected IntOpenHashSet    s_reduce;

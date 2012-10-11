@@ -366,17 +366,23 @@ abstract public class AbstractModel
 	 */
 	protected void saveWeightVector(PrintStream fout)
 	{
-		StringBuilder build = new StringBuilder();
 		int i, size = d_weights.length;
+		StringBuilder build = null;
 		
 		fout.println(size);
 		
 		for (i=0; i<size; i++)
 		{
+			if (i%n_features == 0)
+			{
+				System.out.print(".");
+				
+				if (build != null)	fout.print(build.toString());
+				build = new StringBuilder();
+			}
+			
 			build.append(d_weights[i]);
 			build.append(' ');
-			
-			if (i%n_features == 0)	System.out.print(".");
 		}
 		
 		fout.println(build.toString());

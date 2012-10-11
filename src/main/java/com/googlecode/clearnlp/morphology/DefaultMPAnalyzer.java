@@ -23,6 +23,7 @@
 */
 package com.googlecode.clearnlp.morphology;
 
+
 /**
  * Default morphological analyzer.
  * @since 1.0.0
@@ -30,9 +31,14 @@ package com.googlecode.clearnlp.morphology;
  */
 public class DefaultMPAnalyzer extends AbstractMPAnalyzer
 {
-	@Override
+	/**
+	 * Returns the lemma of the specific word-form given its POS tag.
+	 * @param form the word-form.
+	 * @param pos the POS tag of the word.
+	 */
 	public String getLemma(String form, String pos)
 	{
-		return getNormalizedForm(form, true);
+		form = MPLib.normalizeBasic(form);
+		return form.toLowerCase();
 	}
 }

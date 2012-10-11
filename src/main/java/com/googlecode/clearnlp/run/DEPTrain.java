@@ -23,10 +23,7 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -34,9 +31,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
@@ -45,6 +39,7 @@ import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.engine.EngineSetter;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.util.UTFile;
@@ -101,15 +96,15 @@ public class DEPTrain extends AbstractRun
 		int boot = 0;
 		
 		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, null, -1, boot);
-		if (b_saveAllModels)	saveModels(modelFile+"."+boot, featureXml, parser);
+		if (b_saveAllModels)	EngineSetter.saveModel(modelFile+"."+boot, featureXml, parser);
 		
 		for (boot=1; boot<=nBoot; boot++)
 		{
 			parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, parser.getModel(), -1, boot);
-			if (b_saveAllModels)	saveModels(modelFile+"."+boot, featureXml, parser);
+			if (b_saveAllModels)	EngineSetter.saveModel(modelFile+"."+boot, featureXml, parser);
 		}
 		
-		saveModels(modelFile, featureXml, parser);
+		EngineSetter.saveModel(modelFile, featureXml, parser);
 	}
 	
 	protected Set<String> getLexica(Element eConfig, DEPFtrXml xml, String[] trainFiles, int devId) throws Exception
@@ -333,24 +328,6 @@ public class DEPTrain extends AbstractRun
 		System.out.printf("- LS : %5.2f (%d/%d)\n", 100d*counts[3]/counts[0], counts[3], counts[0]);
 	}
 
-	public void saveModels(String modelFile, String featureXml, DEPParser parser) throws Exception
-	{
-		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
-		PrintStream fout;
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
-		IOUtils.copy(new FileInputStream(featureXml), zout);
-		zout.closeArchiveEntry();
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
-		fout = new PrintStream(new BufferedOutputStream(zout));
-		parser.saveModel(fout);
-		fout.close();
-		zout.closeArchiveEntry();
-		
-		zout.close();
-	}
-	
 	static public void main(String[] args)
 	{
 		new DEPTrain(args);

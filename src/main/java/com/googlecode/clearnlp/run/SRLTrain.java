@@ -23,15 +23,9 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.Set;
 
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
@@ -39,6 +33,7 @@ import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLParser;
+import com.googlecode.clearnlp.engine.EngineSetter;
 import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.util.UTFile;
@@ -54,9 +49,6 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class SRLTrain extends AbstractRun
 {
-	static public final String ENTRY_SET_DOWN = "SET_DOWN";
-	static public final String ENTRY_SET_UP   = "SET_UP";
-	
 	@Option(name="-i", usage="the directory containg training files (input; required)", required=true, metaVar="<directory>")
 	protected String s_trainDir;
 	@Option(name="-c", usage="the configuration file (input; required)", required=true, metaVar="<filename>")
@@ -93,47 +85,13 @@ public class SRLTrain extends AbstractRun
 		int i;
 		
 		parser = getTrainedParser(eConfig, reader, xml, trainFiles, null, p.o1, p.o2, -1);
-		saveModels(modelFile, featureXml, parser);
+		EngineSetter.setSRLabeler(modelFile, featureXml, parser);
 		
 		for (i=1; i<=nBoot; i++)
 		{
 			parser = getTrainedParser(eConfig, reader, xml, trainFiles, parser.getModels(), p.o1, p.o2, -1);
-			saveModels(modelFile+"."+i, featureXml, parser);
+			EngineSetter.setSRLabeler(modelFile+"."+i, featureXml, parser);
 		}
-	}
-	
-	public void saveModels(String modelFile, String featureXml, SRLParser parser) throws Exception
-	{
-		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
-		PrintStream fout;
-		int i;
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
-		IOUtils.copy(new FileInputStream(featureXml), zout);
-		zout.closeArchiveEntry();
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_SET_DOWN));
-		fout = new PrintStream(new BufferedOutputStream(zout));
-		parser.saveDownSet(fout);
-		fout.close();
-		zout.closeArchiveEntry();
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_SET_UP));
-		fout = new PrintStream(new BufferedOutputStream(zout));
-		parser.saveUpSet(fout);
-		fout.close();
-		zout.closeArchiveEntry();
-		
-		for (i=0; i<SRLParser.MODEL_SIZE; i++)
-		{
-			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL+"."+i));
-			fout = new PrintStream(new BufferedOutputStream(zout));
-			parser.saveModel(fout, i);
-			fout.close();
-			zout.closeArchiveEntry();			
-		}
-		
-		zout.close();
 	}
 	
 	public Pair<Set<String>,Set<String>> getDownUpSets(SRLReader reader, SRLFtrXml xml, String[] trainFiles, int devId)

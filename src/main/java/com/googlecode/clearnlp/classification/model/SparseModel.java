@@ -66,7 +66,7 @@ public class SparseModel extends AbstractModel
 	 */
 	public void load(BufferedReader reader)
 	{
-		System.out.print("Loading");
+		System.out.println("Loading model:");
 		
 		try
 		{
@@ -85,7 +85,7 @@ public class SparseModel extends AbstractModel
 	 */
 	public void save(PrintStream fout)
 	{
-		System.out.print("Saving");
+		System.out.println("Saving model:");
 		
 		try
 		{

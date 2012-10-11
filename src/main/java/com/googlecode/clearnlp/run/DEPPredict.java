@@ -23,21 +23,16 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
+import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.util.UTFile;
@@ -81,7 +76,7 @@ public class DEPPredict extends AbstractRun
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPReader reader = (DEPReader)getReader(eConfig);
-		DEPParser parser = getParser(modelFile);
+		DEPParser parser = EngineGetter.getDEPParser(modelFile);
 		
 		if (new File(inputPath).isFile())
 		{
@@ -93,46 +88,6 @@ public class DEPPredict extends AbstractRun
 			for (String filename : UTFile.getSortedFileList(inputPath))
 				predict(filename, filename+EXT, reader, parser);
 		}
-	}
-	
-	static public DEPParser getParser(String modelFile) throws Exception
-	{
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
-		DEPFtrXml xml = null;
-		BufferedReader fin;
-		ZipEntry zEntry;
-		String name;
-		
-		DEPParser parser = null;
-		
-		while ((zEntry = zin.getNextEntry()) != null)
-		{
-			name = zEntry.getName();
-						
-			if (name.equals(ENTRY_FEATURE))
-			{
-				System.out.println("Loading feature template.");
-				fin = new BufferedReader(new InputStreamReader(zin));
-				StringBuilder build = new StringBuilder();
-				String string;
-
-				while ((string = fin.readLine()) != null)
-				{
-					build.append(string);
-					build.append("\n");
-				}
-				
-				xml = new DEPFtrXml(new ByteArrayInputStream(build.toString().getBytes()));
-			}
-			else if (name.startsWith(ENTRY_MODEL))
-			{
-				fin = new BufferedReader(new InputStreamReader(zin));
-				parser = new DEPParser(xml, fin);
-			}
-		}
-		
-		zin.close();
-		return parser;
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */

@@ -26,11 +26,8 @@ package com.googlecode.clearnlp.util;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipInputStream;
 
 /**
  * Input utilities.
@@ -66,29 +63,17 @@ public class UTInput
 		return reader;
 	}
 	
-	static public Set<String> getStringSet(BufferedReader fin) throws Exception
+	/** @return new ZipInputStream(new FileInputStream(filename)) */
+	static public ZipInputStream createZipFileInputStream(String filename)
 	{
-		Set<String> set = new HashSet<String>();
-		int i, size = Integer.parseInt(fin.readLine());
+		ZipInputStream stream = null;
 		
-		for (i=0; i<size; i++)
-			set.add(fin.readLine());
-		
-		return set;
-	}
-	
-	static public Map<String,String> getStringMap(BufferedReader fin, String delim) throws Exception
-	{
-		Map<String,String> map = new HashMap<String, String>();
-		int i, size = Integer.parseInt(fin.readLine());
-		String[] tmp;
-		
-		for (i=0; i<size; i++)
+		try
 		{
-			tmp = fin.readLine().split(delim);
-			map.put(tmp[0], tmp[1]);
+			stream = new ZipInputStream(new FileInputStream(filename));
 		}
+		catch (Exception e) {e.printStackTrace();}
 		
-		return map;
+		return stream;
 	}
 }

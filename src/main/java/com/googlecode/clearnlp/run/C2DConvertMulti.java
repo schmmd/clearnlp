@@ -21,7 +21,7 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.experiment;
+package com.googlecode.clearnlp.run;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,21 +37,18 @@ import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
-import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.headrule.HeadRuleMap;
+import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
-import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
 import com.googlecode.clearnlp.propbank.PBArg;
 import com.googlecode.clearnlp.propbank.PBInstance;
 import com.googlecode.clearnlp.propbank.PBLib;
 import com.googlecode.clearnlp.propbank.PBLoc;
 import com.googlecode.clearnlp.reader.AbstractReader;
-import com.googlecode.clearnlp.run.AbstractRun;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -60,21 +57,21 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 public class C2DConvertMulti extends AbstractRun
 {
-	@Option(name="-i", usage="the input path containing constituent trees (input; required)", required=true, metaVar="<filepath>")
+	@Option(name="-i", usage="input path (required)", required=true, metaVar="<filepath>")
 	private String s_inputPath;
-	@Option(name="-h", usage="the name of a headrule file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-h", usage="name of a headrule file (required)", required=true, metaVar="<filename>")
 	private String s_headruleFile;
-	@Option(name="-d", usage="the name of a dictionary file for lemmatization (for English)", required=false, metaVar="<extension>")
-	private String s_dictFile = null;
-	@Option(name="-et", usage="the parse-file extension (default: parse)", required=false, metaVar="<extension>")
+	@Option(name="-d", usage="name of a dictionary file", required=true, metaVar="<filename>")
+	private String s_dictFile;
+	@Option(name="-et", usage="parse-file extension (default: parse)", required=false, metaVar="<extension>")
 	private String s_parseExt = "parse";
-	@Option(name="-ep", usage="the prop-file extension (default: prop)", required=false, metaVar="<extension>")
+	@Option(name="-ep", usage="prop-file extension (default: prop)", required=false, metaVar="<extension>")
 	private String s_propExt = "prop";
-	@Option(name="-es", usage="the sense-file extension (default: sense)", required=false, metaVar="<extension>")
+	@Option(name="-es", usage="sense-file extension (default: sense)", required=false, metaVar="<extension>")
 	private String s_senseExt = "sense";
-	@Option(name="-en", usage="the name-file extension (default: name)", required=false, metaVar="<extension>")
+	@Option(name="-en", usage="name-file extension (default: name)", required=false, metaVar="<extension>")
 	private String s_nameExt = "name";
-	@Option(name="-ed", usage="the output-file extension (default: dep)", required=false, metaVar="<extension>")
+	@Option(name="-ed", usage="output-file extension (default: dep)", required=false, metaVar="<extension>")
 	private String s_outputExt = "dep";
 	@Option(name="-l", usage="language (default: "+AbstractReader.LANG_EN+")", required=false, metaVar="<language>")
 	private String s_language = AbstractReader.LANG_EN;
@@ -83,8 +80,6 @@ public class C2DConvertMulti extends AbstractRun
 	@Option(name="-v", usage="if set, add only verb predicates in PropBank", required=false, metaVar="<boolean>")
 	private boolean b_verbs_only = false;
 	
-	public C2DConvertMulti() {}
-
 	public C2DConvertMulti(String[] args)
 	{
 		initArgs(args);
@@ -93,14 +88,8 @@ public class C2DConvertMulti extends AbstractRun
 	
 	public void convert(String headruleFile, String dictFile, String language, String mergeLabels, String inputPath, String parseExt, String propExt, String senseExt, String nameExt, String outputExt)
 	{
-		AbstractMPAnalyzer morph = null;
-		AbstractC2DConverter c2d = null;
-		
-		if (s_language.equals(AbstractReader.LANG_EN))
-		{
-			c2d   = new EnglishC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(headruleFile)), mergeLabels);
-			if (dictFile != null)	morph = new EnglishMPAnalyzer(dictFile);
-		}
+		AbstractMPAnalyzer morph = EngineGetter.getMPAnalyzer(s_language, s_dictFile);
+		AbstractC2DConverter c2d = EngineGetter.getC2DConverter(s_language, s_headruleFile, s_mergeLabels);
 		
 		convertRec(c2d, morph, language, inputPath, parseExt, propExt, senseExt, nameExt, outputExt);
 	}

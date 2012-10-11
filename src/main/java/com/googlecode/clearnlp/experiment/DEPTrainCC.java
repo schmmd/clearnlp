@@ -15,10 +15,7 @@
 */
 package com.googlecode.clearnlp.experiment;
 
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -26,9 +23,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -38,6 +32,7 @@ import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPParserCC;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.engine.EngineSetter;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.run.AbstractRun;
@@ -101,15 +96,15 @@ public class DEPTrainCC extends AbstractRun
 		int i = 0;
 		
 		parser = getTrainedParser(eConfig, xmls, sPunc, trainFiles, cutoffs, null, -1);
-		if (b_saveAllModels)	saveModels(modelFile+"."+i, featureFiles, parser);
+		if (b_saveAllModels)	EngineSetter.saveModel(modelFile+"."+i, featureFiles, parser);
 		
 		for (i=1; i<=nBoot; i++)
 		{
 			parser = getTrainedParser(eConfig, xmls, sPunc, trainFiles, cutoffs, parser.getModels(), -1);
-			if (b_saveAllModels)	saveModels(modelFile+"."+i, featureFiles, parser);
+			if (b_saveAllModels)	EngineSetter.saveModel(modelFile+"."+i, featureFiles, parser);
 		}
 		
-		saveModels(modelFile, featureFiles, parser);
+		EngineSetter.saveModel(modelFile, featureFiles, parser);
 	}
 	
 	protected DEPFtrXml[] getFeatureTemplates(String featureFiles) throws Exception
@@ -301,24 +296,6 @@ public class DEPTrainCC extends AbstractRun
 		}
 		
 		return gSpace;
-	}
-	
-	public void saveModels(String modelFile, String featureXml, DEPParserCC parser) throws Exception
-	{
-		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
-		PrintStream fout;
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
-		IOUtils.copy(new FileInputStream(featureXml), zout);
-		zout.closeArchiveEntry();
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
-		fout = new PrintStream(new BufferedOutputStream(zout));
-		parser.saveModel(fout);
-		fout.close();
-		zout.closeArchiveEntry();
-		
-		zout.close();
 	}
 	
 	protected void printScores(int[] counts)

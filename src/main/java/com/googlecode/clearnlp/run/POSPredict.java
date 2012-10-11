@@ -23,19 +23,14 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
-import com.googlecode.clearnlp.feature.xml.POSFtrXml;
+import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.pos.POSTagger;
@@ -72,7 +67,7 @@ public class POSPredict extends AbstractRun
 	@Option(name="-m", usage="the model file (input; required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
 	@Option(name="-t", usage="the similarity threshold (default: read from the model file)", required=false, metaVar="<double>")
-	protected double d_threshold = Double.MAX_VALUE;
+	protected double d_threshold = -1;
 	
 	public POSPredict() {}
 	
@@ -92,7 +87,7 @@ public class POSPredict extends AbstractRun
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		POSReader reader = (POSReader)getReader(eConfig);
 		
-		Pair<POSTagger[],Double> p = getTaggers(modelFile, threshold);
+		Pair<POSTagger[],Double> p = EngineGetter.getPOSTaggers(modelFile, threshold);
 		long counts[] = {0, 0, 0, 0};
 		
 		if (new File(inputPath).isFile())
@@ -123,55 +118,6 @@ public class POSPredict extends AbstractRun
 			System.out.println("Generalized model used");
 			System.out.printf(": %f (%d/%d)\n", (double)gc/sc, gc, sc);			
 		}
-	}
-	
-	static public Pair<POSTagger[],Double> getTaggers(String modelFile, double threshold) throws Exception
-	{
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
-		POSTagger[] taggers = null;
-		POSFtrXml xml = null;
-		BufferedReader fin;
-		ZipEntry zEntry;
-		String name;
-		
-		while ((zEntry = zin.getNextEntry()) != null)
-		{
-			name = zEntry.getName();
-						
-			if (name.equals(POSTrain.ENTRY_CONFIGURATION) && threshold == Double.MAX_VALUE)
-			{
-				fin = new BufferedReader(new InputStreamReader(zin));
-				threshold = Double.parseDouble(fin.readLine());
-				System.out.println("Threshold: "+threshold);
-			}
-			else if (name.equals(ENTRY_FEATURE))
-			{
-				System.out.println("Loading feature template.");
-				fin = new BufferedReader(new InputStreamReader(zin));
-				StringBuilder build = new StringBuilder();
-				String string;
-
-				while ((string = fin.readLine()) != null)
-				{
-					build.append(string);
-					build.append("\n");
-				}
-				
-				xml = new POSFtrXml(new ByteArrayInputStream(build.toString().getBytes()));
-			}
-			else if (name.equals(ENTRY_MODEL))
-			{
-				fin = new BufferedReader(new InputStreamReader(zin));
-				int i, size = Integer.parseInt(fin.readLine());
-				taggers = new POSTagger[size];
-				
-				for (i=0; i<size; i++)
-					taggers[i] = new POSTagger(xml, fin);
-			}
-		}
-		
-		zin.close();
-		return new Pair<POSTagger[],Double>(taggers, threshold);
 	}
 	
 	static public void predict(String inputFile, String outputFile, POSReader reader, POSTagger[] taggers, double threshold, long[] counts) 

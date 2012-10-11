@@ -40,4 +40,12 @@ A/01	XX
 12/34/46	XX
 $10.23,45:67-89/10%	XX
 
-...!!!???---***===~~~,,,"	XX
+.!?-*=~,	XX
+..!!??--**==~~,,	XX
+...!!!???---***===~~~,,,	XX
+....!!!!????----****====~~~~,,,,	XX
+
+http://www.google.com	XX
+www.google.com	XX
+mailto:somebody@google.com	XX
+some-body@google+.com	XX

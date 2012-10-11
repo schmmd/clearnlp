@@ -27,8 +27,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.googlecode.clearnlp.util.pair.Pair;
+import jregex.MatchResult;
+import jregex.Replacer;
+import jregex.Substitution;
+import jregex.TextBuffer;
 
+import com.googlecode.clearnlp.util.pair.Pair;
 
 /**
  * Morphology library.
@@ -37,24 +41,39 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class MPLib
 {
-	static final protected Pattern URL_URI       = Pattern.compile("(cvs|dns|file|ftp|http|https|imap|mms|pop|rsync|rtmp|ssh|sftp|smb|svn)://.+");
-	static final protected Pattern URL_DOMAIN    = Pattern.compile(".+\\.(com|edu|gov|int|mil|net|org|biz)");
-	static final protected Pattern URL_DOMAIN_KR = Pattern.compile(".+\\.(co|ac|go|mil|ne|or)\\.kr");
-	static final protected Pattern URL_WEB_EXT   = Pattern.compile(".+\\.(asp|aspx|htm|html|jsp|php|shtml|xml)");
-
-	static final protected Pattern PUNCT_ANY	= Pattern.compile("\\p{Punct}");
-	static final protected Pattern PUNCT_ONLY	= Pattern.compile("^\\p{Punct}+$");
-	static final protected Pattern PUNCT_PERIOD	= Pattern.compile("^(\\.|\\?|\\!)+$");
-
-	static final protected Pattern   DIGIT_SPAN	= Pattern.compile("\\d+");
-	static final protected Pattern   DIGIT_ONLY	= Pattern.compile("^\\d+$");
-	static final protected Pattern[] DIGIT_LIKE	= {Pattern.compile("\\d%"), Pattern.compile("\\$\\d"), Pattern.compile("(^|\\d)\\.\\d"), Pattern.compile("\\d,\\d"), Pattern.compile("\\d:\\d"), Pattern.compile("\\d-\\d"), Pattern.compile("\\d\\/\\d")};
+	static final public Pattern PUNCT_CHAR   = Pattern.compile("\\p{Punct}");
+	static final public Pattern PUNCT_ONLY   = Pattern.compile("^\\p{Punct}+$");
+	static final public Pattern PUNCT_PERIOD = Pattern.compile("^(\\.|\\?|\\!)+$");
+	static final public jregex.Pattern PUNCT_REPEAT = new jregex.Pattern("\\.{2,}|\\!{2,}|\\?{2,}|\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}");	// ".","!","?","-","*","=","~",","
+	static final public Replacer PUNCT_REPEAT_REPLACE = PUNCT_REPEAT.replacer(new Substitution()
+	{
+		public void appendSubstitution(MatchResult match, TextBuffer dest)
+		{
+			char c = match.group(0).charAt(0);
+			dest.append(c);
+			dest.append(c);
+		}
+	});
 	
-	static final protected Pattern WHITE_SPACES = Pattern.compile("\\s\\s*");
+	static final public Pattern DIGIT_SPAN = Pattern.compile("\\d+");
+	static final public Pattern DIGIT_ONLY = Pattern.compile("^\\d+$");
+	static final public Pattern DIGIT_LIKE = Pattern.compile("\\d%|\\$\\d|(^|\\d)\\.\\d|\\d,\\d|\\d:\\d|\\d-\\d|\\d\\/\\d");
+	
+	static final public Pattern ALPHA_CHAR = Pattern.compile("\\p{Alpha}");
+	static final public Pattern WHITE_SPAN = Pattern.compile("\\s+");
+	
+//	static final public jregex.Pattern URL_SPAN = new jregex.Pattern("((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+\\$,\\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\\+\\$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?(?:[.\\!\\/\\\\w]*))?)");
+	static final public jregex.Pattern URL_SPAN = new jregex.Pattern("((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+\\$,\\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\\+\\$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?(?:[.\\!\\/\\\\w]*))?|(\\w+\\.)+(com|edu|gov|int|mil|net|org|biz)$)");
+	static final public Pattern FILE_EXTS = Pattern.compile("\\S+\\.(3gp|7z|ace|ai(f){0,2}|amr|asf|asp(x)?|asx|avi|bat|bin|bmp|bup|cab|cbr|cd(a|l|r)|chm|dat|divx|dll|dmg|doc|dss|dvf|dwg|eml|eps|exe|fl(a|v)|gif|gz|hqx|(s)?htm(l)?|ifo|indd|iso|jar|jsp|jp(e)?g|lnk|log|m4(a|b|p|v)|mcd|mdb|mid|mov|mp(2|3|4)|mp(e)?g|ms(i|wmm)|ogg|pdf|php|png|pps|ppt|ps(d|t)?|ptb|pub|qb(b|w)|qxd|ra(m|r)|rm(vb)?|rtf|se(a|s)|sit(x)?|sql|ss|swf|tgz|tif|torrent|ttf|txt|vcd|vob|wav|wm(a|v)|wp(d|s)|xls|xml|xtm|zip)$");
+	
+	static public boolean containsURL(String str)
+	{
+		return URL_SPAN.matcher(str).find();
+	}
 	
 	static public String[] splitWhiteSpaces(String str)
 	{
-		return WHITE_SPACES.split(str);
+		return WHITE_SPAN.split(str);
 	}
 	
 	@SuppressWarnings("serial")
@@ -70,32 +89,43 @@ public class MPLib
 		trimToSize();
 	}};
 	
-	@SuppressWarnings("serial")
-	static final protected List<Pair<Pattern, String>> PUNC_REPEAT_LIST = new ArrayList<Pair<Pattern, String>>()
-	{{
-		final String[] PUNC_REPEAT_ARRAY = {".","!","?","-","*","=","~",","};
+	/**
+	 * Returns a normalized form of the specific word-form.
+	 * @see MPLib#containsURL(String)
+	 * @see MPLib#normalizeDigits(String)
+	 * @see MPLib#normalizePunctuation(String)
+	 * @param form the word-form.
+	 * @return a normalized form of the specific word-form.
+	 */
+	static public String normalizeBasic(String form)
+	{
+		if (MPLib.containsURL(form))	return "#url#";
 		
-		for (String p : PUNC_REPEAT_ARRAY)
-			add(new Pair<Pattern,String>(Pattern.compile(String.format("(\\%s)+", p)), p));
-	}};
+		form = MPLib.normalizeDigits(form);
+		form = MPLib.normalizePunctuation(form);
+		
+		return form;
+	}
 	
 	/**
-	 * Returns {@code true} if the specific word-form contains an URL.
-	 * @param form the word-form to be compared (assumed to be all in lowercase).
-	 * @return {@code true} if the specific form contains an URL.
+	 * Normalizes all digits to 0.
+	 * @param form the word-form to be normalized.
+	 * @return the normalized form.
 	 */
-	static public boolean containsURL(String form)
+	static public String normalizeDigits(String form)
 	{
-		if      (URL_URI.matcher(form).find())
-			return true;
-		else if (URL_DOMAIN.matcher(form).find())
-			return true;
-		else if (URL_DOMAIN_KR.matcher(form).find())
-			return true;
-		else if (URL_WEB_EXT.matcher(form).find())
-			return true;
-		
-		return false;
+		form = DIGIT_LIKE.matcher(form).replaceAll("0");
+		return DIGIT_SPAN.matcher(form).replaceAll("0");
+	}
+	
+	/**
+	 * Collapses redundant punctuation in the specific word-form (e.g., "!!!" -> "!").
+	 * @param form the word-form to be normalized.
+	 * @return normalized word-form.
+	 */
+	static public String normalizePunctuation(String form)
+	{
+		return PUNCT_REPEAT_REPLACE.replace(form);
 	}
 	
 	/**
@@ -112,26 +142,13 @@ public class MPLib
 	}
 	
 	/**
-	 * Collapses redundant punctuation in the specific word-form (e.g., "!!!" -> "!").
-	 * @param form the word-form to be normalized.
-	 * @return normalized word-form.
-	 */
-	static public String normalizePunctuation(String form)
-	{
-		for (Pair<Pattern,String> p : PUNC_REPEAT_LIST)
-			form = p.o1.matcher(form).replaceAll(p.o2);
-		
-		return form;		
-	}
-	
-	/**
 	 * Returns {@code true} if the specific word-form contains only punctuation.
 	 * @param form the word-form to be compared.
 	 * @return {@code true} if the specific word-form contains only punctuation.
 	 */
 	static public boolean containsAnyPunctuation(String form)
 	{
-		return PUNCT_ANY.matcher(form).find();
+		return PUNCT_CHAR.matcher(form).find();
 	}
 	
 	/**
@@ -167,19 +184,6 @@ public class MPLib
 	}
 	
 	/**
-	 * Normalizes all digits to 0.
-	 * @param form the word-form to be normalized.
-	 * @return the normalized form.
-	 */
-	static public String normalizeDigits(String form)
-	{
-		for (Pattern p : DIGIT_LIKE)
-			form = p.matcher(form).replaceAll("0");
-		
-		return DIGIT_SPAN.matcher(form).replaceAll("0");
-	}
-	
-	/**
 	 * Returns {@code true} if the specific word-form contains only digits.
 	 * @param form the word-form to be compared.
 	 * @return {@code true} if the specific word-form contains only digits.
@@ -198,5 +202,10 @@ public class MPLib
 			return PUNCT_PERIOD.matcher(form.substring(1)).find();
 		
 		return false;
+	}
+	
+	static public boolean isAlpha(String form)
+	{
+		return ALPHA_CHAR.matcher(form).find();
 	}
 }

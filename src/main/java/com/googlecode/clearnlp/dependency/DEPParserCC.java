@@ -26,8 +26,6 @@ import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.util.UTArray;
-import com.googlecode.clearnlp.util.UTInput;
-import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.triple.Triple;
 
@@ -96,7 +94,7 @@ public class DEPParserCC extends AbstractDEPParser
 	{
 		try
 		{
-			s_punc = UTInput.getStringSet(fin);
+			s_punc = getStringSet(fin);
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
@@ -110,7 +108,7 @@ public class DEPParserCC extends AbstractDEPParser
 	/** Saves collections and a dependency parsing model to the specific output-stream. */
 	public void saveModel(PrintStream fout)
 	{
-		UTOutput.printSet(fout, s_punc);
+		printSet(fout, s_punc);
 		
 		for (StringModel model : s_models)
 			model.save(fout);
