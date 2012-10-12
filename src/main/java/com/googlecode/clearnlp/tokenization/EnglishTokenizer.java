@@ -130,7 +130,8 @@ public class EnglishTokenizer extends AbstractTokenizer
 		R_URL         = MPLib.URL_SPAN.replacer(new SubstitutionOne());
 		R_PERIOD_LIKE = new jregex.Pattern("(\\.|\\?|\\!){2,}").replacer(new SubstitutionOne());
 		R_MARKER      = new jregex.Pattern("\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}").replacer(new SubstitutionOne());
-		R_APOSTROPHY  = new jregex.Pattern("(?i)((\\'|\\Õ)(s|d|m|ll|re|ve|nt)|n(\\'|\\Õ)t)$").replacer(new SubstitutionOne());
+	//	R_APOSTROPHY  = new jregex.Pattern("(?i)((\\'|\\Õ)(s|d|m|ll|re|ve|nt)|n(\\'|\\Õ)t)$").replacer(new SubstitutionOne());
+		R_APOSTROPHY  = new jregex.Pattern("(?i)((\\')(s|d|m|ll|re|ve|nt)|n(\\')t)$").replacer(new SubstitutionOne());
 		R_WAW         = getWAWs();
 		
 		R_PUNCTUATION_PRE  = new jregex.Pattern("\\(|\\)|\\[|\\]|\\{|\\}|<|>|\\,|\\:|\\;|\\\"|Ò|Ó").replacer(new SubstitutionOne());
