@@ -20,26 +20,20 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-
-import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
 import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
 import com.googlecode.clearnlp.dependency.DEPParser;
-import com.googlecode.clearnlp.dependency.srl.SRLParser;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
-import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.morphology.DefaultMPAnalyzer;
 import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.reader.AbstractReader;
-import com.googlecode.clearnlp.run.POSTrain;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.segmentation.EnglishSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
@@ -51,15 +45,8 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class EngineGetter
+public class EngineGetter implements EngineLib
 {
-	static final String ENTRY_CONFIGURATION	= "CONFIGURATION";
-	static final String ENTRY_FEATURE		= "FEATURE";
-	static final String ENTRY_MODEL			= "MODEL";
-	static final String ENTRY_THRESHOLD		= "THRESHOLD";
-	static final String ENTRY_SET_DOWN 		= "SET_DOWN";
-	static final String ENTRY_SET_UP   		= "SET_UP";
-	
 	// ============================= getter: constituent-to-dependency converter =============================
 	
 	static public AbstractC2DConverter getC2DConverter(String language, String headruleFile, String mergeLabels)
@@ -104,34 +91,11 @@ public class EngineGetter
 	
 	// ============================= getter: part-of-speech tagger =============================
 	
-	static public POSTagger getPOSTagger(String modelFile) throws IOException
-	{
-		ZipInputStream zin = UTInput.createZipFileInputStream(modelFile);
-		POSTagger tagger = null;
-		POSFtrXml xml = null;
-		BufferedReader fin;
-		ZipEntry zEntry;
-		String entry;
-		
-		while ((zEntry = zin.getNextEntry()) != null)
-		{
-			entry = zEntry.getName();
-			fin   = new BufferedReader(new InputStreamReader(zin));
-						
-			if (entry.equals(ENTRY_FEATURE))
-				xml = new POSFtrXml(getFeatureTemplates(fin));
-			else if (entry.equals(ENTRY_MODEL))
-				tagger = new POSTagger(xml, fin);
-		}
-		
-		zin.close();
-		return tagger;
-	}
-	
-	static public Pair<POSTagger[],Double> getPOSTaggers(String modelFile, double threshold) throws Exception
+	static public Pair<POSTagger[],Double> getPOSTaggers(String modelFile) throws Exception
 	{
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
-		POSTagger[] taggers = new POSTagger[POSTrain.MODEL_SIZE];
+		POSTagger[] taggers = null;
+		double threshold = -1;
 		POSFtrXml xml = null;
 		BufferedReader fin;
 		ZipEntry zEntry;
@@ -143,10 +107,10 @@ public class EngineGetter
 			entry = zEntry.getName();
 			fin   = new BufferedReader(new InputStreamReader(zin));
 			
-			if (entry.equals(EngineGetter.ENTRY_CONFIGURATION) && threshold < 0)
+			if (entry.equals(EngineGetter.ENTRY_CONFIGURATION))
 			{
+				taggers   = new POSTagger[Integer.parseInt(fin.readLine())];
 				threshold = Double.parseDouble(fin.readLine());
-				System.out.println("Threshold: "+threshold);
 			}
 			else if (entry.equals(ENTRY_FEATURE))
 			{
@@ -191,7 +155,7 @@ public class EngineGetter
 	
 	// ============================= getter: semantic role labeler =============================
 	
-	static public SRLParser getSRLabeler(String modelFile) throws Exception
+/*	static public SRLParser getSRLabeler(String modelFile) throws Exception
 	{
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
 		StringModel[] models = new StringModel[SRLParser.MODEL_SIZE];
@@ -220,7 +184,7 @@ public class EngineGetter
 		
 		zin.close();
 		return new SRLParser(xml, models, sDown, sUp);
-	}
+	}*/
 	
 	// ============================= utilities =============================
 	

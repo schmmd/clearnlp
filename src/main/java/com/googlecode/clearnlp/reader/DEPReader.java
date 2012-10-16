@@ -31,7 +31,6 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 
 
 /**
- * Dependency tree reader.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
@@ -81,9 +80,7 @@ public class DEPReader extends AbstractColumnReader<DEPTree>
 		i_deprel = iDeprel;
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.reader.AbstractReader#next()
-	 */
+	@Override
 	public DEPTree next()
 	{
 		DEPTree tree = null;

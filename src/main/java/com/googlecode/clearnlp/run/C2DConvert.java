@@ -23,7 +23,6 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.File;
 import java.io.PrintStream;
 import java.util.List;
 
@@ -60,6 +59,8 @@ public class C2DConvert extends AbstractRun
 	@Option(name="-m", usage="merge labels (default: null)", required=false, metaVar="<string>")
 	private String s_mergeLabels = null;
 
+	public C2DConvert() {}
+	
 	public C2DConvert(String[] args)
 	{
 		initArgs(args);
@@ -67,12 +68,16 @@ public class C2DConvert extends AbstractRun
 		AbstractC2DConverter c2d = EngineGetter.getC2DConverter(s_language, s_headruleFile, s_mergeLabels);
 		AbstractMPAnalyzer morph = EngineGetter.getMPAnalyzer(s_language, s_dictFile);
 		List<String[]> filenames = getFilenames(s_inputPath, s_inputExt, s_outputExt);
+		int n;
 		
 		for (String[] io : filenames)
-			convert(c2d, morph, s_language, io[0], io[1]);
+		{
+			n = convert(c2d, morph, s_language, io[0], io[1]);
+			System.out.printf("%s: %d trees\n", io[0], n);
+		}
 	}
 	
-	protected void convert(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputFile, String outputFile)
+	protected int convert(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputFile, String outputFile)
 	{
 		CTReader  reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
@@ -100,7 +105,8 @@ public class C2DConvert extends AbstractRun
 		
 		reader.close();
 		fout.close();
-		System.out.printf("%s -> %d trees\n", inputFile.substring(inputFile.lastIndexOf(File.separator)), n);
+		
+		return n;
 	}
 	
 	private DEPTree getNullTree()

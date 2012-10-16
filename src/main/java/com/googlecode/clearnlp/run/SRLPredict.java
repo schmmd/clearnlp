@@ -32,7 +32,6 @@ import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLParser;
-import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.util.UTFile;
@@ -75,8 +74,9 @@ public class SRLPredict extends AbstractRun
 	private void run(String configXml, String modelFile, String inputPath, String outputFile) throws Exception
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		SRLReader reader = (SRLReader)getReader(eConfig);
-		SRLParser  parser = EngineGetter.getSRLabeler(modelFile);
+		SRLReader reader = (SRLReader)getReader(eConfig).o1;
+		SRLParser parser = null;
+	//	SRLParser parser = EngineGetter.getSRLabeler(modelFile);
 		
 		if (new File(inputPath).isFile())
 		{

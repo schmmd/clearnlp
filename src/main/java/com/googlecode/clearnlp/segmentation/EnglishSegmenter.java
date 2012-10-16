@@ -30,8 +30,8 @@ public class EnglishSegmenter extends AbstractSegmenter
 {
 	/** Patterns of terminal punctuation. */
 	protected final Pattern  P_TERMINAL_PUNCTUATION = Pattern.compile("^(\\.|\\?|\\!)+$");
-	protected final String[] L_BRACKETS = {"\"","Ò","(","{","["};
-	protected final String[] R_BRACKETS = {"\"","Ó",")","}","]"};
+	protected final String[] L_BRACKETS = {"\"","(","{","["};
+	protected final String[] R_BRACKETS = {"\"",")","}","]"};
 	
 	public EnglishSegmenter(AbstractTokenizer tokenizer)
 	{

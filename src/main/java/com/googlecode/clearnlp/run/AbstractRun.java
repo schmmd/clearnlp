@@ -37,17 +37,24 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
+import com.googlecode.clearnlp.classification.train.StringTrainSpace;
+import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
-import com.googlecode.clearnlp.morphology.DefaultMPAnalyzer;
-import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
+import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.reader.DAGReader;
 import com.googlecode.clearnlp.reader.DEPReader;
+import com.googlecode.clearnlp.reader.LineReader;
 import com.googlecode.clearnlp.reader.POSReader;
+import com.googlecode.clearnlp.reader.RawReader;
 import com.googlecode.clearnlp.reader.SRLReader;
+import com.googlecode.clearnlp.reader.TOKReader;
+import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
+import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.UTXml;
+import com.googlecode.clearnlp.util.pair.Pair;
 
 /**
  * @since 1.0.0
@@ -64,7 +71,7 @@ abstract public class AbstractRun
 	final public String TAG_LEXICA					= "lexica";
 	final public String TAG_LEXICA_LEXICON			= "lexicon";
 	final public String TAG_LEXICA_LEXICON_TYPE		= "type";
-	final public String TAG_LEXICA_LEXICON_LABEL		= "label";
+	final public String TAG_LEXICA_LEXICON_LABEL	= "label";
 	final public String TAG_LEXICA_LEXICON_CUTOFF	= "cutoff";
 	
 	final public String TAG_TRAIN					= "train";
@@ -72,8 +79,9 @@ abstract public class AbstractRun
 	final public String TAG_TRAIN_ALGORITHM_NAME	= "name";
 	final public String TAG_TRAIN_THREADS			= "threads";
 	
-	final public String TAG_LANGUAGE				= "language";
-	final public String TAG_MORPH_DICT				= "morph_dict";
+	final public String TAG_LANGUAGE	= "language";
+	final public String TAG_DICTIONARY	= "dictionary";
+	final public String TAG_POS_MODEL	= "pos_model";
 	
 	/** Initializes arguments using args4j. */
 	protected void initArgs(String[] args)
@@ -93,27 +101,7 @@ abstract public class AbstractRun
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	/** String[0]: input filename, String[1]: output filename. */
-	protected List<String[]> getFilenames(String inputPath, String inputExt, String outputExt)
-	{
-		List<String[]> filenames = new ArrayList<String[]>();
-		File f = new File(inputPath);
-		String outputFile;
-		
-		if (f.isDirectory())
-		{
-			for (String inputFile : f.list(new FileExtFilter(inputExt)))
-			{
-				inputFile  = inputPath + File.separator + inputFile;
-				outputFile = inputFile + "." + outputExt;
-				filenames.add(new String[]{inputFile, outputFile});
-			}
-		}
-		else
-			filenames.add(new String[]{inputPath, inputPath+"."+outputExt});
-		
-		return filenames;
-	}
+	// ============================= getter: language =============================
 	
 	protected String getLanguage(Element eConfig)
 	{
@@ -121,19 +109,65 @@ abstract public class AbstractRun
 		return UTXml.getTrimmedTextContent(eLanguage);
 	}
 	
-	protected AbstractReader<?> getReader(Element eConfig)
+	// ============================= getter: components =============================
+	
+	protected AbstractSegmenter getSegmenter(Element eConfig)
 	{
-		Element eReader = UTXml.getFirstElementByTagName(eConfig, TAG_READER);
+		String language = getLanguage(eConfig);
+		String dictFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_DICTIONARY));
+
+		return EngineGetter.getSegmenter(language, EngineGetter.getTokenizer(language, dictFile));
+	}
+	
+	protected AbstractTokenizer getTokenizer(Element eConfig)
+	{
+		String language = getLanguage(eConfig);
+		String dictFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_DICTIONARY));
+
+		return EngineGetter.getTokenizer(language, dictFile);
+	}
+	
+	protected AbstractMPAnalyzer getMPAnalyzer(Element eConfig)
+	{
+		String language = getLanguage(eConfig);
+		String dictFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_DICTIONARY));
+
+		return EngineGetter.getMPAnalyzer(language, dictFile);
+	}
+	
+	protected Pair<POSTagger[],Double> getPOSTaggers(Element eConfig)
+	{
+		try
+		{
+			String modelFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_POS_MODEL));
+			return EngineGetter.getPOSTaggers(modelFile);
+		}
+		catch (Exception e) {e.printStackTrace();}
+		
+		return null;
+	}
+	
+	// ============================= getter: readers =============================
+	
+	protected Pair<AbstractReader<?>,String> getReader(Element element)
+	{
+		Element eReader = UTXml.getFirstElementByTagName(element, TAG_READER);
 		String  type    = UTXml.getTrimmedAttribute(eReader, TAG_READER_TYPE);
 		
-		if      (type.equals(AbstractReader.TYPE_POS))
-			return getPOSReader(eReader);
+		if      (type.equals(AbstractReader.TYPE_RAW))
+			return new Pair<AbstractReader<?>,String>(new RawReader(), type);
+		else if (type.equals(AbstractReader.TYPE_LINE))
+			return new Pair<AbstractReader<?>,String>(new LineReader(), type);
+		else if (type.equals(AbstractReader.TYPE_TOK))
+			return new Pair<AbstractReader<?>,String>(getTOKReader(eReader), type);
+		else if (type.equals(AbstractReader.TYPE_POS))
+			return new Pair<AbstractReader<?>,String>(getPOSReader(eReader), type);
 		else if (type.equals(AbstractReader.TYPE_DEP))
-			return getDEPReader(eReader);
+			return new Pair<AbstractReader<?>,String>(getDEPReader(eReader), type);
 		else if (type.equals(AbstractReader.TYPE_DAG))
-			return getDAGReader(eReader);
+			return new Pair<AbstractReader<?>,String>(getDAGReader(eReader), type);
 		else if (type.equals(AbstractReader.TYPE_SRL))
-			return getSRLReader(eReader);
+			return new Pair<AbstractReader<?>,String>(getSRLReader(eReader), type);
 		
 		return null;
 	}
@@ -161,6 +195,21 @@ abstract public class AbstractRun
 	}
 	
 	/** Called by {@link AbstractRun#getReader(Element)}. */
+	private TOKReader getTOKReader(Element eReader)
+	{
+		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
+		int iForm = map.get(AbstractColumnReader.FIELD_FORM) - 1;
+		
+		if (iForm < 0)
+		{
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
+			System.exit(1);
+		}
+		
+		return new TOKReader(iForm);
+	}
+	
+	/** Called by {@link AbstractRun#getReader(Element)}. */
 	private POSReader getPOSReader(Element eReader)
 	{
 		ObjectIntOpenHashMap<String> map = getFieldMap(eReader);
@@ -170,7 +219,7 @@ abstract public class AbstractRun
 		
 		if (iForm < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
 			System.exit(1);
 		}
 		
@@ -192,27 +241,27 @@ abstract public class AbstractRun
 		
 		if (iId < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
 			System.exit(1);
 		}
 		else if (iForm < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
 			System.exit(1);
 		}
 		else if (iLemma < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
 			System.exit(1);
 		}
 		else if (iPos < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
 			System.exit(1);
 		}
 		else if (iFeats < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
 			System.exit(1);
 		}
 		
@@ -235,37 +284,37 @@ abstract public class AbstractRun
 		
 		if (iId < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
 			System.exit(1);
 		}
 		else if (iForm < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
 			System.exit(1);
 		}
 		else if (iLemma < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
 			System.exit(1);
 		}
 		else if (iPos < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
 			System.exit(1);
 		}
 		else if (iFeats < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
 			System.exit(1);
 		}
 		else if (iHeadId < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_HEADID);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_HEADID);
 			System.exit(1);
 		}
 		else if (iDeprel < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_DEPREL);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_DEPREL);
 			System.exit(1);
 		}
 		
@@ -286,31 +335,59 @@ abstract public class AbstractRun
 		
 		if (iId < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_ID);
 			System.exit(1);
 		}
 		else if (iForm < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FORM);
 			System.exit(1);
 		}
 		else if (iLemma < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_LEMMA);
 			System.exit(1);
 		}
 		else if (iPos < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_POS);
 			System.exit(1);
 		}
 		else if (iFeats < 0)
 		{
-			System.out.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
+			System.err.printf("The '%s' field must be specified in the configuration file.\n", AbstractColumnReader.FIELD_FEATS);
 			System.exit(1);
 		}
 		
 		return new DAGReader(iId, iForm, iLemma, iPos, iFeats, iXheads);
+	}
+	
+	// ============================= classification =============================
+	
+	protected StringTrainSpace mergeTrainSpaces(List<StringTrainSpace> spaces, int labelCutoff, int featureCutoff)
+	{
+		StringTrainSpace space;
+		
+		if (spaces.size() == 1)
+		{
+			space = spaces.get(0);
+		}
+		else
+		{
+			System.out.println("Merging training instances:");
+			space = new StringTrainSpace(false, labelCutoff, featureCutoff);
+			
+			for (StringTrainSpace s : spaces)
+			{
+				space.appendSpace(s);
+				System.out.print(".");
+				s.clear();
+			}
+			
+			System.out.println();			
+		}
+		
+		return space;
 	}
 	
 	protected AbstractModel getModel(Element eTrain, AbstractTrainSpace space, int index)
@@ -359,29 +436,6 @@ abstract public class AbstractRun
 		return LiblinearTrain.getModel(space, numThreads, cost, eps, bias, pBias);
 	}
 	
-	protected AbstractMPAnalyzer getMPAnalyzer(Element eConfig)
-	{
-		Element eMorphDict = UTXml.getFirstElementByTagName(eConfig, TAG_MORPH_DICT);
-		String  language   = getLanguage(eConfig);
-		String  morphDict  = UTXml.getTrimmedTextContent(eMorphDict);
-
-		return getMPAnalyzer(language, morphDict);
-	}
-	
-	/**
-	 * Returns a morphological analyzer for the specific language.
-	 * @param language the language.
-	 * @param dictFile the dictionary filename.
-	 * @return a morphological analyzer for the specific language.
-	 */
-	static public AbstractMPAnalyzer getMPAnalyzer(String language, String dictFile)
-	{
-		if (language.equals(AbstractReader.LANG_EN))
-			return new EnglishMPAnalyzer(dictFile);
-		
-		return new DefaultMPAnalyzer();
-	}
-	
 	protected int getNumOfThreads(Element eTrain)
 	{
 		Element eThreads = UTXml.getFirstElementByTagName(eTrain, TAG_TRAIN_THREADS); 
@@ -396,5 +450,29 @@ abstract public class AbstractRun
 
 		System.out.println(message);
 		System.out.println(String.format("- %d mins, %d secs", mins, secs));
+	}
+	
+	// ============================= utilities =============================
+	
+	/** String[0]: input filename, String[1]: output filename. */
+	protected List<String[]> getFilenames(String inputPath, String inputExt, String outputExt)
+	{
+		List<String[]> filenames = new ArrayList<String[]>();
+		File f = new File(inputPath);
+		String outputFile;
+		
+		if (f.isDirectory())
+		{
+			for (String inputFile : f.list(new FileExtFilter(inputExt)))
+			{
+				inputFile  = inputPath + File.separator + inputFile;
+				outputFile = inputFile + "." + outputExt;
+				filenames.add(new String[]{inputFile, outputFile});
+			}
+		}
+		else
+			filenames.add(new String[]{inputPath, inputPath+"."+outputExt});
+		
+		return filenames;
 	}
 }

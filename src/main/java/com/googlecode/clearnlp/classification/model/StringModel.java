@@ -29,6 +29,7 @@ import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
@@ -46,7 +47,7 @@ public class StringModel extends AbstractModel
 {
 	/** The map between features and their indices. */
 	private Map<String,ObjectIntOpenHashMap<String>> m_features;
-		
+	
 	/** Constructs a string model for training. */
 	public StringModel()
 	{
@@ -122,6 +123,8 @@ public class StringModel extends AbstractModel
 		typeSize   = Integer.parseInt(fin.readLine());
 		m_features = new HashMap<String, ObjectIntOpenHashMap<String>>();
 		
+		Pattern P_DELIM = Pattern.compile(" ");
+		
 		for (i=0; i<typeSize; i++)
 		{
 			map  = new ObjectIntOpenHashMap<String>();
@@ -130,11 +133,12 @@ public class StringModel extends AbstractModel
 			
 			for (j=0; j<valueSize; j++)
 			{
-				tmp = fin.readLine().split(" ");
+				tmp = P_DELIM.split(fin.readLine());
 				map.put(tmp[0], Integer.parseInt(tmp[1]));
 			}
 			
 			m_features.put(type, map);
+		//	System.out.println(valueSize-map.size());
 		}
 	}
 	

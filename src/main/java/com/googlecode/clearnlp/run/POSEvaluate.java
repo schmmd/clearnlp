@@ -37,16 +37,19 @@ import org.kohsuke.args4j.Option;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
 
-
+/**
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
+ */
 public class POSEvaluate extends AbstractRun
 {
-	@Option(name="-g", usage="the gold-standard file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-g", usage="gold-standard file (required)", required=true, metaVar="<filename>")
 	private String s_goldFile;
-	@Option(name="-s", usage="the system file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-s", usage="system-generated file (required)", required=true, metaVar="<filename>")
 	private String s_autoFile;
-	@Option(name="-gi", usage="the column index of POS tags in the gold-standard file (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-gi", usage="column index of POS tags in a gold-standard file (required)", required=true, metaVar="<integer>")
 	private int    i_goldIndex;
-	@Option(name="-si", usage="the column index of POS tags in the sytem file (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-si", usage="column index of POS tags in a system-generated file (required)", required=true, metaVar="<integer>")
 	private int    i_autoIndex;
 	
 	private Map<String,int[]> m_labels;
@@ -56,7 +59,7 @@ public class POSEvaluate extends AbstractRun
 	public POSEvaluate(String[] args)
 	{
 		initArgs(args);
-		run(s_goldFile, s_autoFile, i_goldIndex, i_autoIndex);
+		run(s_goldFile, s_autoFile, i_goldIndex-1, i_autoIndex-1);
 	}
 	
 	public void run(String goldFile, String autoFile, int goldIndex, int autoIndex)

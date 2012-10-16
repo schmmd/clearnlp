@@ -72,7 +72,7 @@ public class DEPDevelop extends DEPTrain
 	private void run(String configXml, String featureXml, String trainDir, String devDir) throws Exception
 	{
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader reader = (DEPReader)getReader(eConfig);
+		DEPReader reader = (DEPReader)getReader(eConfig).o1;
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
 		String[]  devFiles = UTFile.getSortedFileList(devDir); 
@@ -106,6 +106,7 @@ public class DEPDevelop extends DEPTrain
 		
 		for (String devFile : devFiles)
 		{
+		//	PrintStream fout = UTOutput.createPrintBufferedFileStream(devFile+".out");
 			reader.open(UTInput.createBufferedFileReader(devFile));
 			Arrays.fill(lCounts, 0);
 			
@@ -114,6 +115,7 @@ public class DEPDevelop extends DEPTrain
 			{
 				gHeads = tree.getHeads();
 				parser.parse(tree);
+		//		fout.println(tree.toStringDEP()+"\n");
 				counts = DEPLib.getScores(tree, gHeads);
 				UTArray.add(lCounts, counts);
 				if (i%1000 == 0)	System.out.print(".");
@@ -125,8 +127,8 @@ public class DEPDevelop extends DEPTrain
 			System.out.printf("UAS: %5.2f (%d/%d)\n", 100d*lCounts[2]/lCounts[0], lCounts[2], lCounts[0]);
 			System.out.printf("LS : %5.2f (%d/%d)\n", 100d*lCounts[3]/lCounts[0], lCounts[3], lCounts[0]);
 			
-			for (i=0; i<lCounts.length; i++)
-				gCounts[i] += lCounts[i];
+			for (i=0; i<lCounts.length; i++)	gCounts[i] += lCounts[i];
+		//	fout.close();
 		}
 		
 		System.out.println("Total");

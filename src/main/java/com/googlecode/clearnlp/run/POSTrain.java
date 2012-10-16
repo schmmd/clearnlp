@@ -62,17 +62,17 @@ public class POSTrain extends AbstractRun
 	protected final int FLAG_GENERAL = 1;
 	protected final int FLAG_DYNAMIC = 2;
 	
-	@Option(name="-i", usage="the directory containg training files (input; required)", required=true, metaVar="<directory>")
+	@Option(name="-i", usage="directory containg training files (required)", required=true, metaVar="<directory>")
 	protected String s_trainDir;
-	@Option(name="-c", usage="the configuration file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
 	protected String s_configXml;
-	@Option(name="-f", usage="the feature file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-f", usage="feature template file (required)", required=true, metaVar="<filename>")
 	protected String s_featureXml;
-	@Option(name="-m", usage="the model file (output; required)", required=true, metaVar="<filename>")
+	@Option(name="-m", usage="model file (output; required)", required=true, metaVar="<filename>")
 	protected String s_modelFile;
-	@Option(name="-t", usage="the similarity threshold (default: -1)", required=false, metaVar="<double>")
+	@Option(name="-t", usage="similarity threshold (default: -1)", required=false, metaVar="<double>")
 	protected double d_threshold = -1;
-	@Option(name="-flag", usage="0|1|2 (default: 1)\n0: train only a domain-specific model\n1: train only a generalized model\n2: train both models using dynamic model selection", required=false, metaVar="<int>")
+	@Option(name="-s", usage="model type - 0|1|2 (default: 1)\n0: train only a domain-specific model\n1: train only a generalized model\n2: train both models using dynamic model selection", required=false, metaVar="<integer>")
 	protected int i_flag = FLAG_GENERAL;
 	
 	public POSTrain() {}
@@ -88,44 +88,45 @@ public class POSTrain extends AbstractRun
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configXml, String featureXml, String trainDir, String modelFile, double threshold, int flag) throws Exception
+	public void run(String configXml, String featureXml, String trainDir, String modelFile, double threshold, int modId) throws Exception
 	{
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader    reader = (POSReader)getReader(eConfig);
+		POSReader    reader = (POSReader)getReader(eConfig).o1;
 		POSFtrXml       xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[] trainFiles = UTFile.getSortedFileList(trainDir);
 		
-		if (flag == FLAG_DYNAMIC)
+		if (modId == FLAG_DYNAMIC)
 		{
 			if (threshold < 0)	threshold = crossValidate(trainFiles, reader, xml, eConfig);
-			POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trainFiles, null);
-			EngineSetter.setPOSTaggers(modelFile, featureXml, taggers, threshold);
+			POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trainFiles, -1);
+			EngineSetter.setPOSTaggers(modelFile, featureXml, taggers, threshold, MODEL_SIZE);
 		}
 		else
 		{
-			POSTagger tagger = getTrainedTagger(eConfig, reader, xml, trainFiles, null, flag);
-			EngineSetter.saveModel(modelFile, featureXml, tagger);
+			POSTagger[] taggers = {getTrainedTagger(eConfig, reader, xml, trainFiles, -1, modId)};
+			taggers[0].clearFormSet();
+			EngineSetter.setPOSTaggers(modelFile, featureXml, taggers, threshold, 1);
 		}
 	}
 	
 	/** @return a single POS tagging model using {@code modId}. */
-	public POSTagger getTrainedTagger(Element eConfig, POSReader reader, POSFtrXml xml, String[] trnFiles, IntOpenHashSet sDev, int modId) throws Exception
+	public POSTagger getTrainedTagger(Element eConfig, POSReader reader, POSFtrXml xml, String[] trnFiles, int devId, int modId) throws Exception
 	{
 		Pair<Set<String>, Map<String,String>> p;
 		StringTrainSpace space;
 		Set<String> sLemmas;
 		StringModel model;
 		
-		sLemmas = getLemmaSet  (reader, xml, modId, trnFiles, sDev);
-		p       = getLexica    (reader, xml, modId, sLemmas, trnFiles, sDev);
-		space   = getTrainSpace(reader, xml, modId, sLemmas, p.o1, p.o2, trnFiles, sDev); 
+		sLemmas = getLemmaSet  (reader, xml, modId, trnFiles, devId);
+		p       = getLexica    (reader, xml, modId, sLemmas, trnFiles, devId);
+		space   = getTrainSpace(reader, xml, modId, sLemmas, p.o1, p.o2, trnFiles, devId); 
 		model   = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), space, modId);
 		
 		return new POSTagger(xml, sLemmas, p.o1, p.o2, model);
 	}
 	
 	/** @return both domain-specific and generalized models. */
-	public POSTagger[] getTrainedTaggers(Element eConfig, POSReader reader, POSFtrXml xml, String[] trnFiles, IntOpenHashSet sDev) throws Exception
+	public POSTagger[] getTrainedTaggers(Element eConfig, POSReader reader, POSFtrXml xml, String[] trnFiles, int devId) throws Exception
 	{
 		POSTagger[] taggers = new POSTagger[MODEL_SIZE];
 		int modId;
@@ -133,14 +134,14 @@ public class POSTrain extends AbstractRun
 		for (modId=0; modId<MODEL_SIZE; modId++)
 		{
 			System.out.printf("===== Training model %d =====\n", modId);
-			taggers[modId] = getTrainedTagger(eConfig, reader, xml, trnFiles, sDev, modId);
+			taggers[modId] = getTrainedTagger(eConfig, reader, xml, trnFiles, devId, modId);
 		}
 		
 		return taggers;
 	}
 
 	/** Called by {@link POSTrain#getTrainedTaggers(Element, POSReader, POSFtrXml, String[], IntOpenHashSet)}. */
-	private Set<String> getLemmaSet(POSReader reader, POSFtrXml xml, int modId, String[] trnFiles, IntOpenHashSet sDev) throws Exception
+	private Set<String> getLemmaSet(POSReader reader, POSFtrXml xml, int modId, String[] trnFiles, int devId) throws Exception
 	{
 		int dfCutoff = xml.getDocumentFrequency(modId);
 		Prob1DMap map = new Prob1DMap();
@@ -154,7 +155,7 @@ public class POSTrain extends AbstractRun
 		
 		for (i=0; i<size; i++)
 		{
-			if (sDev != null && sDev.contains(i))	continue;
+			if (devId == i)	continue;
 			reader.open(UTInput.createBufferedFileReader(trnFiles[i]));
 			set = new HashSet<String>();
 			
@@ -185,7 +186,7 @@ public class POSTrain extends AbstractRun
 	}
 	
 	/** Called by {@link POSTrain#getTrainedTaggers(Element, POSReader, POSFtrXml, String[], IntOpenHashSet)}. */
-	private Pair<Set<String>,Map<String,String>> getLexica(POSReader reader, POSFtrXml xml, int xmlId, Set<String> sLemmas, String[] trnFiles, IntOpenHashSet sDev)
+	private Pair<Set<String>,Map<String,String>> getLexica(POSReader reader, POSFtrXml xml, int xmlId, Set<String> sLemmas, String[] trnFiles, int devId)
 	{
 		POSTagger tagger = new POSTagger(sLemmas);
 		int i, size = trnFiles.length;
@@ -199,7 +200,7 @@ public class POSTrain extends AbstractRun
 		
 		for (i=0; i<size; i++)
 		{
-			if (sDev != null && sDev.contains(i))	continue;
+			if (devId == i)	continue;
 			reader.open(UTInput.createBufferedFileReader(trnFiles[i]));
 			
 			while ((nodes = reader.next()) != null)
@@ -217,7 +218,7 @@ public class POSTrain extends AbstractRun
 	}
 	
 	/** Called by {@link POSTrain#getTrainedTaggers(Element, POSReader, POSFtrXml, String[], IntOpenHashSet)}. */
-	private StringTrainSpace getTrainSpace(POSReader reader, POSFtrXml xml, int modId, Set<String> sLemmas, Set<String> sForms, Map<String, String> ambiguityMap, String[] trnFiles, IntOpenHashSet sDev)
+	private StringTrainSpace getTrainSpace(POSReader reader, POSFtrXml xml, int modId, Set<String> sLemmas, Set<String> sForms, Map<String, String> ambiguityMap, String[] trnFiles, int devId)
 	{
 		StringTrainSpace space = new StringTrainSpace(false, xml.getLabelCutoff(modId), xml.getFeatureCutoff(modId));
 		POSTagger tagger = new POSTagger(xml, sLemmas, sForms, ambiguityMap, space);
@@ -228,7 +229,7 @@ public class POSTrain extends AbstractRun
 		
 		for (i=0; i<size; i++)
 		{
-			if (sDev != null && sDev.contains(i))	continue;
+			if (devId == i)	continue;
 			reader.open(UTInput.createBufferedFileReader(trnFiles[i]));
 			
 			while ((nodes = reader.next()) != null)
@@ -247,21 +248,14 @@ public class POSTrain extends AbstractRun
 		SortedDoubleArrayList list = new SortedDoubleArrayList();
 		int devId, size = trnFiles.length;
 		POSTagger[] taggers;
-		IntOpenHashSet sDev = new IntOpenHashSet();
-		
 		
 		for (devId=0; devId<size; devId++)
 		{
 			System.out.printf("<== Cross validation %d ==>\n", devId);
-			sDev.clear();	sDev.add(devId);
 			
-			taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, sDev);
+			taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, devId);
 			crossValidatePredict(trnFiles[devId], reader, taggers, list);
 		}
-		
-	/*	PrintStream fout = UTOutput.createPrintBufferedFileStream("cosine-sims.txt");
-		for (int i=0; i<list.size(); i++)	fout.println(list.get(i));
-		fout.close();*/
 		
 		int n = (int)Math.round(list.size() * 0.05);
 		double threshold = (double)Math.ceil(list.get(n)*1000)/1000;

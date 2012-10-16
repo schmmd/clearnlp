@@ -48,8 +48,7 @@ import com.googlecode.clearnlp.util.map.Prob2DMap;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 
 /**
- * Part-of-speech tagger.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class POSTagger extends AbstractEngine
@@ -104,8 +103,13 @@ public class POSTagger extends AbstractEngine
 	public POSTagger(POSFtrXml xml, BufferedReader fin)
 	{
 		super(FLAG_PREDICT);
-		f_xml  = xml;
 		
+		f_xml = xml;
+		loadModel(fin);
+	}
+	
+	public void loadModel(BufferedReader fin)
+	{
 		try
 		{
 			s_lemmas = getStringSet(fin);
@@ -240,6 +244,11 @@ public class POSTagger extends AbstractEngine
 		}
 		
 		return set;
+	}
+	
+	public void clearFormSet()
+	{
+		s_forms.clear();
 	}
 	
 	public double getCosineSimilarity(POSNode[] nodes)

@@ -49,6 +49,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected final String F_HYPHENS		= F_DIR+"hyphens.txt";
 	protected final String F_COMPOUNDS		= F_DIR+"compounds.txt";
 	protected final String F_UNITS			= F_DIR+"units.txt";
+	protected final String F_MICROSOFT		= F_DIR+"microsoft.txt";
 	
 	protected final String S_DELIM			= " ";
 	protected final String S_PROTECTED		= "PR0T_";
@@ -130,12 +131,11 @@ public class EnglishTokenizer extends AbstractTokenizer
 		R_URL         = MPLib.URL_SPAN.replacer(new SubstitutionOne());
 		R_PERIOD_LIKE = new jregex.Pattern("(\\.|\\?|\\!){2,}").replacer(new SubstitutionOne());
 		R_MARKER      = new jregex.Pattern("\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}").replacer(new SubstitutionOne());
-	//	R_APOSTROPHY  = new jregex.Pattern("(?i)((\\'|\\Õ)(s|d|m|ll|re|ve|nt)|n(\\'|\\Õ)t)$").replacer(new SubstitutionOne());
 		R_APOSTROPHY  = new jregex.Pattern("(?i)((\\')(s|d|m|ll|re|ve|nt)|n(\\')t)$").replacer(new SubstitutionOne());
 		R_WAW         = getWAWs();
 		
-		R_PUNCTUATION_PRE  = new jregex.Pattern("\\(|\\)|\\[|\\]|\\{|\\}|<|>|\\,|\\:|\\;|\\\"|Ò|Ó").replacer(new SubstitutionOne());
-		R_PUNCTUATION_POST = new jregex.Pattern("\\.|\\?|\\!|\\`|\\'|\\-|Ñ|\\/|\\@|\\#|\\$|\\%|\\&|\\|").replacer(new SubstitutionOne());
+		R_PUNCTUATION_PRE  = new jregex.Pattern("\\(|\\)|\\[|\\]|\\{|\\}|<|>|\\,|\\:|\\;|\\\"").replacer(new SubstitutionOne());
+		R_PUNCTUATION_POST = new jregex.Pattern("\\.|\\?|\\!|\\`|\\'|\\-|\\/|\\@|\\#|\\$|\\%|\\&|\\|").replacer(new SubstitutionOne());
 		
 		initReplacersD0Ds();
 	}
@@ -143,7 +143,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	/** Called by {@link EnglishTokenizer#initReplacers()}. */
 	private Replacer getWAWs()
 	{
-		return new jregex.Pattern("(\\w)(\\'|\\Õ)(\\w)").replacer(new Substitution()
+		return new jregex.Pattern("(\\w)(\\')(\\w)").replacer(new Substitution()
 		{
 			@Override
 			public void appendSubstitution(MatchResult match, TextBuffer dest)

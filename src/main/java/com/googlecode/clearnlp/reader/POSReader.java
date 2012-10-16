@@ -27,9 +27,7 @@ import java.util.List;
 
 import com.googlecode.clearnlp.pos.POSNode;
 
-
 /**
- * Part-of-speech reader.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
@@ -59,9 +57,7 @@ public class POSReader extends AbstractColumnReader<POSNode[]>
 		i_pos  = iPos;
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.reader.AbstractReader#next()
-	 */
+	@Override
 	public POSNode[] next()
 	{
 		POSNode[] nodes = null;

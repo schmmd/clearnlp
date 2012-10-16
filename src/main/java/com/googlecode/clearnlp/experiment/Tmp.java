@@ -46,13 +46,16 @@ package com.googlecode.clearnlp.experiment;
 * POSSIBILITY OF SUCH DAMAGE.
 */
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
@@ -63,12 +66,14 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
 import com.googlecode.clearnlp.dependency.srl.SRLParser;
+import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.reader.POSReader;
 import com.googlecode.clearnlp.reader.SRLReader;
+import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
@@ -80,12 +85,13 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 public class Tmp
 {
-	public Tmp(String[] args)
+	public Tmp(String[] args) throws Exception
 	{
 	//	mapPropBankToDependency(args[0], args[1]);
 	//	countSRL(args);
 	//	traverse(args[0]);
-		getTokens(args[0], args[1]);
+	//	getTokens(args[0], args[1]);
+		converNonASC(args);
 	}
 	
 	void countSRL(String[] args)
@@ -289,10 +295,82 @@ public class Tmp
 		
 		fout.close();
 	}
-
-	public static void main(String[] args)
+	
+	public List<String[]> getFilenames(String inputPath, String inputExt, String outputExt)
 	{
-		new Tmp(args);
+		List<String[]> filenames = new ArrayList<String[]>();
+		File f = new File(inputPath);
+		String outputFile;
+		
+		if (f.isDirectory())
+		{
+			for (String inputFile : f.list(new FileExtFilter(inputExt)))
+			{
+				inputFile  = inputPath + File.separator + inputFile;
+				outputFile = inputFile + "." + outputExt;
+				filenames.add(new String[]{inputFile, outputFile});
+			}
+		}
+		else
+			filenames.add(new String[]{inputPath, inputPath+"."+outputExt});
+		
+		return filenames;
+	}
+	
+	public void converNonASC(String[] args) throws Exception
+	{
+		Pattern asc1 = Pattern.compile("[^\\p{ASCII}]");
+		Pattern asc2 = Pattern.compile("\\p{ASCII}");
+		Pattern tab  = Pattern.compile("\t");
+		BufferedReader fin;
+		PrintStream fout;
+		String[] tmp;
+		String line, str;
+		int i;
+		
+		for (String[] io : getFilenames(args[0], args[1], args[2]))
+		{
+			System.out.println(io[1]);
+			fin  = UTInput.createBufferedFileReader(io[0]);
+			fout = UTOutput.createPrintBufferedFileStream(io[1]);
+			
+			while ((line = fin.readLine()) != null)
+			{
+				line = line.trim();
+				
+				if (line.isEmpty())
+				{
+					fout.println();
+					continue;
+				}
+				
+				tmp = tab.split(line);
+				
+				for (i=0; i<tmp.length; i++)
+				{
+					str = tmp[i];
+					
+					if (asc2.matcher(str).find())
+						tmp[i] = asc1.matcher(str).replaceAll("");
+					else
+						tmp[i] = "^ASCII";
+				}
+				
+				fout.println(UTArray.join(tmp, "\t"));
+			}
+			
+			fout.close();
+		}
+	}
+
+	public static void main(String[] args) throws IOException
+	{
+		try
+		{
+			new Tmp(args);
+		}
+		catch (Exception e) {e.printStackTrace();}
+		
 	/*	SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 8);
 		reader.open(UTInput.createBufferedFileReader(args[0]));
 		DEPTree tree;

@@ -24,15 +24,15 @@ import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
+import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.srl.SRLParser;
 import com.googlecode.clearnlp.pos.POSTagger;
-import com.googlecode.clearnlp.run.POSTrain;
 
 /**
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class EngineSetter
+public class EngineSetter implements EngineLib
 {
 	// ============================= setters: general =============================
 
@@ -41,11 +41,11 @@ public class EngineSetter
 		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
 		PrintStream fout;
 		
-		zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_FEATURE));
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
 		IOUtils.copy(new FileInputStream(featureXml), zout);
 		zout.closeArchiveEntry();
 		
-		zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_MODEL));
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
 		fout = new PrintStream(new BufferedOutputStream(zout));
 		engine.saveModel(fout);
 		fout.close();
@@ -55,32 +55,51 @@ public class EngineSetter
 	}
 	
 	// ============================= setter: part-of-speech tagger =============================
-
-	static public void setPOSTaggers(String modelFile, String featureXml, POSTagger[] taggers, double threshold) throws Exception
+	
+	static public void setPOSTaggers(String modelFile, String featureXml, POSTagger[] taggers, double threshold, int modelSize) throws Exception
 	{
 		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
 		PrintStream fout;
+		int modId;
 		
-		zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_CONFIGURATION));
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_CONFIGURATION));
 		fout = new PrintStream(zout);
+		fout.println(modelSize);
 		fout.println(threshold);
 		fout.close();
 		zout.closeArchiveEntry();
 		
-		zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_FEATURE));
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
 		IOUtils.copy(new FileInputStream(featureXml), zout);
 		zout.closeArchiveEntry();
 		
-		int modId;
-		
-		for (modId=0; modId<POSTrain.MODEL_SIZE; modId++)
+		for (modId=0; modId<modelSize; modId++)
 		{
-			zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_MODEL+modId));
+			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL+modId));
 			fout = new PrintStream(new BufferedOutputStream(zout));
 			taggers[modId].saveModel(fout);
 			fout.close();
 			zout.closeArchiveEntry();			
 		}
+		
+		zout.close();
+	}
+	
+	// ============================= setter: dependency parser =============================
+	static public void setDEPParser(String modelFile, String featureXml, DEPParser parser) throws Exception
+	{
+		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
+		PrintStream fout;
+		
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
+		IOUtils.copy(new FileInputStream(featureXml), zout);
+		zout.closeArchiveEntry();
+		
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
+		fout = new PrintStream(new BufferedOutputStream(zout));
+		parser.saveModel(fout);
+		fout.close();
+		zout.closeArchiveEntry();
 		
 		zout.close();
 	}
@@ -93,17 +112,17 @@ public class EngineSetter
 		PrintStream fout;
 		int modId;
 		
-		zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_FEATURE));
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
 		IOUtils.copy(new FileInputStream(featureXml), zout);
 		zout.closeArchiveEntry();
 		
-		zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_SET_DOWN));
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_SET_DOWN));
 		fout = new PrintStream(new BufferedOutputStream(zout));
 		parser.saveDownSet(fout);
 		fout.close();
 		zout.closeArchiveEntry();
 		
-		zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_SET_UP));
+		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_SET_UP));
 		fout = new PrintStream(new BufferedOutputStream(zout));
 		parser.saveUpSet(fout);
 		fout.close();
@@ -111,7 +130,7 @@ public class EngineSetter
 		
 		for (modId=0; modId<SRLParser.MODEL_SIZE; modId++)
 		{
-			zout.putArchiveEntry(new JarArchiveEntry(EngineGetter.ENTRY_MODEL+modId));
+			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL+modId));
 			fout = new PrintStream(new BufferedOutputStream(zout));
 			parser.saveModel(fout, modId);
 			fout.close();

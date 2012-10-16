@@ -72,6 +72,11 @@ abstract public class AbstractReader<T>
 	{
 		f_in = reader;
 	}
+	
+	public BufferedReader getBufferedReader()
+	{
+		return f_in;
+	}
 
 	/** Closes this reader. */
 	public void close()

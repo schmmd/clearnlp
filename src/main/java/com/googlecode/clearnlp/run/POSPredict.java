@@ -23,51 +23,46 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;
+import java.util.List;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.engine.EngineGetter;
-import com.googlecode.clearnlp.pos.POSLib;
+import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
+import com.googlecode.clearnlp.reader.AbstractReader;
+import com.googlecode.clearnlp.reader.LineReader;
 import com.googlecode.clearnlp.reader.POSReader;
+import com.googlecode.clearnlp.reader.RawReader;
+import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
+import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.UTArray;
-import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.pair.Pair;
 
-
 /**
- * Predicts a part-of-speech tagging model.
- * @since v0.1
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @since 1.1.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class POSPredict extends AbstractRun
 {
-	final private String EXT = ".tagged";
-	
-	static final private int COUNT_WC = 0;		// word count
-	static final private int COUNT_SC = 1;		// sentence count
-	static final private int COUNT_GC = 2;		// count how many times a generalized model is used
-	static final private int COUNT_TC = 3;		// total time in milliseconds
-	
-	@Option(name="-i", usage="the input path (input; required)", required=true, metaVar="<filepath>")
+	@Option(name="-i", usage="input path (required)", required=true, metaVar="<filepath>")
 	private String s_inputPath;
-	@Option(name="-o", usage="the output file (default: <input_path>.tagged)", required=false, metaVar="<filename>")
-	private String s_outputFile = null;
-	@Option(name="-c", usage="the configuration file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
+	private String s_inputExt = ".*";
+	@Option(name="-oe", usage="output file extension (default: tagged)", required=false, metaVar="<string>")
+	private String s_outputExt = "tagged";
+	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
 	private String s_configXml;
-	@Option(name="-m", usage="the model file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-m", usage="model file (required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
-	@Option(name="-t", usage="the similarity threshold (default: read from the model file)", required=false, metaVar="<double>")
-	protected double d_threshold = -1;
 	
 	public POSPredict() {}
 	
@@ -77,94 +72,103 @@ public class POSPredict extends AbstractRun
 		
 		try
 		{
-			run(s_configXml, s_modelFile, d_threshold, s_inputPath, s_outputFile);
+			Element eConfig = UTXml.getDocumentElement(new FileInputStream(s_configXml));
+			
+			List<String[]> filenames = getFilenames(s_inputPath, s_inputExt, s_outputExt);
+			Pair<AbstractReader<?>, String> reader = getReader(eConfig);
+			
+			AbstractSegmenter segmenter = reader.o2.equals(AbstractReader.TYPE_RAW ) ? getSegmenter(eConfig) : null;
+			AbstractTokenizer tokenizer = reader.o2.equals(AbstractReader.TYPE_LINE) ? getTokenizer(eConfig) : null;
+			Pair<POSTagger[],Double> taggers = EngineGetter.getPOSTaggers(s_modelFile);
+			
+			for (String[] io : filenames)
+			{
+				if      (reader.o2.equals(AbstractReader.TYPE_RAW))
+					predict(segmenter, taggers, (RawReader)reader.o1, io[0], io[1]);
+				else if (reader.o2.equals(AbstractReader.TYPE_LINE))
+					predict(tokenizer, taggers, (LineReader)reader.o1, io[0], io[1]);
+				else if (reader.o2.equals(AbstractReader.TYPE_POS))
+					predict(taggers, (POSReader)reader.o1, io[0], io[1]);
+				else
+				{
+					new Exception("Invalid reader type: "+reader.o2);
+					break;
+				}
+			}
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configXml, String modelFile, double threshold, String inputPath, String outputFile) throws Exception
+	public void predict(AbstractSegmenter segmenter, Pair<POSTagger[],Double> taggers, RawReader fin, String inputFile, String outputFile)
 	{
-		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader reader = (POSReader)getReader(eConfig);
-		
-		Pair<POSTagger[],Double> p = EngineGetter.getPOSTaggers(modelFile, threshold);
-		long counts[] = {0, 0, 0, 0};
-		
-		if (new File(inputPath).isFile())
-		{
-			if (outputFile == null)	outputFile = inputPath + EXT;
-			predict(inputPath, outputFile, reader, p.o1, p.o2, counts);	
-		}
-		else
-		{
-			for (String filename : UTFile.getSortedFileList(inputPath))
-				predict(filename, filename+EXT, reader, p.o1, p.o2, counts);
-		}
-	
-		printScores(counts, p.o1.length);
-	}
-	
-	private void printScores(long[] counts, int modelSize)
-	{
-		long wc = counts[COUNT_WC], sc = counts[COUNT_SC], gc = counts[COUNT_GC];
-		double time = counts[COUNT_TC];
-		
-		System.out.println("Average tagging speed");
-		System.out.printf(": %f (milliseconds/token)\n", time/wc);
-		System.out.printf(": %f (milliseconds/sentence)\n", time/sc);
-		
-		if (modelSize > 1)
-		{
-			System.out.println("Generalized model used");
-			System.out.printf(": %f (%d/%d)\n", (double)gc/sc, gc, sc);			
-		}
-	}
-	
-	static public void predict(String inputFile, String outputFile, POSReader reader, POSTagger[] taggers, double threshold, long[] counts) 
-	{
-		System.out.println("Predicting: "+inputFile);
-		reader.open(UTInput.createBufferedFileReader(inputFile));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
-
+		fin.open(UTInput.createBufferedFileReader(inputFile));
 		POSNode[] nodes;
-		long sc;
+		int i = 0;
 		
-		for (sc=0; (nodes = reader.next()) != null; sc++)
+		System.out.print(inputFile+": ");
+		
+		for (List<String> tokens : segmenter.getSentences(fin.getBufferedReader()))
 		{
-			predict(nodes, taggers, threshold, counts);
-			counts[COUNT_WC] += nodes.length;
-
-			if (sc%1000 == 0)	System.out.print(".");
+			nodes = EngineProcess.getPOSNodes(taggers, tokens);
 			fout.println(UTArray.join(nodes, AbstractColumnReader.DELIM_SENTENCE) + AbstractColumnReader.DELIM_SENTENCE);
+			
+			if (++i%1000 == 0)	System.out.print(".");
 		}
 		
 		System.out.println();
-		counts[COUNT_SC] += sc;
-		reader.close();
+		
+		fin.close();
 		fout.close();
 	}
 	
-	static void predict(POSNode[] nodes, POSTagger[] taggers, double threshold, long[] counts)
+	public void predict(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, LineReader fin, String inputFile, String outputFile)
 	{
-		long st, et;
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
+		POSNode[] nodes;
+		String line;
+		int i = 0;
 		
-		st = System.currentTimeMillis();
-		POSLib.normalizeForms(nodes);
-
-		if (taggers.length == 1 || threshold < taggers[0].getCosineSimilarity(nodes))
+		System.out.print(inputFile+": ");
+		
+		while ((line = fin.next()) != null)
 		{
-			taggers[0].tag(nodes);
+			nodes = EngineProcess.getPOSNodes(tokenizer, taggers, line);
+			fout.println(UTArray.join(nodes, AbstractColumnReader.DELIM_SENTENCE) + AbstractColumnReader.DELIM_SENTENCE);
+			
+			if (++i%1000 == 0)	System.out.print(".");
 		}
-		else
-		{
-			taggers[1].tag(nodes);
-			counts[COUNT_GC]++;
-		}
-
-		et = System.currentTimeMillis();
-		counts[COUNT_TC] += et - st;
+		
+		System.out.println();
+		
+		fin.close();
+		fout.close();
 	}
+	
+	public void predict(Pair<POSTagger[],Double> taggers, POSReader fin, String inputFile, String outputFile)
+	{
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
+		POSNode[] nodes;
+		int i = 0;
 		
+		System.out.print(inputFile+": ");
+		
+		while ((nodes = fin.next()) != null)
+		{
+			EngineProcess.predictPOS(taggers, nodes);
+			fout.println(UTArray.join(nodes, AbstractColumnReader.DELIM_SENTENCE) + AbstractColumnReader.DELIM_SENTENCE);
+			
+			if (++i%1000 == 0)	System.out.print(".");
+		}
+		
+		System.out.println();
+		
+		fin.close();
+		fout.close();
+	}
+
 	static public void main(String[] args)
 	{
 		new POSPredict(args);

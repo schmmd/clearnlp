@@ -55,8 +55,7 @@ abstract public class AbstractEngine
 		i_flag = flag;
 	}
 	
-	// TODO: make this non static
-	static public Set<String> getStringSet(BufferedReader fin) throws Exception
+	public Set<String> getStringSet(BufferedReader fin) throws Exception
 	{
 		Set<String> set = new HashSet<String>();
 		int i, size = Integer.parseInt(fin.readLine());
@@ -65,6 +64,12 @@ abstract public class AbstractEngine
 			set.add(fin.readLine());
 		
 		return set;
+	}
+	
+	protected void printSet(PrintStream fout, Set<String> set)
+	{
+		fout.println(set.size());
+		for (String key : set)	fout.println(key);
 	}
 	
 	protected Map<String,String> getStringMap(BufferedReader fin, String delim) throws Exception
@@ -80,14 +85,6 @@ abstract public class AbstractEngine
 		}
 		
 		return map;
-	}
-	
-	protected void printSet(PrintStream fout, Set<String> set)
-	{
-		fout.println(set.size());
-		
-		for (String key : set)
-			fout.println(key);
 	}
 	
 	protected void printMap(PrintStream fout, Map<String,String> map, String delim)

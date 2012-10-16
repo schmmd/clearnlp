@@ -60,17 +60,17 @@ public class DEPTrain extends AbstractRun
 	
 	protected final String LEXICON_PUNCTUATION = "punctuation"; 
 	
-	@Option(name="-i", usage="the directory containg training files (input; required)", required=true, metaVar="<directory>")
+	@Option(name="-i", usage="input directory containing training files (required)", required=true, metaVar="<directory>")
 	protected String s_trainDir;
-	@Option(name="-c", usage="the configuration file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
 	protected String s_configXml;
-	@Option(name="-f", usage="the feature file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-f", usage="feature template file (required)", required=true, metaVar="<filename>")
 	protected String s_featureXml;
-	@Option(name="-m", usage="the model file (output; required)", required=true, metaVar="<filename>")
+	@Option(name="-m", usage="model file (output; required)", required=true, metaVar="<filename>")
 	protected String s_modelFile;
-	@Option(name="-n", usage="the bootstrapping level (default: 2)", required=false, metaVar="<integer>")
+	@Option(name="-n", usage="bootstrapping level (default: 2)", required=false, metaVar="<integer>")
 	protected int n_boot = 2;
-	@Option(name="-sb", usage="if set, save all bootstrapping models", required=false, metaVar="<boolean>")
+	@Option(name="-sb", usage="if set, save all intermediate bootstrapping models", required=false, metaVar="<boolean>")
 	protected boolean b_saveAllModels = false;
 	
 	public DEPTrain() {}
@@ -96,20 +96,20 @@ public class DEPTrain extends AbstractRun
 		int boot = 0;
 		
 		parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, null, -1, boot);
-		if (b_saveAllModels)	EngineSetter.saveModel(modelFile+"."+boot, featureXml, parser);
+		if (b_saveAllModels)	EngineSetter.setDEPParser(modelFile+"."+boot, featureXml, parser);
 		
 		for (boot=1; boot<=nBoot; boot++)
 		{
 			parser = getTrainedParser(eConfig, xml, sPunc, trainFiles, parser.getModel(), -1, boot);
-			if (b_saveAllModels)	EngineSetter.saveModel(modelFile+"."+boot, featureXml, parser);
+			if (b_saveAllModels)	EngineSetter.setDEPParser(modelFile+"."+boot, featureXml, parser);
 		}
 		
-		EngineSetter.saveModel(modelFile, featureXml, parser);
+		if (!b_saveAllModels)	EngineSetter.setDEPParser(modelFile, featureXml, parser);
 	}
 	
 	protected Set<String> getLexica(Element eConfig, DEPFtrXml xml, String[] trainFiles, int devId) throws Exception
 	{
-		DEPReader reader = (DEPReader)getReader(eConfig);
+		DEPReader reader = (DEPReader)getReader(eConfig).o1;
 		Prob1DMap mPunct = new Prob1DMap();
 		int i, size = trainFiles.length;
 		DEPTree tree;
@@ -305,7 +305,7 @@ public class DEPTrain extends AbstractRun
 		public TrainTask(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String trainFile, StringModel model, StringTrainSpace space)
 		{
 			d_parser = (model == null) ? new DEPParser(xml, sPunc, space) : new DEPParser(xml, sPunc, model, space);
-			d_reader = (DEPReader)getReader(eConfig);
+			d_reader = (DEPReader)getReader(eConfig).o1;
 			d_reader.open(UTInput.createBufferedFileReader(trainFile));
 		}
 		

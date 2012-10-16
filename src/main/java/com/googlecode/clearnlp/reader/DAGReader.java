@@ -32,7 +32,6 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 
 
 /**
- * Acyclic directed graph reader.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
@@ -78,9 +77,7 @@ public class DAGReader extends AbstractColumnReader<DEPTree>
 		i_xheads = iXheads;
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.reader.AbstractReader#next()
-	 */
+	@Override
 	public DEPTree next()
 	{
 		DEPTree tree = null;

@@ -24,6 +24,7 @@
 package com.googlecode.clearnlp.experiment;
 
 import java.io.FileInputStream;
+import java.util.Arrays;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
@@ -57,38 +58,60 @@ public class POSDevelop extends POSTrain
 		
 		try
 		{
-			run(s_configXml, s_featureXml, s_trainDir, s_devDir, d_threshold);	
+			run(s_configXml, s_featureXml, s_trainDir, s_devDir);	
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void run(String configXml, String featureXml, String trnDir, String devDir, double threshold) throws Exception
+	public void run(String configXml, String featureXml, String trnDir, String devDir) throws Exception
 	{
 		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader   reader = (POSReader)getReader(eConfig);
+		POSReader   reader = (POSReader)getReader(eConfig).o1;
 		POSFtrXml      xml = new POSFtrXml(new FileInputStream(featureXml));
 		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
 		String[]  devFiles = UTFile.getSortedFileList(devDir);
 		
-		if (threshold < 0)	threshold = crossValidate(trnFiles, reader, xml, eConfig);
-		POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, null);
+		POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, -1);
+		int[] lCounts, gCounts;	int i;
+		
+		gCounts = new int[4];
 		
 		for (String devFile : devFiles)
-			predict(devFile, reader, taggers, threshold);
+		{
+			lCounts = predict(devFile, reader, taggers);
+			for (i=0; i<gCounts.length; i++)	gCounts[i] += lCounts[i];
+		}
+		
+		System.out.println("Overall");
+		printAccuracy(gCounts);
+		
+		gCounts = new int[2];
+		for (double th = 0.01; th<=0.03; th += 0.001)
+		{
+			System.out.println("Threshold: "+th);
+			Arrays.fill(gCounts, 0);
+			
+			for (String devFile : devFiles)
+			{
+				lCounts = predict(devFile, reader, taggers, th);
+				for (i=0; i<gCounts.length; i++)	gCounts[i] += lCounts[i];
+			}
+			
+			System.out.println("Overall");
+			printAccuracy(gCounts);
+		}
 	}
-
-	protected double predict(String devFile, POSReader reader, POSTagger[] taggers, double threshold) 
+	
+	protected int[] predict(String devFile, POSReader reader, POSTagger[] taggers, double threshold) 
 	{
-		int correct = 0, total = 0, n, cLocal, tLocal;
+		int[] counts = {0,0};
 		POSNode[] nodes;
 		String[]  gold;
-		double macro = 0;
 		
-		System.out.println("Threshold : "+threshold);
 		System.out.println("Predicting: "+devFile);
 		reader.open(UTInput.createBufferedFileReader(devFile));
 		
-		for (n=0; (nodes = reader.next()) != null; n++)
+		while ((nodes = reader.next()) != null)
 		{
 			gold = POSLib.getLabels(nodes);
 			POSLib.normalizeForms(nodes);
@@ -98,23 +121,58 @@ public class POSDevelop extends POSTrain
 			else
 				taggers[1].tag(nodes);
 
-			cLocal   = countCorrect(nodes, gold);
-			tLocal   = gold.length;
-			correct += cLocal;
-			total   += tLocal;
-			
-			macro += 100d * cLocal / tLocal;
+			counts[0] += countCorrect(nodes, gold);
+			counts[1] += gold.length;
 		}
 		
 		reader.close();
+		printAccuracy(counts);
 		
-		double accuracy = 100d * correct / total;
-		System.out.printf("- micro accuracy: %7.5f (%d/%d)\n", accuracy, correct, total);
+		return counts;
+	}
+
+	protected int[] predict(String devFile, POSReader reader, POSTagger[] taggers) 
+	{
+		int[] counts = {0,0,0,0}, correct = {0,0};
+		POSNode[] nodes;
+		String[]  gold;
+		int i;
 		
-		accuracy = macro / n;
-		System.out.printf("- macro accuracy: %7.5f (%d)\n", accuracy, n);
+		System.out.println("Predicting: "+devFile);
+		reader.open(UTInput.createBufferedFileReader(devFile));
 		
-		return accuracy;
+		while ((nodes = reader.next()) != null)
+		{
+			gold = POSLib.getLabels(nodes);
+			POSLib.normalizeForms(nodes);
+			Arrays.fill(correct, 0);
+			
+			for (i=0; i<2; i++)
+			{
+				taggers[i].tag(nodes);
+				correct[i] = countCorrect(nodes, gold);
+				counts[i] += correct[i];
+			}
+			
+			counts[2] += (correct[0] < correct[1]) ? correct[1] : correct[0];
+			counts[3] += gold.length;
+		}
+		
+		reader.close();
+		printAccuracy(counts);
+		
+		return counts;
+	}
+	
+	private void printAccuracy(int[] counts)
+	{
+		double accuracy;	int i, last = counts.length-1;
+		
+		for (i=0; i<last; i++)
+		{
+			accuracy = 100d * counts[i] / counts[last];
+			System.out.printf("- accuracy %d: %7.5f (%d/%d)\n", i, accuracy, counts[i], counts[last]);
+		}
 	}
 	
 	private int countCorrect(POSNode[] nodes, String[] gold)

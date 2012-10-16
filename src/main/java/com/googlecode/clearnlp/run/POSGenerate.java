@@ -21,36 +21,38 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.experiment;
+package com.googlecode.clearnlp.run;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.Arrays;
 
 import org.w3c.dom.Element;
 
-import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
 import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.reader.POSReader;
-import com.googlecode.clearnlp.run.POSPredict;
-import com.googlecode.clearnlp.run.POSTrain;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTXml;
+import com.googlecode.clearnlp.util.pair.Pair;
 
-
+/**
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
 public class POSGenerate extends POSTrain
 {
-	public POSGenerate(String configXml, String featureXml, String trnDir, String outDir, double threshold) throws Exception
+	public POSGenerate(String[] args) throws Exception
 	{
-		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		POSReader   reader = (POSReader)getReader(eConfig);
-		POSFtrXml      xml = new POSFtrXml(new FileInputStream(featureXml));
-		String[]  trnFiles = UTFile.getSortedFileList(trnDir);
+		initArgs(args);
+		
+		Element    eConfig = UTXml.getDocumentElement(new FileInputStream(s_configXml));
+		POSReader   reader = (POSReader)getReader(eConfig).o1;
+		POSFtrXml      xml = new POSFtrXml(new FileInputStream(s_featureXml));
+		String[]  trnFiles = UTFile.getSortedFileList(s_trainDir);
 
-		IntOpenHashSet sDev = new IntOpenHashSet();
+		Pair<POSTagger[],Double> taggers = new Pair<POSTagger[],Double>(null, d_threshold);
 		int devId, size = trnFiles.length;
-		long[] counts = new long[4];
+		POSPredict p = new POSPredict();
 		String devFile;
 		
 		for (devId=0; devId<size; devId++)
@@ -59,26 +61,21 @@ public class POSGenerate extends POSTrain
 			devFile = devFile.substring(devFile.lastIndexOf(File.separator)+1);
 			
 			System.out.println("Cross validation: "+devFile);
-			sDev.clear();	sDev.add(devId);
-			Arrays.fill(counts, 0);
 			
-			POSTagger[] taggers = {getTrainedTagger(eConfig, reader, xml, trnFiles, sDev, FLAG_GENERAL)};
-		//	POSTagger[] taggers = getTrainedTaggers(eConfig, reader, xml, trnFiles, sDev);
-			POSPredict.predict(trnFiles[devId], outDir+File.separator+devFile+".tagged", reader, taggers, threshold, counts);
+			if (i_flag == FLAG_DYNAMIC)
+				taggers.o1 = getTrainedTaggers(eConfig, reader, xml, trnFiles, devId);
+			else
+				taggers.o1 = new POSTagger[]{getTrainedTagger(eConfig, reader, xml, trnFiles, devId, FLAG_GENERAL)};
+			
+			p.predict(taggers, reader, trnFiles[devId], s_trainDir+File.separator+devFile+".pos");
 		}
 	}
 	
 	static public void main(String[] args)
 	{
-		String configXml  = args[0];
-		String featureXml = args[1];
-		String trnDir     = args[2];
-		String outDir     = args[3];
-		double threshold  = Double.parseDouble(args[4]);
-		
 		try
 		{
-			new POSGenerate(configXml, featureXml, trnDir, outDir, threshold);
+			new POSGenerate(args);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}

@@ -90,11 +90,10 @@ public class DEPParser extends AbstractDEPParser
 	{
 		try
 		{
-			s_punc = getStringSet(fin);
+			s_punc  = getStringSet(fin);
+			s_model = new StringModel(fin);
 		}
 		catch (Exception e) {e.printStackTrace();}
-		
-		s_model = new StringModel(fin);
 	}
 	
 	/** Saves collections and a dependency parsing model to the specific output stream. */

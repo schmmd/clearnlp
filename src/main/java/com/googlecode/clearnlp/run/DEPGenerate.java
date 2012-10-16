@@ -21,7 +21,7 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.experiment;
+package com.googlecode.clearnlp.run;
 
 import java.io.FileInputStream;
 import java.io.PrintStream;
@@ -35,7 +35,6 @@ import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.reader.DEPReader;
-import com.googlecode.clearnlp.run.DEPTrain;
 import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
@@ -44,10 +43,8 @@ import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
-
 /**
- * Trains a liblinear model.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class DEPGenerate extends DEPTrain
@@ -75,7 +72,7 @@ public class DEPGenerate extends DEPTrain
 	private void run(String configXml, String featureXml, String[] trainFiles, int devId) throws Exception
 	{
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader  reader = (DEPReader)getReader(eConfig);
+		DEPReader  reader = (DEPReader)getReader(eConfig).o1;
 		DEPFtrXml     xml = new DEPFtrXml(new FileInputStream(featureXml));
 		
 		Pair<StringModel,Double> model = new Pair<StringModel,Double>(null, 0d);

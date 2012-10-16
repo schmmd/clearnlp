@@ -12,16 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-package com.googlecode.clearnlp.run;
+*/
+package com.googlecode.clearnlp.reader;
 
-public class Version
+import java.io.IOException;
+
+/**
+ * @since 1.1.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
+ */
+public class LineReader extends AbstractReader<String>
 {
-	public static void main(String[] args)
+	@Override
+	public String next()
 	{
-		System.out.println("ClearNLP version 1.1.0");
-		System.out.println("Webpage: clearnlp.googlecode.com");
-		System.out.println("Members: Jinho D. Choi (owner)");
-		System.out.println("Contact: jdchoi77@gmail.com");
+		try
+		{
+			return f_in.readLine();
+		}
+		catch (IOException e) {e.printStackTrace();}
+		
+		return null;
 	}
 }

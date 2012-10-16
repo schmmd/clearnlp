@@ -25,6 +25,7 @@ package com.googlecode.clearnlp.reader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Abstract column reader.
@@ -50,6 +51,8 @@ abstract public class AbstractColumnReader<T> extends AbstractReader<T>
 	static public final String FIELD_SHEADS	= "sheads";
 	static public final String FIELD_XHEADS	= "xheads";
 	
+	private final Pattern P_COLUMN = Pattern.compile(DELIM_COLUMN);
+	
 	/** Returns the next batch of lines. */
 	protected List<String[]> readLines() throws Exception
 	{
@@ -65,7 +68,7 @@ abstract public class AbstractColumnReader<T> extends AbstractReader<T>
 		
 		// add lines
 		List<String[]> list = new ArrayList<String[]>();
-		list.add(line.split(DELIM_COLUMN));
+		list.add(P_COLUMN.split(line));
 		
 		while ((line = f_in.readLine()) != null)
 		{

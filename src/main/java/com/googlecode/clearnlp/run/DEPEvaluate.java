@@ -40,17 +40,17 @@ import com.googlecode.clearnlp.util.UTInput;
 
 public class DEPEvaluate extends AbstractRun
 {
-	@Option(name="-g", usage="the gold-standard file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-g", usage="gold-standard file (required)", required=true, metaVar="<filename>")
 	private String s_goldFile;
-	@Option(name="-s", usage="the system file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-s", usage="system-generated file (required)", required=true, metaVar="<filename>")
 	private String s_autoFile;
-	@Option(name="-gh", usage="the column index of gold head ID (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-gh", usage="column index of gold head ID (required)", required=true, metaVar="<integer>")
 	private int    i_goldHeadId;
-	@Option(name="-gd", usage="the column index of gold dependency label (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-gd", usage="column index of gold dependency label (required)", required=true, metaVar="<integer>")
 	private int    i_goldDeprel;
-	@Option(name="-sh", usage="the column index of system head ID (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-sh", usage="column index of system head ID (required)", required=true, metaVar="<integer>")
 	private int    i_autoHeadId;
-	@Option(name="-sd", usage="the column index of system dependency label (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-sd", usage="column index of system dependency label (required)", required=true, metaVar="<integer>")
 	private int    i_autoDeprel;
 	
 	private Map<String,int[]> m_labels;
@@ -60,7 +60,7 @@ public class DEPEvaluate extends AbstractRun
 	public DEPEvaluate(String[] args)
 	{
 		initArgs(args);
-		run(s_goldFile, s_autoFile, i_goldHeadId, i_goldDeprel, i_autoHeadId, i_autoDeprel);
+		run(s_goldFile, s_autoFile, i_goldHeadId-1, i_goldDeprel-1, i_autoHeadId-1, i_autoDeprel-1);
 	}
 	
 	public void run(String goldFile, String autoFile, int goldHeadId, int goldDeprel, int autoHeadId, int autoDeprel)

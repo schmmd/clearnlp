@@ -76,7 +76,7 @@ public class SRLTrain extends AbstractRun
 	private void run(String configXml, String featureXml, String trainDir, String modelFile, int nBoot) throws Exception
 	{
 		Element   eConfig    = UTXml.getDocumentElement(new FileInputStream(configXml));
-		SRLReader reader     = (SRLReader)getReader(eConfig);
+		SRLReader reader     = (SRLReader)getReader(eConfig).o1;
 		SRLFtrXml xml        = new SRLFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
 		SRLParser parser;

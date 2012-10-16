@@ -45,11 +45,13 @@ public class Tokenizer extends AbstractRun
 	@Option(name="-l", usage="language (default: "+AbstractReader.LANG_EN+")", required=false, metaVar="<language>")
 	private String s_language = AbstractReader.LANG_EN;
 	@Option(name="-d", usage="name of a dictionary file (required)", required=true, metaVar="<filename>")
-	private String s_dictFile = null;
+	private String s_dictFile;
 	@Option(name="-if", usage="input format (default: "+AbstractReader.TYPE_RAW+")", required=false, metaVar="<string>")
 	private String i_format = AbstractReader.TYPE_RAW;
 	@Option(name="-of", usage="output format (default: "+AbstractReader.TYPE_LINE+")", required=false, metaVar="<string>")
 	private String o_format = AbstractReader.TYPE_LINE;
+	
+	public Tokenizer() {}
 	
 	public Tokenizer(String[] args)
 	{
@@ -63,7 +65,10 @@ public class Tokenizer extends AbstractRun
 		try
 		{
 			for (String[] io : filenames)
+			{
+				System.out.println(io[0]);
 				tokenize(tokenizer, segmenter, io[0], io[1], outLine);
+			}
 		}
 		catch (IOException e) {e.printStackTrace();}
 	}
@@ -72,8 +77,6 @@ public class Tokenizer extends AbstractRun
 	{
 		BufferedReader fin = UTInput.createBufferedFileReader(inputFile);
 		PrintStream   fout = UTOutput.createPrintBufferedFileStream(outputFile);
-		
-		System.out.println(outputFile);
 		
 		if (segmenter == null)
 		{

@@ -31,7 +31,6 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 
 
 /**
- * Semantic role reader.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
@@ -73,9 +72,7 @@ public class SRLReader extends DEPReader
 		i_sheads = iSheads;
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.reader.AbstractReader#next()
-	 */
+	@Override
 	public DEPTree next()
 	{
 		DEPTree tree = null;

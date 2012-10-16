@@ -1,6 +1,6 @@
 <!--Feature template for POS tagging in English -->
 <feature_template>
-	<cutoff label="0" feature="1" df="1" ambiguity="0.5" note="specific"/>
+	<cutoff label="0" feature="1" df="1" ambiguity="0.5" note="domain-specific"/>
 	<cutoff label="0" feature="1" df="2" ambiguity="0.6" note="general"/>
 
 	<feature n="1" f0="i-3:f"/>

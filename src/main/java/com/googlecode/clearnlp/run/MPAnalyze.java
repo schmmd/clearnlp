@@ -23,14 +23,13 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;
+import java.util.List;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
-import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
@@ -48,16 +47,14 @@ import com.googlecode.clearnlp.util.UTXml;
  */
 public class MPAnalyze extends AbstractRun
 {
-	@Option(name="-c", usage="the configuration file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
 	protected String s_configFile;
-	@Option(name="-i", usage="the input path (input; required)", required=true, metaVar="<filepath>")
+	@Option(name="-i", usage="input path (required)", required=true, metaVar="<filepath>")
 	protected String s_inputPath;
-	@Option(name="-ie", usage="the input file extension (default: .*)", required=false, metaVar="<regex>")
+	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
 	protected String s_inputExt = ".*";
-	@Option(name="-oe", usage="the output file extension (default: morph)", required=false, metaVar="<string>")
+	@Option(name="-oe", usage="output file extension (default: morph)", required=false, metaVar="<string>")
 	protected String s_outputExt = "morph";
-	
-	public MPAnalyze() {}
 	
 	public MPAnalyze(String[] args)
 	{
@@ -65,39 +62,29 @@ public class MPAnalyze extends AbstractRun
 		
 		try
 		{
-			analyze(s_configFile, s_inputPath, s_inputExt, s_outputExt);
+			Element eConfig = UTXml.getDocumentElement(new FileInputStream(s_configFile));
+			POSReader reader = (POSReader)getReader(eConfig).o1; 
+			AbstractMPAnalyzer analyzer = getMPAnalyzer(eConfig);
+			List<String[]> filenames = getFilenames(s_inputPath, s_inputExt, s_outputExt);
+			
+			for (String[] io : filenames)
+			{
+				System.out.println(io[1]);
+				analyze(analyzer, reader, io[0], io[1]);
+			}
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void analyze(String configFile, String inputPath, String inputExt, String outputExt) throws Exception
+	public void analyze(AbstractMPAnalyzer analyzer, POSReader reader, String inputFile, String outputFile)
 	{
-		Element          eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
-		POSReader         reader = (POSReader)getReader(eConfig); 
-		AbstractMPAnalyzer morph = getMPAnalyzer(eConfig);
-		
-		File f = new File(inputPath);
-		
-		if (f.isDirectory())
-		{
-			for (String inputFile : f.list(new FileExtFilter(inputExt)))
-				analyze(reader, morph, inputPath+File.separator+inputFile, outputExt);	
-		}
-		else
-			analyze(reader, morph, inputPath, outputExt);
-	}
-	
-	public void analyze(POSReader reader, AbstractMPAnalyzer morph, String inputFile, String outputExt)
-	{
-		PrintStream fout = UTOutput.createPrintBufferedFileStream(inputFile+"."+outputExt);
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		reader.open(UTInput.createBufferedFileReader(inputFile));
 		POSNode[] nodes;
 		
-		System.out.println(inputFile);
-		
 		while ((nodes = reader.next()) != null)
 		{
-			morph.lemmatize(nodes);
+			analyzer.lemmatize(nodes);
 			fout.println(POSLib.toString(nodes, true) + AbstractColumnReader.DELIM_SENTENCE);
 		}
 		

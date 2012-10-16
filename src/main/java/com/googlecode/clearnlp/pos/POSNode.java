@@ -152,14 +152,14 @@ public class POSNode
 		
 		build.append(form);
 		
+		build.append(AbstractColumnReader.DELIM_COLUMN);
+		build.append(pos);
+		
 		if (includeLemma)
 		{
 			build.append(AbstractColumnReader.DELIM_COLUMN);
 			build.append(lemma);
 		}
-		
-		build.append(AbstractColumnReader.DELIM_COLUMN);
-		build.append(pos);
 		
 		return build.toString();		
 	}

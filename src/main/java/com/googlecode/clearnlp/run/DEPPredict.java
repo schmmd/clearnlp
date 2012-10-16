@@ -23,9 +23,9 @@
 */
 package com.googlecode.clearnlp.run;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintStream;
+import java.util.List;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
@@ -33,30 +33,38 @@ import org.w3c.dom.Element;
 import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineGetter;
+import com.googlecode.clearnlp.engine.EngineProcess;
+import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
+import com.googlecode.clearnlp.pos.POSNode;
+import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
+import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.reader.DEPReader;
-import com.googlecode.clearnlp.util.UTFile;
+import com.googlecode.clearnlp.reader.LineReader;
+import com.googlecode.clearnlp.reader.POSReader;
+import com.googlecode.clearnlp.reader.RawReader;
+import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
+import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.UTXml;
-
+import com.googlecode.clearnlp.util.pair.Pair;
 
 /**
- * Trains a liblinear model.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class DEPPredict extends AbstractRun
 {
-	final private String EXT = ".parsed";
-	
-	@Option(name="-i", usage="the input path (input; required)", required=true, metaVar="<filepath>")
+	@Option(name="-i", usage="input path (required)", required=true, metaVar="<filepath>")
 	private String s_inputPath;
-	@Option(name="-o", usage="the output file (default: <input_path>.parsed)", required=false, metaVar="<filename>")
-	private String s_outputFile;
-	@Option(name="-c", usage="the configuration file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
+	private String s_inputExt = ".*";
+	@Option(name="-oe", usage="output file extension (default: pos)", required=false, metaVar="<string>")
+	private String s_outputExt = "parsed";
+	@Option(name="-c", usage="configuration file (input; required)", required=true, metaVar="<filename>")
 	private String s_configXml;
-	@Option(name="-m", usage="the model file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-m", usage="model file (input; required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
 	
 	public DEPPredict() {}
@@ -67,69 +75,148 @@ public class DEPPredict extends AbstractRun
 		
 		try
 		{
-			run(s_configXml, s_modelFile, s_inputPath, s_outputFile);	
+			Element eConfig = UTXml.getDocumentElement(new FileInputStream(s_configXml));
+			
+			List<String[]> filenames = getFilenames(s_inputPath, s_inputExt, s_outputExt);
+			Pair<AbstractReader<?>, String> reader = getReader(eConfig);
+			
+			AbstractSegmenter segmenter = null;
+			AbstractTokenizer tokenizer = null;
+			Pair<POSTagger[],Double> taggers = null;
+			AbstractMPAnalyzer analyzer = null;
+			
+			if (reader.o2.equals(AbstractReader.TYPE_RAW ))
+			{
+				segmenter = getSegmenter(eConfig);
+				taggers   = getPOSTaggers(eConfig);
+				analyzer  = getMPAnalyzer(eConfig);
+			}
+			else if (reader.o2.equals(AbstractReader.TYPE_LINE))
+			{
+				tokenizer = getTokenizer(eConfig);
+				taggers   = getPOSTaggers(eConfig);
+				analyzer  = getMPAnalyzer(eConfig);
+			}
+			else if (reader.o2.equals(AbstractReader.TYPE_POS))
+			{
+				taggers  = getPOSTaggers(eConfig);
+				analyzer = getMPAnalyzer(eConfig);
+			}
+				
+			DEPParser parser = EngineGetter.getDEPParser(s_modelFile);
+			
+			for (String[] io : filenames)
+			{
+				if      (reader.o2.equals(AbstractReader.TYPE_RAW))
+					predict(segmenter, taggers, analyzer, parser, (RawReader)reader.o1, io[0], io[1]);
+				else if (reader.o2.equals(AbstractReader.TYPE_LINE))
+					predict(tokenizer, taggers, analyzer, parser, (LineReader)reader.o1, io[0], io[1]);
+				else if (reader.o2.equals(AbstractReader.TYPE_POS))
+					predict(taggers, analyzer, parser, (POSReader)reader.o1, io[0], io[1]);
+				else if (reader.o2.equals(AbstractReader.TYPE_DEP))
+					predict(parser, (DEPReader)reader.o1, io[0], io[1]);
+				else
+				{
+					new Exception("Invalid reader type: "+reader.o2);
+					break;
+				}
+			}
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void run(String configXml, String modelFile, String inputPath, String outputFile) throws Exception
+	public void predict(AbstractSegmenter segmenter, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, DEPParser parser, RawReader fin, String inputFile, String outputFile)
 	{
-		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
-		DEPReader reader = (DEPReader)getReader(eConfig);
-		DEPParser parser = EngineGetter.getDEPParser(modelFile);
-		
-		if (new File(inputPath).isFile())
-		{
-			if (outputFile == null)	outputFile = inputPath + EXT;
-			predict(inputPath, outputFile, reader, parser);
-		}
-		else
-		{
-			for (String filename : UTFile.getSortedFileList(inputPath))
-				predict(filename, filename+EXT, reader, parser);
-		}
-	}
-	
-	/** @param devId if {@code -1}, train the models using all training files. */
-	static public void predict(String inputFile, String outputPath, DEPReader reader, DEPParser parser) throws Exception
-	{
-		long[] time = new long[10];
-		int[] nTotal = new int[10];
-		long st, et, dTotal = 0;
-		int i, n, index;
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
 		DEPTree tree;
+		int i = 0;
 		
-		System.out.println("Predicting: "+inputFile);
-		reader.open(UTInput.createBufferedFileReader(inputFile));
-		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputPath);
+		System.out.print(inputFile+": ");
 		
-		for (n=0; true; n++)
+		for (List<String> tokens : segmenter.getSentences(fin.getBufferedReader()))
 		{
-			st = System.currentTimeMillis();
-			if ((tree = reader.next()) == null)	break;
-			parser.parse(tree);
-			et = System.currentTimeMillis();
-			
+			tree = EngineProcess.getDEPTree(taggers, analyzer, parser, tokens);
 			fout.println(tree.toStringDEP() + AbstractColumnReader.DELIM_SENTENCE);
-			if (n%1000 == 0)	System.out.print(".");
 			
-			index = (tree.size() > 101) ? 9 : (tree.size()-2) / 10;
-			time[index] += (et - st);
-			dTotal      += (et - st);
-			nTotal[index]++;
+			if (++i%1000 == 0)	System.out.print(".");
 		}
 		
 		System.out.println();
-		reader.close();
+		
+		fin.close();
 		fout.close();
+	}
+	
+	public void predict(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, DEPParser parser, LineReader fin, String inputFile, String outputFile)
+	{
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
+		DEPTree tree;
+		String line;
+		int i = 0;
 		
-		System.out.println("\nParsing time per sentence length");
+		System.out.print(inputFile+": ");
 		
-		for (i=0; i<9; i++)
-			System.out.printf("<= %2d: %4.2f (%d/%d)\n", (i+1)*10, (double)time[i]/nTotal[i], time[i], nTotal[i]);
+		while ((line = fin.next()) != null)
+		{
+			tree = EngineProcess.getDEPTree(tokenizer, taggers, analyzer, parser, line);
+			fout.println(tree.toStringDEP() + AbstractColumnReader.DELIM_SENTENCE);
+			
+			if (++i%1000 == 0)	System.out.print(".");
+		}
 		
-		System.out.printf(" > %2d: %4.2f (%d/%d)\n", i*10, (double)time[9]/nTotal[9], time[9], nTotal[9]);
-		System.out.printf("\nAverage parsing time: %4.2f (ms) (%d/%d)\n", (double)dTotal/n, dTotal, n);
+		System.out.println();
+		
+		fin.close();
+		fout.close();
+	}
+	
+	public void predict(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, DEPParser parser, POSReader fin, String inputFile, String outputFile)
+	{
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
+		POSNode[] nodes;
+		DEPTree tree;
+		int i = 0;
+		
+		System.out.print(inputFile+": ");
+		
+		while ((nodes = fin.next()) != null)
+		{
+			tree = EngineProcess.getDEPTree(analyzer, parser, nodes);
+			fout.println(tree.toStringDEP() + AbstractColumnReader.DELIM_SENTENCE);
+
+			if (++i%1000 == 0)	System.out.print(".");
+		}
+		
+		System.out.println();
+		
+		fin.close();
+		fout.close();
+	}
+	
+	public void predict(DEPParser parser, DEPReader fin, String inputFile, String outputFile)
+	{
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
+		DEPTree tree;
+		int i = 0;
+		
+		System.out.print(inputFile+": ");
+		
+		while ((tree = fin.next()) != null)
+		{
+			parser.parse(tree);
+			fout.println(tree.toStringDEP() + AbstractColumnReader.DELIM_SENTENCE);
+
+			if (++i%1000 == 0)	System.out.print(".");
+		}
+		
+		System.out.println();
+		
+		fin.close();
+		fout.close();
 	}
 	
 	static public void main(String[] args)

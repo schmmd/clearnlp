@@ -26,6 +26,7 @@ package com.googlecode.clearnlp.classification.model;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -386,6 +387,19 @@ abstract public class AbstractModel
 		}
 		
 		fout.println(build.toString());
+	}
+	
+	public byte[] toByteArray(double value)
+	{
+		byte[] bytes = new byte[8];
+		ByteBuffer.wrap(bytes).putDouble(value);
+		
+		return bytes;
+	}
+
+	public double toDouble(byte[] bytes)
+	{
+		return ByteBuffer.wrap(bytes).getDouble();
 	}
 	
 	public void toProbability(List<StringPrediction> ps)

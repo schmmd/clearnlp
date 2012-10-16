@@ -70,7 +70,7 @@ public class SRLDevelop extends SRLTrain
 	private void run(String configXml, String featureXml, String trainDir, String devDir) throws Exception
 	{
 		Element   eConfig    = UTXml.getDocumentElement(new FileInputStream(configXml));
-		SRLReader reader     = (SRLReader)getReader(eConfig);
+		SRLReader reader     = (SRLReader)getReader(eConfig).o1;
 		SRLFtrXml xml        = new SRLFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
 		String[]  devFiles   = UTFile.getSortedFileList(devDir);
