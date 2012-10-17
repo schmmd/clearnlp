@@ -362,16 +362,10 @@ public class Tmp
 			fout.close();
 		}
 	}
-
-	public static void main(String[] args) throws IOException
+	
+	public void countSemanticDependents(String[] args)
 	{
-		try
-		{
-			new Tmp(args);
-		}
-		catch (Exception e) {e.printStackTrace();}
-		
-	/*	SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 8);
+		SRLReader reader = new SRLReader(0, 1, 2, 3, 4, 5, 6, 8);
 		reader.open(UTInput.createBufferedFileReader(args[0]));
 		DEPTree tree;
 		DEPNode node, dHead, sHead;
@@ -398,6 +392,20 @@ public class Tmp
 					}
 				}
 			}
-		}*/
+		}
+	}
+	
+	public void convertCoref(String[] args)
+	{
+		
+	}
+
+	public static void main(String[] args) throws IOException
+	{
+		try
+		{
+			new Tmp(args);
+		}
+		catch (Exception e) {e.printStackTrace();}
 	}
 }
