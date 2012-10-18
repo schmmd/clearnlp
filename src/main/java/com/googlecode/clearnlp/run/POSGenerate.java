@@ -67,7 +67,7 @@ public class POSGenerate extends POSTrain
 			else
 				taggers.o1 = new POSTagger[]{getTrainedTagger(eConfig, reader, xml, trnFiles, devId, FLAG_GENERAL)};
 			
-			p.predict(taggers, reader, trnFiles[devId], s_trainDir+File.separator+devFile+".pos");
+			p.predict(taggers, reader, trnFiles[devId], s_trainDir+File.separator+devFile+".tagged");
 		}
 	}
 	

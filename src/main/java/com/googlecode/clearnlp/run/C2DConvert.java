@@ -28,6 +28,7 @@ import java.util.List;
 
 import org.kohsuke.args4j.Option;
 
+import com.googlecode.clearnlp.constituent.CTLib;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
@@ -58,6 +59,8 @@ public class C2DConvert extends AbstractRun
 	private String s_dictFile;
 	@Option(name="-m", usage="merge labels (default: null)", required=false, metaVar="<string>")
 	private String s_mergeLabels = null;
+	@Option(name="-n", usage="if set, normalize empty category indices", required=false, metaVar="<boolean>")
+	private boolean b_normalize = false;
 
 	public C2DConvert() {}
 	
@@ -72,12 +75,12 @@ public class C2DConvert extends AbstractRun
 		
 		for (String[] io : filenames)
 		{
-			n = convert(c2d, morph, s_language, io[0], io[1]);
+			n = convert(c2d, morph, s_language, io[0], io[1], b_normalize);
 			System.out.printf("%s: %d trees\n", io[0], n);
 		}
 	}
 	
-	protected int convert(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputFile, String outputFile)
+	protected int convert(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputFile, String outputFile, boolean normalize)
 	{
 		CTReader  reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
@@ -87,6 +90,8 @@ public class C2DConvert extends AbstractRun
 		
 		for (n=0; (cTree = reader.nextTree()) != null; n++)
 		{
+			if (normalize)	CTLib.normalizeIndices(cTree);
+			
 			if (language.equals(AbstractReader.LANG_EN))
 				CTLibEn.preprocessTree(cTree);
 			

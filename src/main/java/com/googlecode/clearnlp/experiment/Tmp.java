@@ -91,7 +91,7 @@ public class Tmp
 	//	countSRL(args);
 	//	traverse(args[0]);
 	//	getTokens(args[0], args[1]);
-		converNonASC(args);
+	//	converNonASC(args);
 	}
 	
 	void countSRL(String[] args)
@@ -395,11 +395,6 @@ public class Tmp
 		}
 	}
 	
-	public void convertCoref(String[] args)
-	{
-		
-	}
-
 	public static void main(String[] args) throws IOException
 	{
 		try

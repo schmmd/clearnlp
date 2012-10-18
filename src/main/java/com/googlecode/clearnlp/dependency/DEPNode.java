@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.googlecode.clearnlp.ner.NERNode;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.DEPReader;
@@ -43,12 +44,10 @@ import com.googlecode.clearnlp.reader.DEPReader;
  * @since v0.1
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class DEPNode extends POSNode implements Comparable<DEPNode>
+public class DEPNode extends NERNode implements Comparable<DEPNode>
 {
 	/** The ID of this node (default: {@link DEPLib#NULL_ID}). */
 	public int             id;
-	/** The named entity tag of this node (default: null). */
-	public String          namex;
 	/** The extra features of this node (default: empty). */
 	protected DEPFeat      d_feats;
 	/** The dependency head of this node (default: empty). */

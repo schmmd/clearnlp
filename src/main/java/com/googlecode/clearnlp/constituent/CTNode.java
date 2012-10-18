@@ -292,6 +292,12 @@ public class CTNode implements Comparable<CTNode>
 		
 		return null;
 	}
+
+	public CTNode getPrevSibling()
+	{
+		List<CTNode> siblings = parent.ls_children;
+		return (0 <= i_siblingId-1) ? siblings.get(i_siblingId-1) : null;
+	}
 	
 	public CTNode getPrevSibling(String... tags)
 	{
@@ -313,6 +319,12 @@ public class CTNode implements Comparable<CTNode>
 	public List<CTNode> getPrevSiblings()
 	{
 		return (parent != null) ? parent.getChildren(0, this.i_siblingId) : new ArrayList<CTNode>(0);
+	}
+	
+	public CTNode getNextSibling()
+	{
+		List<CTNode> siblings = parent.ls_children;
+		return (i_siblingId+1 < siblings.size()) ? siblings.get(i_siblingId+1) : null;
 	}
 	
 	public CTNode getNextSibling(String... tags)

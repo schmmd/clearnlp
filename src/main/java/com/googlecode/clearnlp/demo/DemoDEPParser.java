@@ -28,16 +28,16 @@ public class DemoDEPParser
 		
 		String sentence = "I'd like to meet Mr. Choi.";
 		parse(tokenizer, analyzer, taggers, parser, sentence);
-		parse(tokenizer, analyzer, taggers, parser, sentence, UTInput.createBufferedFileReader(inputFile));
+		parse(tokenizer, analyzer, taggers, parser, UTInput.createBufferedFileReader(inputFile));
 	}
 	
 	public void parse(AbstractTokenizer tokenizer, AbstractMPAnalyzer analyzer, Pair<POSTagger[],Double> taggers, DEPParser parser, String sentence)
 	{
 		DEPTree tree = EngineProcess.getDEPTree(tokenizer, taggers, analyzer, parser, sentence);
-		System.out.println(tree.toStringDEP());
+		System.out.println(tree.toStringDEP()+"\n");
 	}
 	
-	public void parse(AbstractTokenizer tokenizer, AbstractMPAnalyzer analyzer, Pair<POSTagger[],Double> taggers, DEPParser parser, String sentence, BufferedReader reader)
+	public void parse(AbstractTokenizer tokenizer, AbstractMPAnalyzer analyzer, Pair<POSTagger[],Double> taggers, DEPParser parser, BufferedReader reader)
 	{
 		AbstractSegmenter segmenter = EngineGetter.getSegmenter(language, tokenizer);
 		DEPTree tree;
@@ -45,7 +45,7 @@ public class DemoDEPParser
 		for (List<String> tokens : segmenter.getSentences(reader))
 		{
 			tree = EngineProcess.getDEPTree(taggers, analyzer, parser, tokens);
-			System.out.println(tree.toStringDEP());	
+			System.out.println(tree.toStringDEP()+"\n");	
 		}
 	}
 
