@@ -65,7 +65,7 @@ import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
-import com.googlecode.clearnlp.dependency.srl.SRLParser;
+import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.pos.POSLib;
@@ -101,7 +101,7 @@ public class Tmp
 		reader.open(UTInput.createBufferedFileReader(args[0]));
 				
 		PrintStream fout  = UTOutput.createPrintBufferedFileStream(args[1]);
-		SRLParser parser = new SRLParser(fout);
+		SRLabeler parser = new SRLabeler(fout);
 		DEPTree tree;
 		StringIntPair[][] gHeads;
 		SRLEval eval = new SRLEval();

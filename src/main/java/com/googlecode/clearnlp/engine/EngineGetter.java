@@ -20,14 +20,18 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
 import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
 import com.googlecode.clearnlp.dependency.DEPParser;
+import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
+import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.morphology.DefaultMPAnalyzer;
@@ -155,10 +159,10 @@ public class EngineGetter implements EngineLib
 	
 	// ============================= getter: semantic role labeler =============================
 	
-/*	static public SRLParser getSRLabeler(String modelFile) throws Exception
+	static public SRLabeler getSRLabeler(String modelFile) throws Exception
 	{
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
-		StringModel[] models = new StringModel[SRLParser.MODEL_SIZE];
+		StringModel[] models = new StringModel[SRLabeler.MODEL_SIZE];
 		Set<String> sDown = null, sUp = null;
 		SRLFtrXml xml = null;
 		BufferedReader fin;
@@ -173,18 +177,18 @@ public class EngineGetter implements EngineLib
 			if (entry.equals(EngineGetter.ENTRY_FEATURE))
 				xml = new SRLFtrXml(getFeatureTemplates(fin));
 			else if (entry.equals(ENTRY_SET_DOWN))
-				sDown = AbstractEngine.getStringSet(fin);
+				sDown = UTInput.getStringSet(fin);
 			else if (entry.equals(ENTRY_SET_UP))
-				sUp = AbstractEngine.getStringSet(fin);
-			else if (entry.startsWith(EngineGetter.ENTRY_MODEL+SRLParser.MODEL_LEFT))
-				models[SRLParser.MODEL_LEFT] = new StringModel(fin);
-			else if (entry.startsWith(EngineGetter.ENTRY_MODEL+SRLParser.MODEL_RIGHT))
-				models[SRLParser.MODEL_RIGHT] = new StringModel(fin);
+				sUp = UTInput.getStringSet(fin);
+			else if (entry.startsWith(ENTRY_MODEL+SRLabeler.MODEL_LEFT))
+				models[SRLabeler.MODEL_LEFT] = new StringModel(fin);
+			else if (entry.startsWith(ENTRY_MODEL+SRLabeler.MODEL_RIGHT))
+				models[SRLabeler.MODEL_RIGHT] = new StringModel(fin);
 		}
 		
 		zin.close();
-		return new SRLParser(xml, models, sDown, sUp);
-	}*/
+		return new SRLabeler(xml, models, sDown, sUp);
+	}
 	
 	// ============================= utilities =============================
 	

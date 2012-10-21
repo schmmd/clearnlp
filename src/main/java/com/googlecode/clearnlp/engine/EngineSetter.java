@@ -25,7 +25,7 @@ import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 import com.googlecode.clearnlp.dependency.DEPParser;
-import com.googlecode.clearnlp.dependency.srl.SRLParser;
+import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.pos.POSTagger;
 
 /**
@@ -86,6 +86,7 @@ public class EngineSetter implements EngineLib
 	}
 	
 	// ============================= setter: dependency parser =============================
+	
 	static public void setDEPParser(String modelFile, String featureXml, DEPParser parser) throws Exception
 	{
 		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
@@ -106,7 +107,7 @@ public class EngineSetter implements EngineLib
 	
 	// ============================= setter: semantic role labeler =============================
 
-	static public void setSRLabeler(String modelFile, String featureXml, SRLParser parser) throws Exception
+	static public void setSRLabeler(String modelFile, String featureXml, SRLabeler parser) throws Exception
 	{
 		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
 		PrintStream fout;
@@ -128,7 +129,7 @@ public class EngineSetter implements EngineLib
 		fout.close();
 		zout.closeArchiveEntry();
 		
-		for (modId=0; modId<SRLParser.MODEL_SIZE; modId++)
+		for (modId=0; modId<SRLabeler.MODEL_SIZE; modId++)
 		{
 			zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL+modId));
 			fout = new PrintStream(new BufferedOutputStream(zout));

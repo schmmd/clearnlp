@@ -6,6 +6,7 @@ import java.util.List;
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.AbstractSRLabeler;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
@@ -21,6 +22,41 @@ public class EngineProcess
 	static public List<List<String>> getSentences(AbstractSegmenter segmenter, BufferedReader fin)
 	{
 		return segmenter.getSentences(fin);
+	}
+	
+	// ============================= input: tokens =============================
+	
+	static public POSNode[] getPOSNodes(Pair<POSTagger[],Double> taggers, List<String> tokens)
+	{
+		POSNode[] nodes = toPOSNodes(tokens);
+		predictPOS(taggers, nodes);
+
+		return nodes;
+	}
+		
+	static public POSNode[] getPOSNodesWithLemmas(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, List<String> tokens)
+	{
+		POSNode[] nodes = getPOSNodes(taggers, tokens);
+		analyzer.lemmatize(nodes);
+
+		return nodes;
+	}
+		
+	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, List<String> tokens)
+	{
+		POSNode[] nodes = getPOSNodesWithLemmas(taggers, analyzer, tokens);
+		DEPTree tree = toDEPTree(nodes);
+		parser.parse(tree);
+			
+		return tree;
+	}
+		
+	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractSRLabeler labeler, List<String> tokens)
+	{
+		DEPTree tree = getDEPTree(taggers, analyzer, parser, tokens);
+		labeler.label(tree);
+			
+		return tree;
 	}
 	
 	// ============================= input: sentence =============================
@@ -48,31 +84,10 @@ public class EngineProcess
 		return getDEPTree(taggers, analyzer, parser, tokens);
 	}
 	
-	// ============================= input: tokens =============================
-	
-	static public POSNode[] getPOSNodes(Pair<POSTagger[],Double> taggers, List<String> tokens)
+	static public DEPTree getDEPTree(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractSRLabeler labeler, String sentence)
 	{
-		POSNode[] nodes = toPOSNodes(tokens);
-		predictPOS(taggers, nodes);
-
-		return nodes;
-	}
-	
-	static public POSNode[] getPOSNodesWithLemmas(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, List<String> tokens)
-	{
-		POSNode[] nodes = getPOSNodes(taggers, tokens);
-		analyzer.lemmatize(nodes);
-
-		return nodes;
-	}
-	
-	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, List<String> tokens)
-	{
-		POSNode[] nodes = getPOSNodesWithLemmas(taggers, analyzer, tokens);
-		DEPTree tree = toDEPTree(nodes);
-		parser.parse(tree);
-		
-		return tree;
+		List<String> tokens = getTokens(tokenizer, sentence);
+		return getDEPTree(taggers, analyzer, parser, labeler, tokens);
 	}
 	
 	// ============================= input: POSNode[] =============================

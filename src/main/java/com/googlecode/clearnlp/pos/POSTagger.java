@@ -42,6 +42,8 @@ import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.AbstractReader;
+import com.googlecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.UTString;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.map.Prob2DMap;
@@ -112,9 +114,9 @@ public class POSTagger extends AbstractEngine
 	{
 		try
 		{
-			s_lemmas = getStringSet(fin);
-			s_forms  = getStringSet(fin);
-			m_ambi   = getStringMap(fin, " ");	
+			s_lemmas = UTInput.getStringSet(fin);
+			s_forms  = UTInput.getStringSet(fin);
+			m_ambi   = UTInput.getStringMap(fin, " ");	
 		}
 		catch (Exception e) {e.printStackTrace();}
 		
@@ -125,9 +127,9 @@ public class POSTagger extends AbstractEngine
 	/** Saves collections and a POS tagging model to the specific output-stream. */
 	public void saveModel(PrintStream fout)
 	{
-		printSet(fout, s_lemmas);
-		printSet(fout, s_forms);
-		printMap(fout, m_ambi, " ");
+		UTOutput.printSet(fout, s_lemmas);
+		UTOutput.printSet(fout, s_forms);
+		UTOutput.printMap(fout, m_ambi, " ");
 		s_model.save(fout);
 	}
 	

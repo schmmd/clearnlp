@@ -31,7 +31,7 @@ import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.dependency.srl.SRLParser;
+import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.util.UTFile;
@@ -75,7 +75,7 @@ public class SRLPredict extends AbstractRun
 	{
 		Element  eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		SRLReader reader = (SRLReader)getReader(eConfig).o1;
-		SRLParser parser = null;
+		SRLabeler parser = null;
 	//	SRLParser parser = EngineGetter.getSRLabeler(modelFile);
 		
 		if (new File(inputPath).isFile())
@@ -91,7 +91,7 @@ public class SRLPredict extends AbstractRun
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */
-	static public void predict(String inputFile, String outputPath, SRLReader reader, SRLParser parser) throws Exception
+	static public void predict(String inputFile, String outputPath, SRLReader reader, SRLabeler parser) throws Exception
 	{
 		long[] time = new long[10];
 		int[] nTotal = new int[10];

@@ -26,6 +26,10 @@ package com.googlecode.clearnlp.util;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
@@ -75,5 +79,31 @@ public class UTInput
 		catch (Exception e) {e.printStackTrace();}
 		
 		return stream;
+	}
+	
+	static public Set<String> getStringSet(BufferedReader fin) throws Exception
+	{
+		Set<String> set = new HashSet<String>();
+		int i, size = Integer.parseInt(fin.readLine());
+		
+		for (i=0; i<size; i++)
+			set.add(fin.readLine());
+		
+		return set;
+	}
+	
+	static public Map<String,String> getStringMap(BufferedReader fin, String delim) throws Exception
+	{
+		Map<String,String> map = new HashMap<String, String>();
+		int i, size = Integer.parseInt(fin.readLine());
+		String[] tmp;
+		
+		for (i=0; i<size; i++)
+		{
+			tmp = fin.readLine().split(delim);
+			map.put(tmp[0], tmp[1]);
+		}
+		
+		return map;
 	}
 }

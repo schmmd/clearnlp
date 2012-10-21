@@ -30,7 +30,6 @@ import org.kohsuke.args4j.Option;
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.algorithm.LiblinearL2LR;
 import com.googlecode.clearnlp.classification.algorithm.LiblinearL2SV;
-import com.googlecode.clearnlp.classification.algorithm.LiblinearL2SVPREC;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.classification.train.SparseTrainSpace;
@@ -135,14 +134,6 @@ public class LiblinearTrain extends AbstractRun
 		}
 
 		new Trainer(space, algorithm, numThreads);
-		return space.getModel();
-	}
-	
-	static public AbstractModel getModel(AbstractTrainSpace space, int numThreads, double cost, double eps, double bias, double pBias)
-	{
-		AbstractAlgorithm algorithm = new LiblinearL2SVPREC((byte)1, cost, eps, bias, pBias);
-		new Trainer(space, algorithm, numThreads);
-		
 		return space.getModel();
 	}
 	

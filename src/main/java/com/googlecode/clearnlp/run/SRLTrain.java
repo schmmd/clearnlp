@@ -32,7 +32,7 @@ import org.w3c.dom.Element;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.dependency.srl.SRLParser;
+import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.engine.EngineSetter;
 import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
 import com.googlecode.clearnlp.reader.SRLReader;
@@ -79,7 +79,7 @@ public class SRLTrain extends AbstractRun
 		SRLReader reader     = (SRLReader)getReader(eConfig).o1;
 		SRLFtrXml xml        = new SRLFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
-		SRLParser parser;
+		SRLabeler parser;
 		
 		Pair<Set<String>,Set<String>> p = getDownUpSets(reader, xml, trainFiles, -1);
 		int i;
@@ -96,7 +96,7 @@ public class SRLTrain extends AbstractRun
 	
 	public Pair<Set<String>,Set<String>> getDownUpSets(SRLReader reader, SRLFtrXml xml, String[] trainFiles, int devId)
 	{
-		SRLParser parser = new SRLParser();
+		SRLabeler parser = new SRLabeler();
 		int i, size = trainFiles.length;
 		DEPTree tree;
 		
@@ -123,18 +123,18 @@ public class SRLTrain extends AbstractRun
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */
-	public SRLParser getTrainedParser(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, StringModel[] models, Set<String> sDown, Set<String> sUp, int devId) throws Exception
+	public SRLabeler getTrainedParser(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, StringModel[] models, Set<String> sDown, Set<String> sUp, int devId) throws Exception
 	{
-		StringTrainSpace[] spaces = new StringTrainSpace[SRLParser.MODEL_SIZE];
+		StringTrainSpace[] spaces = new StringTrainSpace[SRLabeler.MODEL_SIZE];
 		int i, size = trainFiles.length;
-		SRLParser parser;
+		SRLabeler parser;
 		DEPTree tree;
 		
 		for (i=0; i<spaces.length; i++)
 			spaces[i] = new StringTrainSpace(false, xml.getLabelCutoff(0), xml.getFeatureCutoff(0));
 		
-		if (models == null)	parser = new SRLParser(xml, spaces, sDown, sUp);
-		else				parser = new SRLParser(xml, models, spaces, sDown, sUp); 
+		if (models == null)	parser = new SRLabeler(xml, spaces, sDown, sUp);
+		else				parser = new SRLabeler(xml, models, spaces, sDown, sUp); 
 		
 		System.out.println("Collecting training instances:");
 		
@@ -156,7 +156,7 @@ public class SRLTrain extends AbstractRun
 		for (i=0; i<models.length; i++)
 			models[i] = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), spaces[i], i);
 		
-		return new SRLParser(xml, models, sDown, sUp);
+		return new SRLabeler(xml, models, sDown, sUp);
 	}
 	
 	static public void main(String[] args)

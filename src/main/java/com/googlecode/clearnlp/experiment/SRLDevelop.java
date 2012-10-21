@@ -32,7 +32,7 @@ import org.w3c.dom.Element;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
-import com.googlecode.clearnlp.dependency.srl.SRLParser;
+import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.run.SRLTrain;
@@ -97,7 +97,7 @@ public class SRLDevelop extends SRLTrain
 	{
 		SRLEval lEval, gEval = new SRLEval();
 		StringIntPair[][] gHeads, sHeads;
-		SRLParser parser;
+		SRLabeler parser;
 		DEPTree tree;
 		int i, n, size, N = 10;
 		int[][] spaces = new int[2][N];

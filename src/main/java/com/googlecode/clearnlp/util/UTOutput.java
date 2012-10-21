@@ -26,6 +26,8 @@ package com.googlecode.clearnlp.util;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.Map;
+import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
 /**
@@ -60,5 +62,28 @@ public class UTOutput
 		catch (Exception e) {e.printStackTrace();}
 		
 		return fout;
+	}
+	
+	static public void printSet(PrintStream fout, Set<String> set)
+	{
+		fout.println(set.size());
+		for (String key : set)	fout.println(key);
+	}
+	
+	static public void printMap(PrintStream fout, Map<String,String> map, String delim)
+	{
+		StringBuilder build;
+		fout.println(map.size());
+		
+		for (String key : map.keySet())
+		{
+			build = new StringBuilder();
+			
+			build.append(key);
+			build.append(delim);
+			build.append(map.get(key));
+
+			fout.println(build.toString());
+		}
 	}
 }

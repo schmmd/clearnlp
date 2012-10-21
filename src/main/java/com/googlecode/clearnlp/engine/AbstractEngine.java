@@ -23,12 +23,7 @@
 */
 package com.googlecode.clearnlp.engine;
 
-import java.io.BufferedReader;
 import java.io.PrintStream;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.feature.xml.AbstractFtrXml;
@@ -54,56 +49,7 @@ abstract public class AbstractEngine
 	{
 		i_flag = flag;
 	}
-	
-	public Set<String> getStringSet(BufferedReader fin) throws Exception
-	{
-		Set<String> set = new HashSet<String>();
-		int i, size = Integer.parseInt(fin.readLine());
-		
-		for (i=0; i<size; i++)
-			set.add(fin.readLine());
-		
-		return set;
-	}
-	
-	protected void printSet(PrintStream fout, Set<String> set)
-	{
-		fout.println(set.size());
-		for (String key : set)	fout.println(key);
-	}
-	
-	protected Map<String,String> getStringMap(BufferedReader fin, String delim) throws Exception
-	{
-		Map<String,String> map = new HashMap<String, String>();
-		int i, size = Integer.parseInt(fin.readLine());
-		String[] tmp;
-		
-		for (i=0; i<size; i++)
-		{
-			tmp = fin.readLine().split(delim);
-			map.put(tmp[0], tmp[1]);
-		}
-		
-		return map;
-	}
-	
-	protected void printMap(PrintStream fout, Map<String,String> map, String delim)
-	{
-		StringBuilder build;
-		fout.println(map.size());
-		
-		for (String key : map.keySet())
-		{
-			build = new StringBuilder();
-			
-			build.append(key);
-			build.append(delim);
-			build.append(map.get(key));
 
-			fout.println(build.toString());
-		}
-	}
-	
 	protected StringFeatureVector getFeatureVector(AbstractFtrXml xml)
 	{
 		StringFeatureVector vector = new StringFeatureVector();

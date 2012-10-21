@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -39,15 +38,18 @@ import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.engine.AbstractEngine;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
+import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
-
-public class SRLParser extends AbstractEngine
+/**
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
+ */
+public class SRLabeler extends AbstractSRLabeler
 {
 	static public final int MODEL_SIZE	= 2;
 	static public final int MODEL_LEFT	= 0;
@@ -82,10 +84,8 @@ public class SRLParser extends AbstractEngine
 	protected Prob1DMap		m_down, m_up;
 	protected Set<String>	s_down, s_up;
 	
-	protected IntObjectOpenHashMap<IntOpenHashSet> m_coverage;
-	
 	/** Constructs a semantic role labeler for collecting. */
-	public SRLParser()
+	public SRLabeler()
 	{
 		super(FLAG_LEXICA);
 		m_down = new Prob1DMap();
@@ -93,7 +93,7 @@ public class SRLParser extends AbstractEngine
 	}
 	
 	/** Constructs a semantic role labeler for training. */
-	public SRLParser(SRLFtrXml xml, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
+	public SRLabeler(SRLFtrXml xml, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
 	{
 		super(FLAG_TRAIN);
 		f_xml    = xml;
@@ -103,7 +103,7 @@ public class SRLParser extends AbstractEngine
 	}
 	
 	/** Constructs a semantic role labeler for predicting. */
-	public SRLParser(SRLFtrXml xml, StringModel[] models, Set<String> sDown, Set<String> sUp)
+	public SRLabeler(SRLFtrXml xml, StringModel[] models, Set<String> sDown, Set<String> sUp)
 	{
 		super(FLAG_PREDICT);
 		f_xml    = xml;
@@ -113,7 +113,7 @@ public class SRLParser extends AbstractEngine
 	}
 	
 	/** Constructs a semantic role labeler for bootstrapping. */
-	public SRLParser(SRLFtrXml xml, StringModel[] models, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
+	public SRLabeler(SRLFtrXml xml, StringModel[] models, StringTrainSpace[] spaces, Set<String> sDown, Set<String> sUp)
 	{
 		super(FLAG_BOOST);
 		f_xml    = xml;
@@ -124,7 +124,7 @@ public class SRLParser extends AbstractEngine
 	}
 	
 	/** Constructs a semantic role labeler for demonstration. */
-	public SRLParser(PrintStream fout)
+	public SRLabeler(PrintStream fout)
 	{
 		super(FLAG_DEMO);
 		f_trans = fout;
@@ -140,12 +140,12 @@ public class SRLParser extends AbstractEngine
 	
 	public void saveDownSet(PrintStream fout)
 	{
-		printSet(fout, s_down);
+		UTOutput.printSet(fout, s_down);
 	}
 	
 	public void saveUpSet(PrintStream fout)
 	{
-		printSet(fout, s_up);
+		UTOutput.printSet(fout, s_up);
 	}
 	
 	/** @return the semantic role labeling models. */
@@ -317,28 +317,6 @@ public class SRLParser extends AbstractEngine
 		return n_preds;
 	}
 	
-	public IntIntPair getArgCoverage(StringIntPair[][] gHeads)
-	{
-		IntIntPair p = new IntIntPair(0, 0);
-		int argId, size = gHeads.length;
-		StringIntPair[] preds;
-		
-		for (argId=1; argId<size; argId++)
-		{
-			preds = gHeads[argId];
-			
-			for (StringIntPair pred : preds)
-			{
-				if (m_coverage.get(pred.i).contains(argId))
-					p.i1++;
-			}
-			
-			p.i2 += preds.length;
-		}
-		
-		return p;
-	}
-
 	/** Labels the dependency tree. */
 	public void label(DEPTree tree)
 	{
@@ -376,22 +354,6 @@ public class SRLParser extends AbstractEngine
 			{
 				labelAux(pred, d_lca);
 				d_lca = d_lca.getHead();
-				
-			/*	if (d_lca == null)
-					break;
-				else
-				{
-					if (!s_skip.contains(d_lca.id))
-					{
-						i_arg = d_lca.id;
-						addArgument(getLabel(getDirIndex()));	
-					}
-					
-					if (pred.isDependentOf(d_lca))
-						continue;
-					else if (!s_up.contains(getDUPath(d_lca, pred)))
-						break;
-				}*/
 			}
 			while (d_lca != null);// && (pred.isDependentOf(d_lca) || s_up.contains(getDUPath(d_lca, pred))));
 			
@@ -401,7 +363,7 @@ public class SRLParser extends AbstractEngine
 		}
 	}
 	
-	/** Called by {@link SRLParser#label(DEPTree)}. */
+	/** Called by {@link SRLabeler#label(DEPTree)}. */
 	private void labelAux(DEPNode pred, DEPNode head)
 	{
 		if (!s_skip.contains(head.id))
@@ -413,7 +375,7 @@ public class SRLParser extends AbstractEngine
 		labelDown(pred, head.getDependents());
 	}
 	
-	/** Called by {@link SRLParser#labelAux(DEPNode, IntOpenHashSet)}. */
+	/** Called by {@link SRLabeler#labelAux(DEPNode, IntOpenHashSet)}. */
 	private void labelDown(DEPNode pred, List<DEPArc> arcs)
 	{
 		DEPNode arg;
@@ -457,13 +419,13 @@ public class SRLParser extends AbstractEngine
 			s_spaces[idx].addInstance(getGoldArgLabel(), vector);
 			label = getAutoLabel(idx, vector);
 		}
-		else // if (i_flag == FLAG_TRANSITION)
+		else
 			label = getGoldArgLabel();
 
 		return label;
 	}
 	
-	/** Called by {@link SRLParser#getGoldLabel(byte)}. */
+	/** Called by {@link SRLabeler#getGoldLabel(byte)}. */
 	private String getGoldArgLabel()
 	{
 		for (StringIntPair head : g_heads[i_arg])
@@ -475,7 +437,7 @@ public class SRLParser extends AbstractEngine
 		return LB_NO_ARG;
 	}
 
-	/** Called by {@link SRLParser#getLabel(byte)}. */
+	/** Called by {@link SRLabeler#getLabel(byte)}. */
 	private String getAutoLabel(int idx, StringFeatureVector vector)
 	{
 		return s_models[idx].predictBest(vector).label;
@@ -767,7 +729,31 @@ public class SRLParser extends AbstractEngine
 		return node;
 	}
 	
-/*	private boolean containsArgument(DEPNode node)
+/*	protected IntObjectOpenHashMap<IntOpenHashSet> m_coverage;
+	
+	public IntIntPair getArgCoverage(StringIntPair[][] gHeads)
+	{
+		IntIntPair p = new IntIntPair(0, 0);
+		int argId, size = gHeads.length;
+		StringIntPair[] preds;
+		
+		for (argId=1; argId<size; argId++)
+		{
+			preds = gHeads[argId];
+			
+			for (StringIntPair pred : preds)
+			{
+				if (m_coverage.get(pred.i).contains(argId))
+					p.i1++;
+			}
+			
+			p.i2 += preds.length;
+		}
+		
+		return p;
+	}
+	
+	private boolean containsArgument(DEPNode node)
 	{
 		DEPNode dep;
 		

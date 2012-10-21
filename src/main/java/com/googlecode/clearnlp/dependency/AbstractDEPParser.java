@@ -28,6 +28,10 @@ import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 import com.googlecode.clearnlp.util.triple.Triple;
 
+/**
+ * @since 1.1.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
+ */
 abstract public class AbstractDEPParser extends AbstractEngine
 { 
 	protected final String LB_LEFT		= "L";

@@ -34,7 +34,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
-import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -407,13 +406,7 @@ abstract public class AbstractRun
 			double eps  = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "eps"));
 			double bias = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "bias"));
 
-			if (solver == AbstractAlgorithm.SOLVER_LIBLINEAR_LR2_L1_SV_PREC)
-			{
-				double pBias = Double.parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "pBias"));
-				return getLiblinearModel(space, numThreads, cost, eps, bias, pBias);
-			}
-			else
-				return getLiblinearModel(space, numThreads, solver, cost, eps, bias);	
+			return getLiblinearModel(space, numThreads, solver, cost, eps, bias);
 		}
 		
 		return null;
@@ -426,14 +419,6 @@ abstract public class AbstractRun
 		System.out.println("Liblinear:");
 		System.out.printf("- solver=%d, cost=%f, eps=%f, bias=%f\n", solver, cost, eps, bias);
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
-	}
-	
-	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, double cost, double eps, double bias, double pBias)
-	{
-		space.build();
-		System.out.println("LiblinearPrec:");
-		System.out.printf("- cost=%f, eps=%f, bias=%f, pBias=%f\n", cost, eps, bias, pBias);
-		return LiblinearTrain.getModel(space, numThreads, cost, eps, bias, pBias);
 	}
 	
 	protected int getNumOfThreads(Element eTrain)
