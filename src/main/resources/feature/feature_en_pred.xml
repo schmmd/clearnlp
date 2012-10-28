@@ -1,32 +1,33 @@
 <feature_template>
     <cutoff label="0" feature="2"/>
+    <lexica type="predicate" label="VB.*|NN.*"/>
 
-    <feature n="1" f0="i:f"/>
-    <feature n="1" f0="i:m"/>
-    <feature n="1" f0="i:p"/>
-    <feature n="2" f0="i:m" f1="i:p"/>
+    <feature n="1" f0="p:f"/>
+    <feature n="1" f0="p:m"/>
+    <feature n="1" f0="p:p"/>
+    <feature n="2" f0="p:m" f1="p:p"/>
 
-    <feature n="1" f0="i-1:p"/>
-    <feature n="2" f0="i-1:m" f1="i-1:p"/>
+    <feature n="1" f0="p-1:p"/>
+    <feature n="2" f0="p-1:m" f1="p-1:p"/>
 
-    <feature n="1" f0="i_h:m"/>
-    <feature n="2" f0="i_h:m" f1="i_h:p"/>
-    <feature n="2" f0="i_h:m" f1="i:d"/>
+    <feature n="1" f0="p_h:m"/>
+    <feature n="2" f0="p_h:m" f1="p_h:p"/>
+    <feature n="2" f0="p_h:m" f1="p:d"/>
 
-    <feature n="1" f0="i_lmd:m"/>
-    <feature n="1" f0="i_lmd:p"/>
-    <feature n="1" f0="i_lmd:d"/>
-    <feature n="2" f0="i_lmd:d" f1="i:p"/>
+    <feature n="1" f0="p_lmd:m"/>
+    <feature n="1" f0="p_lmd:p"/>
+    <feature n="1" f0="p_lmd:d"/>
+    <feature n="2" f0="p_lmd:d" f1="p:p"/>
 
-    <feature n="1" f0="i_rmd:m"/>
-    <feature n="1" f0="i_rmd:p" visible="false"/>
-    <feature n="1" f0="i_rmd:d"/>
-    <feature n="2" f0="i_rmd:d" f1="i:p"/>
+    <feature n="1" f0="p_rmd:m"/>
+    <feature n="1" f0="p_rmd:p" visible="false"/>
+    <feature n="1" f0="p_rmd:d"/>
+    <feature n="2" f0="p_rmd:d" f1="p:p"/>
 
-    <feature t="s" n="1" f0="i:ds"/>
+    <feature t="s" n="1" f0="p:ds"/>
 
-    <feature n="2" f0="i:p" f1="i-1:m"/>
-    <feature n="2" f0="i:m" f1="i-1:p"/>
-    <feature n="2" f0="i:p" f1="i_h:m"/>
-    <feature n="2" f0="i:m" f1="i_rmd:p"/>
+    <feature n="2" f0="p:p" f1="p-1:m"/>
+    <feature n="2" f0="p:m" f1="p-1:p"/>
+    <feature n="2" f0="p:p" f1="p_h:m"/>
+    <feature n="2" f0="p:m" f1="p_rmd:p"/>
 </feature_template>

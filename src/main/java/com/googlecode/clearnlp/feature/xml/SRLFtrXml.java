@@ -30,10 +30,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.googlecode.clearnlp.dependency.DEPNode;
+import com.googlecode.clearnlp.util.UTXml;
+
 /**
- * Dependency feature template.
- * @author Jinho D. Choi
- * <b>Last update:</b> 4/12/2011
+ * @since 1.2.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class SRLFtrXml extends AbstractFtrXml
 {
@@ -46,6 +48,8 @@ public class SRLFtrXml extends AbstractFtrXml
 	static public final String R_H		= "h";		// head
 	static public final String R_LMD	= "lmd";	// leftmost dependent
 	static public final String R_RMD	= "rmd";	// rightmost dependent
+	static public final String R_LND	= "lnd";	// left-nearest dependent
+	static public final String R_RND	= "rnd";	// right-nearest dependent
 	static public final String R_LNS	= "lns";	// left-nearest sibling
 	static public final String R_RNS	= "rns";	// right-nearest sibling
 
@@ -63,10 +67,12 @@ public class SRLFtrXml extends AbstractFtrXml
 	static public final Pattern P_PATH	 	= Pattern.compile("^pt(["+F_POS+F_DEPREL+F_DISTANCE+"])(\\d+)$");
 	static public final Pattern P_ARGN 	 	= Pattern.compile("^argn(\\d+)$");
 	
-	static protected final Pattern P_REL	= Pattern.compile(R_H+"|"+R_LMD+"|"+R_RMD+"|"+R_LNS+"|"+R_RNS);
+	static protected final Pattern P_REL	= Pattern.compile(R_H+"|"+R_LMD+"|"+R_RMD+"|"+R_LND+"|"+R_RND+"|"+R_LNS+"|"+R_RNS);
 	static protected final Pattern P_FIELD	= Pattern.compile(F_FORM+"|"+F_LEMMA+"|"+F_POS+"|"+F_DEPREL+"|"+F_DISTANCE+"|"+F_DEPREL_SET+"|"+F_GRAND_DEPREL_SET);
 	
+	protected final String XML_LEXICA_PREDICATE = "predicate";
 	private int cutoff_down, cutoff_up;
+	private Pattern p_predicates;
 	
 	public SRLFtrXml(InputStream fin)
 	{
@@ -101,8 +107,34 @@ public class SRLFtrXml extends AbstractFtrXml
 	{
 		return cutoff_up;
 	}
+	
+	public boolean isPredicate(DEPNode node)
+	{
+		return p_predicates.matcher(node.pos).find();
+	}
 
-	protected void initMore(Document doc) throws Exception {}
+	protected void initMore(Document doc) throws Exception
+	{
+		initMoreLexica(doc);
+	}
+	
+	private void initMoreLexica(Document doc)
+	{
+		NodeList eList = doc.getElementsByTagName(XML_LEXICA);
+		int i, size = eList.getLength();
+		String type, label;
+		Element eLexica;
+		
+		for (i=0; i<size; i++)
+		{
+			eLexica = (Element)eList.item(i);
+			type    = UTXml.getTrimmedAttribute(eLexica, XML_TYPE);
+			label   = UTXml.getTrimmedAttribute(eLexica, XML_LABEL);
+			
+			if (type.equals(XML_LEXICA_PREDICATE))
+				p_predicates = Pattern.compile("^"+label+"$");
+		}
+	}
 	
 	@Override
 	protected boolean validSource(char source)

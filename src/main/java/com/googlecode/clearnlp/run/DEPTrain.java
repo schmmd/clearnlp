@@ -47,17 +47,12 @@ import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 
-
 /**
- * Trains a liblinear model.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class DEPTrain extends AbstractRun
 {
-	protected final String ENTRY_FEATURE = "FEATURE";
-	protected final String ENTRY_MODEL   = "MODEL";
-	
 	protected final String LEXICON_PUNCTUATION = "punctuation"; 
 	
 	@Option(name="-i", usage="input directory containing training files (required)", required=true, metaVar="<directory>")
@@ -86,11 +81,11 @@ public class DEPTrain extends AbstractRun
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void run(String configXml, String featureXml, String trainDir, String modelFile, int nBoot) throws Exception
+	public void run(String configXml, String featureXml, String trainDir, String modelFile, int nBoot) throws Exception
 	{
-		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
+		Element eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
-		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
+		String[] trainFiles = UTFile.getSortedFileList(trainDir);
 		Set<String> sPunc = getLexica(eConfig, xml, trainFiles, -1);
 		DEPParser parser;
 		int boot = 0;

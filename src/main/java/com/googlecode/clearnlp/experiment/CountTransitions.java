@@ -26,6 +26,7 @@ package com.googlecode.clearnlp.experiment;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
@@ -83,9 +84,12 @@ public class CountTransitions
 	
 	public void countArguments(String inputFile, boolean isGold)
 	{
+		Pattern isPred = Pattern.compile("NN.*");
 		SRLReader reader;
-		if (isGold)	reader = new SRLReader(0, 1, 2, 4, 6, 7,  8, 12);
-		else		reader = new SRLReader(0, 1, 3, 5, 6, 9, 10, 12);
+		
+		if (isGold)	reader = new SRLReader(0, 1, 2, 4, 6, 7,  9, 12);
+		else		reader = new SRLReader(0, 1, 3, 4, 6, 8, 10, 12);
+	//	else		reader = new SRLReader(0, 1, 3, 5, 6, 8, 10, 12);
 
 		DEPTree tree;
 		int[]   counts = new int[2];
@@ -96,7 +100,7 @@ public class CountTransitions
 		while ((tree = reader.next()) != null)
 		{
 			tree.setDependents();
-			checkArguments(tree, counts, spaces);
+			checkArguments(tree, counts, spaces, isPred);
 		}
 		
 		System.out.printf("Argument coverage: %5.2f ( %d / %d )\n", 100d*counts[0]/counts[1], counts[0], counts[1]);
@@ -118,7 +122,7 @@ public class CountTransitions
 		System.out.printf("# of predicates: %d\n", tPred);
 	}
 	
-	private void checkArguments(DEPTree tree, int[] counts, int[][] spaces)
+	private void checkArguments(DEPTree tree, int[] counts, int[][] spaces, Pattern isPred)
 	{
 		List<List<DEPArc>> list = tree.getArgumentList();
 		int i, size = tree.size();
@@ -132,8 +136,10 @@ public class CountTransitions
 		for (i=1; i<size; i++)
 		{
 			pred = tree.get(i);
+			if (!isPred.matcher(pred.pos).find())	continue;
+			
 			args = list.get(i);
-			cans = pred.getArgumentCandidateSet(1, false);
+			cans = pred.getArgumentCandidateSet(100, false);
 			
 			if (pred.getFeat(DEPLibEn.FEAT_PB) != null)
 			{

@@ -24,6 +24,7 @@
 package com.googlecode.clearnlp.run;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,7 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
+import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
@@ -81,6 +83,8 @@ abstract public class AbstractRun
 	final public String TAG_LANGUAGE	= "language";
 	final public String TAG_DICTIONARY	= "dictionary";
 	final public String TAG_POS_MODEL	= "pos_model";
+	final public String TAG_DEP_MODEL	= "dep_model";
+	final public String TAG_SRL_MODEL	= "srl_model";
 	
 	/** Initializes arguments using args4j. */
 	protected void initArgs(String[] args)
@@ -144,6 +148,20 @@ abstract public class AbstractRun
 		catch (Exception e) {e.printStackTrace();}
 		
 		return null;
+	}
+	
+	protected AbstractDEPParser getDEPParser(Element eConfig)
+	{
+		String modelFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_DEP_MODEL));
+		AbstractDEPParser parser = null;
+		
+		try
+		{
+			parser = EngineGetter.getDEPParser(modelFile);
+		}
+		catch (IOException e) {e.printStackTrace();}
+		
+		return parser;
 	}
 	
 	// ============================= getter: readers =============================

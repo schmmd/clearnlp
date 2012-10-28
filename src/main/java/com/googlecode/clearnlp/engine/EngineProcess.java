@@ -11,6 +11,7 @@ import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.pos.POSTagger;
+import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.pair.Pair;
@@ -51,9 +52,10 @@ public class EngineProcess
 		return tree;
 	}
 		
-	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractSRLabeler labeler, List<String> tokens)
+	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, List<String> tokens)
 	{
 		DEPTree tree = getDEPTree(taggers, analyzer, parser, tokens);
+		identifier.identify(tree);
 		labeler.label(tree);
 			
 		return tree;
@@ -84,10 +86,10 @@ public class EngineProcess
 		return getDEPTree(taggers, analyzer, parser, tokens);
 	}
 	
-	static public DEPTree getDEPTree(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractSRLabeler labeler, String sentence)
+	static public DEPTree getDEPTree(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, String sentence)
 	{
 		List<String> tokens = getTokens(tokenizer, sentence);
-		return getDEPTree(taggers, analyzer, parser, labeler, tokens);
+		return getDEPTree(taggers, analyzer, parser, identifier, labeler, tokens);
 	}
 	
 	// ============================= input: POSNode[] =============================
@@ -97,6 +99,14 @@ public class EngineProcess
 		DEPTree tree = toDEPTree(nodes);
 		analyzer.lemmatize(tree);
 		parser.parse(tree);
+		
+		return tree;
+	}
+	
+	static public DEPTree getDEPTree(AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, POSNode[] nodes)
+	{
+		DEPTree tree = getDEPTree(analyzer, parser, nodes);
+		predictSRL(identifier, labeler, tree);
 		
 		return tree;
 	}
@@ -111,6 +121,14 @@ public class EngineProcess
 			taggers.o1[0].tag(nodes);
 		else
 			taggers.o1[1].tag(nodes);
+	}
+	
+	// ============================= predict: SRL =============================
+	
+	static public void predictSRL(AbstractPredIdentifier identifier, AbstractSRLabeler labeler, DEPTree tree)
+	{
+	//	identifier.identify(tree);
+		labeler.label(tree);	
 	}
 	
 	// ============================= conversion =============================

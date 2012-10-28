@@ -30,7 +30,7 @@ import java.util.List;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
-import com.googlecode.clearnlp.dependency.DEPParser;
+import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.engine.EngineProcess;
@@ -60,7 +60,7 @@ public class DEPPredict extends AbstractRun
 	private String s_inputPath;
 	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
 	private String s_inputExt = ".*";
-	@Option(name="-oe", usage="output file extension (default: pos)", required=false, metaVar="<string>")
+	@Option(name="-oe", usage="output file extension (default: parsed)", required=false, metaVar="<string>")
 	private String s_outputExt = "parsed";
 	@Option(name="-c", usage="configuration file (input; required)", required=true, metaVar="<filename>")
 	private String s_configXml;
@@ -103,7 +103,7 @@ public class DEPPredict extends AbstractRun
 				analyzer = getMPAnalyzer(eConfig);
 			}
 				
-			DEPParser parser = EngineGetter.getDEPParser(s_modelFile);
+			AbstractDEPParser parser = EngineGetter.getDEPParser(s_modelFile);
 			
 			for (String[] io : filenames)
 			{
@@ -125,7 +125,7 @@ public class DEPPredict extends AbstractRun
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void predict(AbstractSegmenter segmenter, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, DEPParser parser, RawReader fin, String inputFile, String outputFile)
+	public void predict(AbstractSegmenter segmenter, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, RawReader fin, String inputFile, String outputFile)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		fin.open(UTInput.createBufferedFileReader(inputFile));
@@ -148,7 +148,7 @@ public class DEPPredict extends AbstractRun
 		fout.close();
 	}
 	
-	public void predict(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, DEPParser parser, LineReader fin, String inputFile, String outputFile)
+	public void predict(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, LineReader fin, String inputFile, String outputFile)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		fin.open(UTInput.createBufferedFileReader(inputFile));
@@ -172,7 +172,7 @@ public class DEPPredict extends AbstractRun
 		fout.close();
 	}
 	
-	public void predict(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, DEPParser parser, POSReader fin, String inputFile, String outputFile)
+	public void predict(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, POSReader fin, String inputFile, String outputFile)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		fin.open(UTInput.createBufferedFileReader(inputFile));
@@ -196,7 +196,7 @@ public class DEPPredict extends AbstractRun
 		fout.close();
 	}
 	
-	public void predict(DEPParser parser, DEPReader fin, String inputFile, String outputFile)
+	public void predict(AbstractDEPParser parser, DEPReader fin, String inputFile, String outputFile)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		fin.open(UTInput.createBufferedFileReader(inputFile));

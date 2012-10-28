@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
 */
-package com.googlecode.clearnlp.engine;
+package com.googlecode.clearnlp.predicate;
 
+import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.engine.AbstractEngine;
 
 /**
- * @since 1.1.0
+ * @since 1.2.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public interface EngineLib
+abstract public class AbstractPredIdentifier extends AbstractEngine
 {
-	final String ENTRY_CONFIGURATION	= "CONFIGURATION";
-	final String ENTRY_FEATURE			= "FEATURE";
-	final String ENTRY_MODEL			= "MODEL";
+	public AbstractPredIdentifier(byte flag)
+	{
+		super(flag);
+	}
 
-	final String ENTRY_THRESHOLD		= "THRESHOLD";	// for POSTagger
-	final String ENTRY_SET_PUNCT		= "SET_PUNCT";	// for DEPParser
-	final String ENTRY_SET_DOWN 		= "SET_DOWN";	// for SRLabeler
-	final String ENTRY_SET_UP   		= "SET_UP";		// for SRLabeler
+	abstract public void identify(DEPTree tree);
 }

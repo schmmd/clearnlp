@@ -27,6 +27,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import com.googlecode.clearnlp.dependency.DEPParser;
 import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.pos.POSTagger;
+import com.googlecode.clearnlp.predicate.PredIdentifier;
 
 /**
  * @since 1.1.0
@@ -89,20 +90,14 @@ public class EngineSetter implements EngineLib
 	
 	static public void setDEPParser(String modelFile, String featureXml, DEPParser parser) throws Exception
 	{
-		JarArchiveOutputStream zout = new JarArchiveOutputStream(new FileOutputStream(modelFile));
-		PrintStream fout;
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_FEATURE));
-		IOUtils.copy(new FileInputStream(featureXml), zout);
-		zout.closeArchiveEntry();
-		
-		zout.putArchiveEntry(new JarArchiveEntry(ENTRY_MODEL));
-		fout = new PrintStream(new BufferedOutputStream(zout));
-		parser.saveModel(fout);
-		fout.close();
-		zout.closeArchiveEntry();
-		
-		zout.close();
+		saveModel(modelFile, featureXml, parser);
+	}
+	
+	// ============================= setter: predicate identifier =============================
+	
+	static public void setPredIdentifier(String modelFile, String featureXml, PredIdentifier identifier) throws Exception
+	{
+		saveModel(modelFile, featureXml, identifier);
 	}
 	
 	// ============================= setter: semantic role labeler =============================

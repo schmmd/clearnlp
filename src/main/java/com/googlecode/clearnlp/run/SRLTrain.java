@@ -41,10 +41,8 @@ import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.pair.Pair;
 
-
 /**
- * Trains a liblinear model.
- * @since v0.1
+ * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
 public class SRLTrain extends AbstractRun
@@ -59,6 +57,8 @@ public class SRLTrain extends AbstractRun
 	protected String s_modelFile;
 	@Option(name="-n", usage="the bootstrapping level (default: 2)", required=false, metaVar="<integer>")
 	protected int n_boot = 2;
+	@Option(name="-sb", usage="if set, save all intermediate bootstrapping models", required=false, metaVar="<boolean>")
+	protected boolean b_saveAllModels = false;
 	
 	public SRLTrain() {}
 	
@@ -79,24 +79,26 @@ public class SRLTrain extends AbstractRun
 		SRLReader reader     = (SRLReader)getReader(eConfig).o1;
 		SRLFtrXml xml        = new SRLFtrXml(new FileInputStream(featureXml));
 		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
-		SRLabeler parser;
+		SRLabeler labeler;
 		
 		Pair<Set<String>,Set<String>> p = getDownUpSets(reader, xml, trainFiles, -1);
-		int i;
+		int boot = 0;
 		
-		parser = getTrainedParser(eConfig, reader, xml, trainFiles, null, p.o1, p.o2, -1);
-		EngineSetter.setSRLabeler(modelFile, featureXml, parser);
+		labeler = getTrainedLabeler(eConfig, reader, xml, trainFiles, null, p.o1, p.o2, -1);
+		if (b_saveAllModels)	EngineSetter.setSRLabeler(modelFile+"."+boot, featureXml, labeler);
 		
-		for (i=1; i<=nBoot; i++)
+		for (boot=1; boot<=nBoot; boot++)
 		{
-			parser = getTrainedParser(eConfig, reader, xml, trainFiles, parser.getModels(), p.o1, p.o2, -1);
-			EngineSetter.setSRLabeler(modelFile+"."+i, featureXml, parser);
+			labeler = getTrainedLabeler(eConfig, reader, xml, trainFiles, labeler.getModels(), p.o1, p.o2, -1);
+			if (b_saveAllModels)	EngineSetter.setSRLabeler(modelFile+"."+boot, featureXml, labeler);
 		}
+		
+		if (!b_saveAllModels)	EngineSetter.setSRLabeler(modelFile, featureXml, labeler);
 	}
 	
 	public Pair<Set<String>,Set<String>> getDownUpSets(SRLReader reader, SRLFtrXml xml, String[] trainFiles, int devId)
 	{
-		SRLabeler parser = new SRLabeler();
+		SRLabeler labeler = new SRLabeler();
 		int i, size = trainFiles.length;
 		DEPTree tree;
 		
@@ -108,14 +110,14 @@ public class SRLTrain extends AbstractRun
 			reader.open(UTInput.createBufferedFileReader(trainFiles[i]));
 			
 			while ((tree = reader.next()) != null)
-				parser.label(tree);
+				labeler.label(tree);
 			
 			System.out.print(".");
 			reader.close();
 		}	System.out.println();
 		
-		Set<String> sDown = parser.getDownSet(xml.getDownCutoff());
-		Set<String> sUp   = parser.getUpSet  (xml.getUpCutoff());
+		Set<String> sDown = labeler.getDownSet(xml.getDownCutoff());
+		Set<String> sUp   = labeler.getUpSet  (xml.getUpCutoff());
 		System.out.printf("- down-paths: size = %d, cutoff = %d\n", sDown.size(), xml.getDownCutoff());
 		System.out.printf("- up-paths  : size = %d, cutoff = %d\n", sUp  .size(), xml.getUpCutoff());
 		
@@ -123,18 +125,18 @@ public class SRLTrain extends AbstractRun
 	}
 	
 	/** @param devId if {@code -1}, train the models using all training files. */
-	public SRLabeler getTrainedParser(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, StringModel[] models, Set<String> sDown, Set<String> sUp, int devId) throws Exception
+	public SRLabeler getTrainedLabeler(Element eConfig, SRLReader reader, SRLFtrXml xml, String[] trainFiles, StringModel[] models, Set<String> sDown, Set<String> sUp, int devId) throws Exception
 	{
 		StringTrainSpace[] spaces = new StringTrainSpace[SRLabeler.MODEL_SIZE];
 		int i, size = trainFiles.length;
-		SRLabeler parser;
+		SRLabeler labeler;
 		DEPTree tree;
 		
 		for (i=0; i<spaces.length; i++)
 			spaces[i] = new StringTrainSpace(false, xml.getLabelCutoff(0), xml.getFeatureCutoff(0));
 		
-		if (models == null)	parser = new SRLabeler(xml, spaces, sDown, sUp);
-		else				parser = new SRLabeler(xml, models, spaces, sDown, sUp); 
+		if (models == null)	labeler = new SRLabeler(xml, spaces, sDown, sUp);
+		else				labeler = new SRLabeler(xml, models, spaces, sDown, sUp); 
 		
 		System.out.println("Collecting training instances:");
 		
@@ -144,7 +146,7 @@ public class SRLTrain extends AbstractRun
 			reader.open(UTInput.createBufferedFileReader(trainFiles[i]));
 			
 			while ((tree = reader.next()) != null)
-				parser.label(tree);
+				labeler.label(tree);
 			
 			System.out.print(".");
 			reader.close();

@@ -54,7 +54,9 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.constituent.CTNode;
@@ -92,6 +94,144 @@ public class Tmp
 	//	traverse(args[0]);
 	//	getTokens(args[0], args[1]);
 	//	converNonASC(args);
+	//	printTreesForCKY(args);
+		wc(args[0]);
+	}
+	
+	void wc(String inputFile)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
+		CTTree tree;
+		int sc, wc;
+		
+		for (sc=0,wc=0; (tree = reader.nextTree()) != null; sc++)
+			wc += tree.getTokens().size();
+		
+		System.out.println(sc+" "+wc);
+	}
+	
+	void stripTrees(String[] args)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[0]+".strip");
+		Set<String> set = new HashSet<String>();
+		String forms;
+		CTTree tree;
+		int i;
+		
+		for (i=0; (tree = reader.nextTree()) != null; i++)
+		{
+			forms = tree.toForms();
+			
+			if (!set.contains(forms))
+			{
+				set.add(forms);
+				fout.println(tree+"\n");
+			}
+		}
+		
+		fout.close();
+		System.out.println(i+" -> "+set.size());
+	}
+	
+	void splitTrees(String[] args)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		PrintStream[] fout = new PrintStream[4];
+		CTTree tree;
+		int i, j;
+		
+		fout[0] = UTOutput.createPrintBufferedFileStream(args[0]+".trn.parse");
+		fout[1] = UTOutput.createPrintBufferedFileStream(args[0]+".trn.raw");
+		fout[2] = UTOutput.createPrintBufferedFileStream(args[0]+".tst.parse");
+		fout[3] = UTOutput.createPrintBufferedFileStream(args[0]+".tst.raw");
+		
+		for (i=0; (tree = reader.nextTree()) != null; i++)
+		{
+			j = (i%6 == 0) ? 2 : 0;
+			
+			fout[j]  .println(tree.toString()+"\n");
+			fout[j+1].println(tree.toForms());
+		}
+		
+		for (PrintStream f : fout)	f.close();
+	}
+	
+	void printTreesForCKY(String[] args)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[1]);
+		CTTree tree;
+		CTNode root;
+		int count;
+		
+		while ((tree = reader.nextTree()) != null)
+		{
+			root = tree.getRoot();
+			
+			if (root.getChildrenSize() == 1)
+			{
+				count = stripPunct(tree);
+				
+				if (root.getChildrenSize() > 0 && tree.getTokens().size()-count >= 4 && !containsEmptyCategories(tree) && isCKYTree(root.getChild(0)))
+					fout.println(tree+"\n");
+			}
+		}
+		
+		reader.close();
+		fout.close();
+	}
+	
+	boolean containsEmptyCategories(CTTree tree)
+	{
+		for (CTNode node : tree.getTerminals())
+		{
+			if (node.isEmptyCategory())
+				return true;
+		}
+		
+		return false;
+	}
+	
+	int stripPunct(CTTree tree)
+	{
+		int count = 0;
+		
+		for (CTNode node : tree.getTokens())
+		{
+			if (MPLib.containsOnlyPunctuation(node.form))
+			{
+				node.getParent().removeChild(node);
+				count++;
+			}
+		}
+		
+		return count;
+	}
+	
+	boolean isCKYTree(CTNode node)
+	{
+		if (!node.isPhrase())
+			return true;
+		
+		int size = node.getChildrenSize();
+		
+	/*	if (size == 1)
+		{
+			if (!node.getChild(0).isPhrase())
+				return true;
+		}*/
+		
+		if (size != 2)
+			return false;
+		
+		for (CTNode child : node.getChildren())
+		{
+			if (!isCKYTree(child))
+				return false;
+		}
+		
+		return true;
 	}
 	
 	void countSRL(String[] args)
@@ -139,12 +279,6 @@ public class Tmp
 		for (CTNode child : node.getChildren())
 			traverseAux(child);
 	}
-	
-	
-	
-	
-	
-	
 	
 	void getTokens(String inputFile, String outputDir)
 	{
@@ -382,8 +516,8 @@ public class Tmp
 				
 				for (DEPArc sArc : node.getSHeads())
 				{
-				//	sHead = sArc.getNode();
-					sHead = sArc.getNode().getHead();
+					sHead = sArc.getNode();
+				//	sHead = sArc.getNode().getHead();
 					
 					if (sHead != dHead && sHead != dHead.getHead() && node.isDescendentOf(sHead))
 					{

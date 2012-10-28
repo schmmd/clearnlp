@@ -27,7 +27,9 @@ import java.util.zip.ZipInputStream;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
 import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
+import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.dependency.DEPParser;
+import com.googlecode.clearnlp.dependency.srl.AbstractSRLabeler;
 import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.feature.xml.DEPFtrXml;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
@@ -37,6 +39,8 @@ import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.morphology.DefaultMPAnalyzer;
 import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSTagger;
+import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
+import com.googlecode.clearnlp.predicate.PredIdentifier;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.segmentation.EnglishSegmenter;
@@ -133,10 +137,10 @@ public class EngineGetter implements EngineLib
 	
 	// ============================= getter: dependency parser =============================
 	
-	static public DEPParser getDEPParser(String modelFile) throws IOException
+	static public AbstractDEPParser getDEPParser(String modelFile) throws IOException
 	{
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
-		DEPParser parser = null;
+		AbstractDEPParser parser = null;
 		DEPFtrXml xml = null;
 		BufferedReader fin;
 		ZipEntry zEntry;
@@ -157,9 +161,35 @@ public class EngineGetter implements EngineLib
 		return parser;
 	}
 	
+	// ============================= getter: predicate identifier =============================
+	
+	static public AbstractPredIdentifier getPredIdentifier(String modelFile) throws IOException
+	{
+		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
+		AbstractPredIdentifier identifier = null;
+		SRLFtrXml xml = null;
+		BufferedReader fin;
+		ZipEntry zEntry;
+		String entry;
+			
+		while ((zEntry = zin.getNextEntry()) != null)
+		{
+			entry = zEntry.getName();
+			fin   = new BufferedReader(new InputStreamReader(zin));
+				
+			if (entry.equals(ENTRY_FEATURE))
+				xml = new SRLFtrXml(getFeatureTemplates(fin));
+			else if (entry.startsWith(ENTRY_MODEL))
+				identifier = new PredIdentifier(xml, fin);
+		}
+			
+		zin.close();
+		return identifier;
+	}
+	
 	// ============================= getter: semantic role labeler =============================
 	
-	static public SRLabeler getSRLabeler(String modelFile) throws Exception
+	static public AbstractSRLabeler getSRLabeler(String modelFile) throws Exception
 	{
 		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
 		StringModel[] models = new StringModel[SRLabeler.MODEL_SIZE];

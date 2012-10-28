@@ -288,6 +288,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return false;
 	}
 	
+	public boolean containsSHead(String label)
+	{
+		for (DEPArc arc : s_heads)
+		{
+			if (arc.isLabel(label))
+				return true;
+		}
+		
+		return false;
+	}
+	
 	public boolean isArgumentOf(DEPNode sHead)
 	{
 		for (DEPArc arc : s_heads)
@@ -429,56 +440,6 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return list;
 	}
 	
-	/** @param depth > 0. */
-	public List<DEPArc> getDescendents(int depth)
-	{
-		List<DEPArc> list = new ArrayList<DEPArc>();
-		
-		getDescendentsAux(this, list, depth-1);
-		return list;
-	}
-	
-	public void getDescendentsAux(DEPNode curr, List<DEPArc> list, int depth)
-	{
-		List<DEPArc> deps = curr.getDependents();
-		list.addAll(deps);
-		
-		if (depth == 0)	return;
-		
-		for (DEPArc arc : deps)
-			getDescendentsAux(arc.getNode(), list, depth-1);
-	}
-	
-	public Set<DEPNode> getArgumentCandidateSet(int depth, boolean includeSelf)
-	{
-		Set<DEPNode> set = new HashSet<DEPNode>();
-		
-		for (DEPArc arc : getDescendents(depth))
-			set.add(arc.getNode());
-		
-		DEPNode head = getHead();
-				
-		if (head != null)
-		{
-			for (DEPArc arc : head.getGrandDependents())
-				set.add(arc.getNode());
-					
-			do
-			{
-				for (DEPArc arc : head.getDependents())
-					set.add(arc.getNode());
-							
-				head = head.getHead();
-			}
-			while (head != null);
-		}
-		
-		if (includeSelf)	set.add   (this);
-		else				set.remove(this);
-		
-		return set;
-	}
-	
 	public DEPNode getLeftNearestDependent()
 	{
 		DEPArc arc;
@@ -509,6 +470,92 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		}
 		
 		return null;
+	}
+	
+	public DEPNode getLeftMostDependent()
+	{
+		DEPNode dep;
+		
+		if (!l_dependents.isEmpty())
+		{
+			dep = l_dependents.get(0).getNode();
+			if (dep.id < id)	return dep;
+		}
+
+		return null;
+	}
+	
+	public DEPNode getRightMostDependent()
+	{
+		DEPNode dep;
+		
+		if (!l_dependents.isEmpty())
+		{
+			dep = l_dependents.get(l_dependents.size()-1).getNode();
+			if (dep.id > id)	return dep;
+		}
+
+		return null;
+	}
+	
+	/** @param depth > 0. */
+	public List<DEPArc> getDescendents(int depth)
+	{
+		List<DEPArc> list = new ArrayList<DEPArc>();
+		
+		getDescendentsAux(this, list, depth-1);
+		return list;
+	}
+	
+	public void getDescendentsAux(DEPNode curr, List<DEPArc> list, int depth)
+	{
+		List<DEPArc> deps = curr.getDependents();
+		list.addAll(deps);
+		
+		if (depth == 0)	return;
+		
+		for (DEPArc arc : deps)
+			getDescendentsAux(arc.getNode(), list, depth-1);
+	}
+	
+	public Set<DEPNode> getArgumentCandidateSet(int depth, boolean includeSelf)
+	{
+		Set<DEPNode> set = new HashSet<DEPNode>();
+		
+		for (DEPArc arc : getDescendents(depth))
+			set.add(arc.getNode());
+		
+		DEPNode head = getHead();
+		
+		while (head != null)
+		{
+			set.add(head);
+			
+			for (DEPArc arc : head.getDependents())
+				set.add(arc.getNode());
+						
+			head = head.getHead();
+		}
+		
+	/*	if (head != null)
+		{
+			for (DEPArc arc : head.getGrandDependents())
+				set.add(arc.getNode());
+					
+			do
+			{
+				for (DEPArc arc : head.getDependents())
+					set.add(arc.getNode());
+							
+				head = head.getHead();
+			}
+			while (head != null);
+		}*/
+		
+		if (includeSelf)	set.add   (this);
+		else				set.remove(this);
+		
+		return set;
 	}
 	
 	public List<DEPNode> getDependentsByLabels(String... labels)

@@ -104,7 +104,7 @@ public class SRLDevelop extends SRLTrain
 		IntIntPair p;
 	//	IntIntPair lArgs, gArgs = new IntIntPair(0, 0);
 		
-		parser = getTrainedParser(eConfig, reader, xml, trainFiles, model.o1, sDown, sUp, -1);
+		parser = getTrainedLabeler(eConfig, reader, xml, trainFiles, model.o1, sDown, sUp, -1);
 		model.o1 = parser.getModels();
 	//	PrintStream fout;
 		

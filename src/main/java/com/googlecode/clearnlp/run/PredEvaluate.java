@@ -28,27 +28,30 @@ import java.io.IOException;
 
 import org.kohsuke.args4j.Option;
 
+import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
-import com.googlecode.clearnlp.util.pair.StringIntPair;
 
-
-public class SRLEvaluate extends AbstractRun
+/**
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
+ */
+public class PredEvaluate extends AbstractRun
 {
-	@Option(name="-g", usage="the gold-standard file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-g", usage="gold-standard file (required)", required=true, metaVar="<filename>")
 	private String s_goldFile;
-	@Option(name="-s", usage="the system file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-s", usage="system-generated file (required)", required=true, metaVar="<filename>")
 	private String s_autoFile;
-	@Option(name="-gi", usage="the column index of semantic arguments in the gold-standard file (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-gi", usage="column index of feats in a gold-standard file (required)", required=true, metaVar="<integer>")
 	private int    i_goldIndex;
-	@Option(name="-si", usage="the column index of semantic arguments in the sytem file (input; required)", required=true, metaVar="<integer>")
+	@Option(name="-si", usage="column index of feats in a system-generated file (required)", required=true, metaVar="<integer>")
 	private int    i_autoIndex;
 	
-	public SRLEvaluate() {}
+	public PredEvaluate() {}
 	
-	public SRLEvaluate(String[] args)
+	public PredEvaluate(String[] args)
 	{
 		initArgs(args);
 		run(s_goldFile, s_autoFile, i_goldIndex-1, i_autoIndex-1);
@@ -58,9 +61,10 @@ public class SRLEvaluate extends AbstractRun
 	{
 		BufferedReader fGold = UTInput.createBufferedFileReader(goldFile);
 		BufferedReader fAuto = UTInput.createBufferedFileReader(autoFile);
-		StringIntPair[] gHeads, aHeads;
-		SRLEval eval = new SRLEval();
+		DEPFeat gFeats, aFeats;
+		int[] counts = {0,0,0};	// correct, gold total, auto total
 		String[] gold, auto;
+		String gPred, aPred;
 		String line;
 		
 		try
@@ -73,40 +77,36 @@ public class SRLEvaluate extends AbstractRun
 				line = line.trim();
 				if (line.isEmpty())	 continue;
 				
-				gHeads = toSHeads(gold[goldIndex]);
-				aHeads = toSHeads(auto[autoIndex]);
-				eval.evaluate(gHeads, aHeads);
+				gFeats = new DEPFeat(gold[goldIndex]);
+				aFeats = new DEPFeat(auto[autoIndex]);
+
+				if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
+					counts[1]++;
+				
+				if ((aPred = aFeats.get(DEPLib.FEAT_PB)) != null)
+					counts[2]++;
+				
+				if (gPred != null && aPred != null)
+					counts[0]++;
 			}
 		}
 		catch (IOException e) {e.printStackTrace();}
 		
-		eval.print();
+		print(counts);
 	}
 	
-	private StringIntPair[] toSHeads(String sHeads)
+	private void print(int[] counts)
 	{
-		if (sHeads.equals(AbstractColumnReader.BLANK_COLUMN))
-			return new StringIntPair[0];
-			
-		String[] heads = sHeads.split(DEPLib.DELIM_HEADS), tmp;
-		int i, size = heads.length, headId;
+		double p  = 100.0 * counts[0] / counts[2];
+		double r  = 100.0 * counts[0] / counts[1];
 		
-		StringIntPair[] p = new StringIntPair[size];
-		String label;
-		
-		for (i=0; i<size; i++)
-		{
-			tmp    = heads[i].split(DEPLib.DELIM_HEADS_KEY);
-			headId = Integer.parseInt(tmp[0]);
-			label  = tmp[1];
-			p[i]   = new StringIntPair(label, headId); 
-		}
-		
-		return p;
+		System.out.printf("Precision: %5.2f (%d/%d)\n", p, counts[0], counts[2]);
+		System.out.printf("Recall   : %5.2f (%d/%d)\n", r, counts[0], counts[1]);
+		System.out.printf("F1-score : %5.2f\n", SRLEval.getF1(p, r));
 	}
-
+	
 	static public void main(String[] args)
 	{
-		new SRLEvaluate(args);
+		new PredEvaluate(args);
 	}
 }

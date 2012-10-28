@@ -35,9 +35,8 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 
 /**
- * Dependency feature template.
- * @author Jinho D. Choi
- * <b>Last update:</b> 4/12/2011
+ * @since 1.0.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class DEPFtrXml extends AbstractFtrXml
 {

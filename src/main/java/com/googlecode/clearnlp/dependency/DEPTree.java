@@ -162,6 +162,12 @@ public class DEPTree extends ArrayList<DEPNode>
 			node.s_heads.clear();
 	}
 	
+	public void clearPredicates()
+	{
+		for (DEPNode node : this)
+			node.removeFeat(DEPLib.FEAT_PB);
+	}
+	
 	public void setDependents()
 	{
 		int i, size = size();
@@ -453,5 +459,18 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 		
 		return null;
+	}
+	
+	public boolean containsPredicate()
+	{
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			if (get(i).getFeat(DEPLib.FEAT_PB) != null)
+				return true;
+		}
+		
+		return false;
 	}
 }
