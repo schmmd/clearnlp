@@ -43,6 +43,7 @@ import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSTagger;
+import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.reader.DAGReader;
@@ -84,6 +85,7 @@ abstract public class AbstractRun
 	final public String TAG_DICTIONARY	= "dictionary";
 	final public String TAG_POS_MODEL	= "pos_model";
 	final public String TAG_DEP_MODEL	= "dep_model";
+	final public String TAG_PRED_MODEL	= "pred_model";
 	final public String TAG_SRL_MODEL	= "srl_model";
 	
 	/** Initializes arguments using args4j. */
@@ -162,6 +164,20 @@ abstract public class AbstractRun
 		catch (IOException e) {e.printStackTrace();}
 		
 		return parser;
+	}
+	
+	protected AbstractPredIdentifier getPredIdentifier(Element eConfig)
+	{
+		String modelFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_PRED_MODEL));
+		AbstractPredIdentifier identifier = null;
+		
+		try
+		{
+			identifier = EngineGetter.getPredIdentifier(modelFile);
+		}
+		catch (IOException e) {e.printStackTrace();}
+		
+		return identifier;
 	}
 	
 	// ============================= getter: readers =============================

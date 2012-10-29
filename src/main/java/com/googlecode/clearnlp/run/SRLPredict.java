@@ -46,6 +46,7 @@ import com.googlecode.clearnlp.reader.LineReader;
 import com.googlecode.clearnlp.reader.POSReader;
 import com.googlecode.clearnlp.reader.RawReader;
 import com.googlecode.clearnlp.reader.SRLReader;
+import com.googlecode.clearnlp.reader.TOKReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.UTInput;
@@ -88,29 +89,42 @@ public class SRLPredict extends AbstractRun
 			Pair<POSTagger[],Double> taggers = null;
 			AbstractMPAnalyzer analyzer = null;
 			AbstractDEPParser parser = null;
+			AbstractPredIdentifier identifier = null;
 			
-			if (reader.o2.equals(AbstractReader.TYPE_RAW ))
+			if (reader.o2.equals(AbstractReader.TYPE_RAW))
 			{
-				segmenter = getSegmenter(eConfig);
-				taggers   = getPOSTaggers(eConfig);
-				analyzer  = getMPAnalyzer(eConfig);
-				parser    = getDEPParser(eConfig);
+				segmenter  = getSegmenter(eConfig);
+				taggers    = getPOSTaggers(eConfig);
+				analyzer   = getMPAnalyzer(eConfig);
+				parser     = getDEPParser(eConfig);
+				identifier = getPredIdentifier(eConfig);
 			}
 			else if (reader.o2.equals(AbstractReader.TYPE_LINE))
 			{
-				tokenizer = getTokenizer(eConfig);
-				taggers   = getPOSTaggers(eConfig);
-				analyzer  = getMPAnalyzer(eConfig);
-				parser    = getDEPParser(eConfig);
+				tokenizer  = getTokenizer(eConfig);
+				taggers    = getPOSTaggers(eConfig);
+				analyzer   = getMPAnalyzer(eConfig);
+				parser     = getDEPParser(eConfig);
+				identifier = getPredIdentifier(eConfig);
+			}
+			else if (reader.o2.equals(AbstractReader.TYPE_TOK))
+			{
+				taggers    = getPOSTaggers(eConfig);
+				analyzer   = getMPAnalyzer(eConfig);
+				parser     = getDEPParser(eConfig);
+				identifier = getPredIdentifier(eConfig);
 			}
 			else if (reader.o2.equals(AbstractReader.TYPE_POS))
 			{
-				taggers  = getPOSTaggers(eConfig);
-				analyzer = getMPAnalyzer(eConfig);
-				parser   = getDEPParser(eConfig);
+				analyzer   = getMPAnalyzer(eConfig);
+				parser     = getDEPParser(eConfig);
+				identifier = getPredIdentifier(eConfig);
+			}
+			else if (reader.o2.equals(AbstractReader.TYPE_DEP))
+			{
+				identifier = getPredIdentifier(eConfig);
 			}
 				
-			AbstractPredIdentifier identifier = null;
 			AbstractSRLabeler labeler = EngineGetter.getSRLabeler(s_modelFile);
 			
 			for (String[] io : filenames)
@@ -119,12 +133,14 @@ public class SRLPredict extends AbstractRun
 					predict(segmenter, taggers, analyzer, parser, identifier, labeler, (RawReader)reader.o1, io[0], io[1]);
 				else if (reader.o2.equals(AbstractReader.TYPE_LINE))
 					predict(tokenizer, taggers, analyzer, parser, identifier, labeler, (LineReader)reader.o1, io[0], io[1]);
+				else if (reader.o2.equals(AbstractReader.TYPE_TOK))
+					predict(taggers, analyzer, parser, identifier, labeler, (TOKReader)reader.o1, io[0], io[1]);
 				else if (reader.o2.equals(AbstractReader.TYPE_POS))
-					predict(taggers, analyzer, parser, identifier, labeler, (POSReader)reader.o1, io[0], io[1]);
+					predict(analyzer, parser, identifier, labeler, (POSReader)reader.o1, io[0], io[1]);
 				else if (reader.o2.equals(AbstractReader.TYPE_DEP))
-					predict(parser, identifier, labeler, (DEPReader)reader.o1, io[0], io[1]);
+					predict(identifier, labeler, (DEPReader)reader.o1, io[0], io[1]);
 				else if (reader.o2.equals(AbstractReader.TYPE_SRL))
-					predict(identifier, labeler, (SRLReader)reader.o1, io[0], io[1]);
+					predict(labeler, (SRLReader)reader.o1, io[0], io[1]);
 				else
 				{
 					new Exception("Invalid reader type: "+reader.o2);
@@ -182,7 +198,31 @@ public class SRLPredict extends AbstractRun
 		fout.close();
 	}
 	
-	public void predict(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, POSReader fin, String inputFile, String outputFile)
+	public void predict(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, TOKReader fin, String inputFile, String outputFile)
+	{
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
+		List<String> tokens;
+		DEPTree tree;
+		int i = 0;
+		
+		System.out.print(inputFile+": ");
+		
+		while ((tokens = fin.next()) != null)
+		{
+			tree = EngineProcess.getDEPTree(taggers, analyzer, parser, identifier, labeler, tokens);
+			fout.println(tree.toStringSRL() + AbstractColumnReader.DELIM_SENTENCE);
+			
+			if (++i%1000 == 0)	System.out.print(".");
+		}
+		
+		System.out.println();
+		
+		fin.close();
+		fout.close();
+	}
+	
+	public void predict(AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, POSReader fin, String inputFile, String outputFile)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		fin.open(UTInput.createBufferedFileReader(inputFile));
@@ -206,7 +246,7 @@ public class SRLPredict extends AbstractRun
 		fout.close();
 	}
 	
-	public void predict(AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, DEPReader fin, String inputFile, String outputFile)
+	public void predict(AbstractPredIdentifier identifier, AbstractSRLabeler labeler, DEPReader fin, String inputFile, String outputFile)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		fin.open(UTInput.createBufferedFileReader(inputFile));
@@ -217,7 +257,6 @@ public class SRLPredict extends AbstractRun
 		
 		while ((tree = fin.next()) != null)
 		{
-			parser.parse(tree);
 			EngineProcess.predictSRL(identifier, labeler, tree);
 			fout.println(tree.toStringSRL() + AbstractColumnReader.DELIM_SENTENCE);
 
@@ -230,7 +269,7 @@ public class SRLPredict extends AbstractRun
 		fout.close();
 	}
 	
-	public void predict(AbstractPredIdentifier identifier, AbstractSRLabeler labeler, SRLReader fin, String inputFile, String outputFile)
+	public void predict(AbstractSRLabeler labeler, SRLReader fin, String inputFile, String outputFile)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
 		fin.open(UTInput.createBufferedFileReader(inputFile));
@@ -241,7 +280,7 @@ public class SRLPredict extends AbstractRun
 		
 		while ((tree = fin.next()) != null)
 		{
-			EngineProcess.predictSRL(identifier, labeler, tree);
+			labeler.label(tree);
 			fout.println(tree.toStringSRL() + AbstractColumnReader.DELIM_SENTENCE);
 
 			if (++i%1000 == 0)	System.out.print(".");

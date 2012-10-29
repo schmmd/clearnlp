@@ -39,6 +39,7 @@ import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.reader.LineReader;
 import com.googlecode.clearnlp.reader.POSReader;
 import com.googlecode.clearnlp.reader.RawReader;
+import com.googlecode.clearnlp.reader.TOKReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.UTArray;
@@ -87,6 +88,8 @@ public class POSPredict extends AbstractRun
 					predict(segmenter, taggers, (RawReader)reader.o1, io[0], io[1]);
 				else if (reader.o2.equals(AbstractReader.TYPE_LINE))
 					predict(tokenizer, taggers, (LineReader)reader.o1, io[0], io[1]);
+				else if (reader.o2.equals(AbstractReader.TYPE_TOK))
+					predict(taggers, (TOKReader)reader.o1, io[0], io[1]);
 				else if (reader.o2.equals(AbstractReader.TYPE_POS))
 					predict(taggers, (POSReader)reader.o1, io[0], io[1]);
 				else
@@ -135,6 +138,30 @@ public class POSPredict extends AbstractRun
 		while ((line = fin.next()) != null)
 		{
 			nodes = EngineProcess.getPOSNodes(tokenizer, taggers, line);
+			fout.println(UTArray.join(nodes, AbstractColumnReader.DELIM_SENTENCE) + AbstractColumnReader.DELIM_SENTENCE);
+			
+			if (++i%1000 == 0)	System.out.print(".");
+		}
+		
+		System.out.println();
+		
+		fin.close();
+		fout.close();
+	}
+	
+	public void predict(Pair<POSTagger[],Double> taggers, TOKReader fin, String inputFile, String outputFile)
+	{
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
+		fin.open(UTInput.createBufferedFileReader(inputFile));
+		List<String> tokens;
+		POSNode[] nodes;
+		int i = 0;
+		
+		System.out.print(inputFile+": ");
+		
+		while ((tokens = fin.next()) != null)
+		{
+			nodes = EngineProcess.getPOSNodes(taggers, tokens);
 			fout.println(UTArray.join(nodes, AbstractColumnReader.DELIM_SENTENCE) + AbstractColumnReader.DELIM_SENTENCE);
 			
 			if (++i%1000 == 0)	System.out.print(".");

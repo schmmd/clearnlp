@@ -21,10 +21,12 @@ import java.util.List;
 
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.dependency.srl.AbstractSRLabeler;
 import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.pos.POSTagger;
+import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
@@ -36,37 +38,39 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class DemoDEPParser
+public class DemoSRLabeler
 {
 	final String language = AbstractReader.LANG_EN;
 	
-	public DemoDEPParser(String dictionaryFile, String posModelFile, String depModelFile, String inputFile, String outputFile) throws Exception
+	public DemoSRLabeler(String dictionaryFile, String posModelFile, String depModelFile, String predModelFile, String srlModelFile, String inputFile, String outputFile) throws Exception
 	{
 		AbstractTokenizer tokenizer = EngineGetter.getTokenizer(language, dictionaryFile);
 		AbstractMPAnalyzer analyzer = EngineGetter.getMPAnalyzer(language, dictionaryFile);
 		Pair<POSTagger[],Double> taggers = EngineGetter.getPOSTaggers(posModelFile);
 		AbstractDEPParser parser = EngineGetter.getDEPParser(depModelFile);
+		AbstractPredIdentifier identifier = EngineGetter.getPredIdentifier(predModelFile);
+		AbstractSRLabeler labeler = EngineGetter.getSRLabeler(srlModelFile);
 		
 		String sentence = "I'd like to meet Mr. Choi.";
-		parse(tokenizer, analyzer, taggers, parser, sentence);
-		parse(tokenizer, analyzer, taggers, parser, UTInput.createBufferedFileReader(inputFile), UTOutput.createPrintBufferedFileStream(outputFile));
+		label(tokenizer, analyzer, taggers, parser, identifier, labeler, sentence);
+		label(tokenizer, analyzer, taggers, parser, identifier, labeler, UTInput.createBufferedFileReader(inputFile), UTOutput.createPrintBufferedFileStream(outputFile));
 	}
 	
-	public void parse(AbstractTokenizer tokenizer, AbstractMPAnalyzer analyzer, Pair<POSTagger[],Double> taggers, AbstractDEPParser parser, String sentence)
+	public void label(AbstractTokenizer tokenizer, AbstractMPAnalyzer analyzer, Pair<POSTagger[],Double> taggers, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, String sentence)
 	{
-		DEPTree tree = EngineProcess.getDEPTree(tokenizer, taggers, analyzer, parser, sentence);
-		System.out.println(tree.toStringDEP()+"\n");
+		DEPTree tree = EngineProcess.getDEPTree(tokenizer, taggers, analyzer, parser, identifier, labeler, sentence);
+		System.out.println(tree.toStringSRL()+"\n");
 	}
 	
-	public void parse(AbstractTokenizer tokenizer, AbstractMPAnalyzer analyzer, Pair<POSTagger[],Double> taggers, AbstractDEPParser parser, BufferedReader reader, PrintStream fout)
+	public void label(AbstractTokenizer tokenizer, AbstractMPAnalyzer analyzer, Pair<POSTagger[],Double> taggers, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, BufferedReader reader, PrintStream fout)
 	{
 		AbstractSegmenter segmenter = EngineGetter.getSegmenter(language, tokenizer);
 		DEPTree tree;
 		
 		for (List<String> tokens : segmenter.getSentences(reader))
 		{
-			tree = EngineProcess.getDEPTree(taggers, analyzer, parser, tokens);
-			fout.println(tree.toStringDEP()+"\n");
+			tree = EngineProcess.getDEPTree(taggers, analyzer, parser, identifier, labeler, tokens);
+			fout.println(tree.toStringSRL()+"\n");	
 		}
 		
 		fout.close();
@@ -77,12 +81,14 @@ public class DemoDEPParser
 		String dictionaryFile = args[0];	// e.g., dictionary-1.1.0.zip
 		String posModelFile   = args[1];	// e.g., ontonotes-en-pos-1.1.0g.jar
 		String depModelFile   = args[2];	// e.g., ontonotes-en-dep-1.1.0b3.jar
-		String inputFile      = args[3];
-		String outputFile     = args[4];
+		String predModelFile  = args[3];	// e.g., ontonotes-en-pred-1.2.0.jar
+		String srlModelFile   = args[4];	// e.g., ontonotes-en-srl-1.2.0b3.jar
+		String inputFile      = args[5];
+		String outputFile     = args[6];
 
 		try
 		{
-			new DemoDEPParser(dictionaryFile, posModelFile, depModelFile, inputFile, outputFile);
+			new DemoSRLabeler(dictionaryFile, posModelFile, depModelFile, predModelFile, srlModelFile, inputFile, outputFile);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}

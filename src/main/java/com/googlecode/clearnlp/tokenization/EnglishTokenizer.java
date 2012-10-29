@@ -55,6 +55,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected final String S_PROTECTED		= "PR0T_";
 	protected final String S_D0D			= "_DPPD_";
 	protected final String S_HYPHEN			= "_HYYN_";
+	protected final String S_AMPERSAND		= "_APSD_";
 	protected final String S_APOSTROPHY		= "_AOOR_";
 	protected final int    N_PROTECTED		= S_PROTECTED.length();
 	
@@ -67,6 +68,8 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected Replacer   R_PERIOD_LIKE;
 	protected Replacer   R_MARKER;
 	protected Replacer   R_APOSTROPHY;
+	protected Replacer   R_USDOLLAR;
+	protected Replacer   R_AMPERSAND;
 	protected Replacer   R_WAW;
 	protected Replacer   R_PUNCTUATION_PRE;
 	protected Replacer   R_PUNCTUATION_POST;
@@ -83,6 +86,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected Pattern						P_RECOVER_DOT;
 	protected Pattern						P_RECOVER_HYPHEN;
 	protected Pattern						P_RECOVER_APOSTROPHY;
+	protected Pattern						P_RECOVER_AMPERSAND;
 
 	public EnglishTokenizer(ZipInputStream zin)
 	{
@@ -105,6 +109,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		lTokens = tokenizePatterns(lTokens, R_URL);
 		lTokens = tokenizePatterns(lTokens, R_PERIOD_LIKE);
 		lTokens = tokenizePatterns(lTokens, R_MARKER);
+		lTokens = tokenizePatterns(lTokens, R_USDOLLAR);
 		for (Replacer r : R_D0D) replaceProtects(lTokens, r);
 		replaceHyphens(lTokens);
 		lTokens = tokenizePatterns(lTokens, R_PUNCTUATION_PRE);
@@ -113,6 +118,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		
 		lTokens = tokenizeCompounds(lTokens);
 		lTokens = tokenizePatterns(lTokens, R_APOSTROPHY);
+		replaceProtects(lTokens, R_AMPERSAND);
 		replaceProtects(lTokens, R_WAW);
 		for (Replacer r : R_UNIT) lTokens = tokenizePatterns(lTokens, r);
 		lTokens = tokenizePatterns(lTokens, R_PUNCTUATION_POST);
@@ -121,6 +127,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		for (i=0; i<size; i++)	recoverPatterns(lTokens, P_RECOVER_D0D[i], A_D0D[i]);
 		recoverPatterns(lTokens, P_RECOVER_HYPHEN, "-");
 		recoverPatterns(lTokens, P_RECOVER_APOSTROPHY, "'");
+		recoverPatterns(lTokens, P_RECOVER_AMPERSAND, "&");
 		
 		return lTokens;
 	}
@@ -130,9 +137,11 @@ public class EnglishTokenizer extends AbstractTokenizer
 	{
 		R_URL         = MPLib.URL_SPAN.replacer(new SubstitutionOne());
 		R_PERIOD_LIKE = new jregex.Pattern("(\\.|\\?|\\!){2,}").replacer(new SubstitutionOne());
-		R_MARKER      = new jregex.Pattern("\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}").replacer(new SubstitutionOne());
+		R_MARKER      = new jregex.Pattern("\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}|\\`{2,}|\\'{2,}").replacer(new SubstitutionOne());
 		R_APOSTROPHY  = new jregex.Pattern("(?i)((\\')(s|d|m|ll|re|ve|nt)|n(\\')t)$").replacer(new SubstitutionOne());
-		R_WAW         = getWAWs();
+		R_USDOLLAR    = new jregex.Pattern("^US\\$").replacer(new SubstitutionOne());
+		R_AMPERSAND   = getReplacerAmpersand();
+		R_WAW         = getReplacerWAWs();
 		
 		R_PUNCTUATION_PRE  = new jregex.Pattern("\\(|\\)|\\[|\\]|\\{|\\}|<|>|\\,|\\:|\\;|\\\"").replacer(new SubstitutionOne());
 		R_PUNCTUATION_POST = new jregex.Pattern("\\.|\\?|\\!|\\`|\\'|\\-|\\/|\\@|\\#|\\$|\\%|\\&|\\|").replacer(new SubstitutionOne());
@@ -140,8 +149,22 @@ public class EnglishTokenizer extends AbstractTokenizer
 		initReplacersD0Ds();
 	}
 	
+	private Replacer getReplacerAmpersand()
+	{
+		return new jregex.Pattern("(\\p{Upper})(\\&)(\\p{Upper})").replacer(new Substitution()
+		{
+			@Override
+			public void appendSubstitution(MatchResult match, TextBuffer dest)
+			{
+				dest.append(match.group(1));
+				dest.append(S_AMPERSAND);
+				dest.append(match.group(3));
+			}
+		});
+	}
+	
 	/** Called by {@link EnglishTokenizer#initReplacers()}. */
-	private Replacer getWAWs()
+	private Replacer getReplacerWAWs()
 	{
 		return new jregex.Pattern("(\\w)(\\')(\\w)").replacer(new Substitution()
 		{
@@ -187,6 +210,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 			
 		P_RECOVER_HYPHEN     = Pattern.compile(S_HYPHEN);
 		P_RECOVER_APOSTROPHY = Pattern.compile(S_APOSTROPHY);
+		P_RECOVER_AMPERSAND  = Pattern.compile(S_AMPERSAND);
 	}
 	
 	/** Called by {@link EnglishTokenizer#EnglishTokenizer(ZipInputStream)}. */
@@ -283,10 +307,10 @@ public class EnglishTokenizer extends AbstractTokenizer
 		
 		R_UNIT = new Replacer[4];
 		
-		R_UNIT[0] = new jregex.Pattern("^(?i)("+signs+")(\\d)").replacer(new SubstitutionTwo());
-		R_UNIT[1] = new jregex.Pattern("^(?i)("+currencies+")(\\d)").replacer(new SubstitutionTwo());
-		R_UNIT[2] = new jregex.Pattern("(?i)(\\d)("+currencies+")$").replacer(new SubstitutionTwo());
-		R_UNIT[3] = new jregex.Pattern("(?i)(\\d)("+units+")$").replacer(new SubstitutionTwo());
+		R_UNIT[0] = new jregex.Pattern("^(?i)(\\p{Punct}*"+signs+")(\\d)").replacer(new SubstitutionTwo());
+		R_UNIT[1] = new jregex.Pattern("^(?i)(\\p{Punct}*"+currencies+")(\\d)").replacer(new SubstitutionTwo());
+		R_UNIT[2] = new jregex.Pattern("(?i)(\\d)("+currencies+"\\p{Punct}*)$").replacer(new SubstitutionTwo());
+		R_UNIT[3] = new jregex.Pattern("(?i)(\\d)("+units+"\\p{Punct}*)$").replacer(new SubstitutionTwo());
 	}
 	
 	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
@@ -354,6 +378,11 @@ public class EnglishTokenizer extends AbstractTokenizer
 			if (!token.b && P_HYPHEN_LIST.matcher(token.s.toLowerCase()).find())
 				token.s = P_HYPHEN.matcher(token.s).replaceAll(S_HYPHEN);
 		}
+	}
+	
+	protected void replaceAmpersands(List<StringBooleanPair> tokens)
+	{
+		
 	}
 	
 	protected void recoverPatterns(List<StringBooleanPair> tokens, Pattern p, String replacement)

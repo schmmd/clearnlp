@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -64,17 +65,30 @@ public class EngineGetter implements EngineLib
 		if (language.equals(AbstractReader.LANG_EN))
 			return new EnglishC2DConverter(headrules, mergeLabels);
 		
-		return null;
+		throw new IllegalArgumentException("The requested language '"+language+"' is not currently supported.");
 	}
 	
 	// ============================= getter: word tokenizer =============================
 	
 	static public AbstractTokenizer getTokenizer(String language, String dictFile)
 	{
-		if (language.equals(AbstractReader.LANG_EN))
-			return new EnglishTokenizer(UTInput.createZipFileInputStream(dictFile));
+		AbstractTokenizer tokenizer = null;
 		
-		return null;
+		try
+		{
+			tokenizer = getTokenizer(language, new FileInputStream(dictFile));
+		}
+		catch (Exception e) {e.printStackTrace();}
+		
+		return tokenizer;
+	}
+	
+	static public AbstractTokenizer getTokenizer(String language, InputStream stream)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishTokenizer(new ZipInputStream(stream));
+		
+		throw new IllegalArgumentException("The requested language '"+language+"' is not currently supported.");
 	}
 	
 	// ============================= getter: sentence segmenter =============================
@@ -84,7 +98,7 @@ public class EngineGetter implements EngineLib
 		if (language.equals(AbstractReader.LANG_EN))
 			return new EnglishSegmenter(tokenizer);
 		
-		return null;
+		throw new IllegalArgumentException("The requested language '"+language+"' is not currently supported.");
 	}
 	
 	// ============================= getter: morphological analyzer =============================
@@ -97,11 +111,24 @@ public class EngineGetter implements EngineLib
 		return new DefaultMPAnalyzer();
 	}
 	
+	static public AbstractMPAnalyzer getMPAnalyzer(String language, InputStream stream)
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new EnglishMPAnalyzer(stream);
+		
+		return new DefaultMPAnalyzer();
+	}
+	
 	// ============================= getter: part-of-speech tagger =============================
 	
 	static public Pair<POSTagger[],Double> getPOSTaggers(String modelFile) throws Exception
 	{
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
+		return getPOSTaggers(new FileInputStream(modelFile));
+	}
+	
+	static public Pair<POSTagger[],Double> getPOSTaggers(InputStream stream) throws Exception
+	{
+		ZipInputStream zin = new ZipInputStream(stream);
 		POSTagger[] taggers = null;
 		double threshold = -1;
 		POSFtrXml xml = null;
@@ -139,7 +166,12 @@ public class EngineGetter implements EngineLib
 	
 	static public AbstractDEPParser getDEPParser(String modelFile) throws IOException
 	{
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
+		return getDEPParser(new FileInputStream(modelFile));
+	}
+	
+	static public AbstractDEPParser getDEPParser(InputStream stream) throws IOException
+	{
+		ZipInputStream zin = new ZipInputStream(stream);
 		AbstractDEPParser parser = null;
 		DEPFtrXml xml = null;
 		BufferedReader fin;
@@ -165,7 +197,12 @@ public class EngineGetter implements EngineLib
 	
 	static public AbstractPredIdentifier getPredIdentifier(String modelFile) throws IOException
 	{
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
+		return getPredIdentifier(new FileInputStream(modelFile));
+	}
+	
+	static public AbstractPredIdentifier getPredIdentifier(InputStream stream) throws IOException
+	{
+		ZipInputStream zin = new ZipInputStream(stream);
 		AbstractPredIdentifier identifier = null;
 		SRLFtrXml xml = null;
 		BufferedReader fin;
@@ -191,7 +228,12 @@ public class EngineGetter implements EngineLib
 	
 	static public AbstractSRLabeler getSRLabeler(String modelFile) throws Exception
 	{
-		ZipInputStream zin = new ZipInputStream(new FileInputStream(modelFile));
+		return getSRLabeler(new FileInputStream(modelFile));
+	}
+	
+	static public AbstractSRLabeler getSRLabeler(InputStream stream) throws Exception
+	{
+		ZipInputStream zin = new ZipInputStream(stream);
 		StringModel[] models = new StringModel[SRLabeler.MODEL_SIZE];
 		Set<String> sDown = null, sUp = null;
 		SRLFtrXml xml = null;
@@ -219,6 +261,7 @@ public class EngineGetter implements EngineLib
 		zin.close();
 		return new SRLabeler(xml, models, sDown, sUp);
 	}
+
 	
 	// ============================= utilities =============================
 	

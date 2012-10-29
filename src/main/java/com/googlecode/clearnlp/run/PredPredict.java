@@ -49,11 +49,11 @@ public class PredPredict extends AbstractRun
 	private String s_inputPath;
 	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
 	private String s_inputExt = ".*";
-	@Option(name="-oe", usage="output file extension (default: labeled)", required=false, metaVar="<string>")
+	@Option(name="-oe", usage="output file extension (default: pred)", required=false, metaVar="<string>")
 	private String s_outputExt = "pred";
-	@Option(name="-c", usage="configuration file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
 	private String s_configXml;
-	@Option(name="-m", usage="model file (input; required)", required=true, metaVar="<filename>")
+	@Option(name="-m", usage="model file (required)", required=true, metaVar="<filename>")
 	private String s_modelFile;
 	
 	public PredPredict() {}

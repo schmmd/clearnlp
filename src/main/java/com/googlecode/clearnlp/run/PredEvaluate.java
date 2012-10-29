@@ -44,9 +44,9 @@ public class PredEvaluate extends AbstractRun
 	private String s_goldFile;
 	@Option(name="-s", usage="system-generated file (required)", required=true, metaVar="<filename>")
 	private String s_autoFile;
-	@Option(name="-gi", usage="column index of feats in a gold-standard file (required)", required=true, metaVar="<integer>")
+	@Option(name="-gi", usage="column index of extra features in a gold-standard file (required)", required=true, metaVar="<integer>")
 	private int    i_goldIndex;
-	@Option(name="-si", usage="column index of feats in a system-generated file (required)", required=true, metaVar="<integer>")
+	@Option(name="-si", usage="column index of extra features in a system-generated file (required)", required=true, metaVar="<integer>")
 	private int    i_autoIndex;
 	
 	public PredEvaluate() {}

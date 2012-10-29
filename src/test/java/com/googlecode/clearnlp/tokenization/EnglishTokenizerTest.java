@@ -21,16 +21,18 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.zip.ZipInputStream;
 
+import org.junit.Test;
+
 /**
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class EnglishTokenizerTest
 {
-//	@Test
+	@Test
 	public void testTokenize() throws FileNotFoundException
 	{
-		EnglishTokenizer tok = new EnglishTokenizer(new ZipInputStream(new FileInputStream("src/main/resources/model/dictionary.zip")));
+		EnglishTokenizer tok = new EnglishTokenizer(new ZipInputStream(new FileInputStream("src/main/resources/model/dictionary-1.1.0.zip")));
 		String src, trg;
 		
 		// spaces
@@ -93,8 +95,8 @@ public class EnglishTokenizerTest
 		trg = "[ai, nt, can, not, do, n', cha, d', ye, i, 'm, ma, du, n, no]";
 		assertEquals(tok.getTokens(src).toString(), trg);
 		
-		src = "$1 E2 L3 USD1 2KPW";
-		trg = "[$, 1, E, 2, L, 3, USD, 1, 2, KPW]";
+		src = "$1 E2 L3 USD1 2KPW ||$1 USD1..";
+		trg = "[$, 1, E2, L3, USD, 1, 2, KPW, |, |, $, 1, USD, 1, ..]";
 		assertEquals(tok.getTokens(src).toString(), trg);
 		
 		src = "1m 2mm 3kg 4oz";
@@ -128,6 +130,26 @@ public class EnglishTokenizerTest
 		src = " \n \t";
 		trg = "[]";
 		assertEquals(tok.getTokens(src).toString(), trg);
+		
+		src = "\"John & Mary's dog,\" Jane thought (to herself).\n" + "\"What a #$%!\n" + "a- ``I like AT&T''.\"";
+		trg = "[\", John, &, Mary, 's, dog, ,, \", Jane, thought, (, to, herself, ), ., \", What, a, #, $, %, !, a, -, ``, I, like, AT&T, '', ., \"]";
+		assertEquals(tok.getTokens(src).toString(), trg);
+		
+		src = "I said at 4:45pm.";
+		trg = "[I, said, at, 4:45, pm, .]";
+		assertEquals(tok.getTokens(src).toString(), trg);
+		
+		src = "I can't believe they wanna keep 40% of that.\"``Whatcha think?''\"I don't --- think so...,\"";
+		trg = "[I, ca, n't, believe, they, wan, na, keep, 40, %, of, that, ., \", ``, What, cha, think, ?, '', \", I, do, n't, ---, think, so, ..., ,, \"]";
+		assertEquals(tok.getTokens(src).toString(), trg);
+		
+		src = "You `paid' US$170,000?!\nYou should've paid only$16.75.";
+		trg = "[You, `, paid, ', US$, 170,000, ?!, You, should, 've, paid, only, $, 16.75, .]";
+		assertEquals(tok.getTokens(src).toString(), trg);
+		
+		System.out.println(tok.getTokens(src).toString());
+		
+		
 		
 	//	src = "He said, \"I'd like to know Mr. Choi.\" He's the owner of ClearNLP.";
 	//	for (String t : tok.getTokens(src))	System.out.println(t);

@@ -80,7 +80,7 @@ public class UTInput
 		
 		return stream;
 	}
-	
+
 	static public Set<String> getStringSet(BufferedReader fin) throws Exception
 	{
 		Set<String> set = new HashSet<String>();

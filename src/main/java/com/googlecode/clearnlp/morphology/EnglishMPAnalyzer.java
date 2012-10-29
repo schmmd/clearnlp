@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -108,6 +109,15 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 		try
 		{
 			init(new ZipInputStream(new FileInputStream(dictFile)));
+		}
+		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	public EnglishMPAnalyzer(InputStream stream)
+	{
+		try
+		{
+			init(new ZipInputStream(stream));
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}

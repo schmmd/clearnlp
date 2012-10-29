@@ -55,8 +55,7 @@ public class EngineProcess
 	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, List<String> tokens)
 	{
 		DEPTree tree = getDEPTree(taggers, analyzer, parser, tokens);
-		identifier.identify(tree);
-		labeler.label(tree);
+		predictSRL(identifier, labeler, tree);
 			
 		return tree;
 	}
@@ -127,7 +126,8 @@ public class EngineProcess
 	
 	static public void predictSRL(AbstractPredIdentifier identifier, AbstractSRLabeler labeler, DEPTree tree)
 	{
-	//	identifier.identify(tree);
+		identifier.identify(tree);
+		tree.initSHeads();
 		labeler.label(tree);	
 	}
 	
