@@ -21,8 +21,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.zip.ZipInputStream;
 
-import org.junit.Test;
-
 /**
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
