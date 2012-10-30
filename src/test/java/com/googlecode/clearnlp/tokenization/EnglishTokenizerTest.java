@@ -21,15 +21,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.zip.ZipInputStream;
 
-import org.junit.Test;
-
 /**
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class EnglishTokenizerTest
 {
-	@Test
+//	@Test
 	public void testTokenize() throws FileNotFoundException
 	{
 		EnglishTokenizer tok = new EnglishTokenizer(new ZipInputStream(new FileInputStream("src/main/resources/model/dictionary-1.2.0.zip")));
