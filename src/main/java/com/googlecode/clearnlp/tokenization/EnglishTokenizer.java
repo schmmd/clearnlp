@@ -65,6 +65,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected final String[] A_D0D = {".",",",":","-","/","'"};
 	
 	protected Replacer   R_URL;
+	protected Replacer   R_ABBREVIATION;
 	protected Replacer   R_PERIOD_LIKE;
 	protected Replacer   R_MARKER;
 	protected Replacer   R_APOSTROPHY;
@@ -107,6 +108,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 
 		protectEmoticons(lTokens);
 		lTokens = tokenizePatterns(lTokens, R_URL);
+		lTokens = tokenizePatterns(lTokens, R_ABBREVIATION);
 		lTokens = tokenizePatterns(lTokens, R_PERIOD_LIKE);
 		lTokens = tokenizePatterns(lTokens, R_MARKER);
 		lTokens = tokenizePatterns(lTokens, R_USDOLLAR);
@@ -135,13 +137,14 @@ public class EnglishTokenizer extends AbstractTokenizer
 	/** Called by {@link EnglishTokenizer#EnglishTokenizer(ZipInputStream)}. */
 	private void initReplacers()
 	{
-		R_URL         = MPLib.URL_SPAN.replacer(new SubstitutionOne());
-		R_PERIOD_LIKE = new jregex.Pattern("(\\.|\\?|\\!){2,}").replacer(new SubstitutionOne());
-		R_MARKER      = new jregex.Pattern("\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}|\\`{2,}|\\'{2,}").replacer(new SubstitutionOne());
-		R_APOSTROPHY  = new jregex.Pattern("(?i)((\\')(s|d|m|ll|re|ve|nt)|n(\\')t)$").replacer(new SubstitutionOne());
-		R_USDOLLAR    = new jregex.Pattern("^US\\$").replacer(new SubstitutionOne());
-		R_AMPERSAND   = getReplacerAmpersand();
-		R_WAW         = getReplacerWAWs();
+		R_URL          = MPLib.URL_SPAN.replacer(new SubstitutionOne());
+		R_ABBREVIATION = new jregex.Pattern("(^(\\p{Alpha}\\.)+)(\\p{Punct}*$)").replacer(new SubstitutionOnePlus());
+		R_PERIOD_LIKE  = new jregex.Pattern("(\\.|\\?|\\!){2,}").replacer(new SubstitutionOne());
+		R_MARKER       = new jregex.Pattern("\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}|\\`{2,}|\\'{2,}").replacer(new SubstitutionOne());
+		R_APOSTROPHY   = new jregex.Pattern("(?i)((\\')(s|d|m|ll|re|ve|nt)|n(\\')t)$").replacer(new SubstitutionOne());
+		R_USDOLLAR     = new jregex.Pattern("^US\\$").replacer(new SubstitutionOne());
+		R_AMPERSAND    = getReplacerAmpersand();
+		R_WAW          = getReplacerWAWs();
 		
 		R_PUNCTUATION_PRE  = new jregex.Pattern("\\(|\\)|\\[|\\]|\\{|\\}|<|>|\\,|\\:|\\;|\\\"").replacer(new SubstitutionOne());
 		R_PUNCTUATION_POST = new jregex.Pattern("\\.|\\?|\\!|\\`|\\'|\\-|\\/|\\@|\\#|\\$|\\%|\\&|\\|").replacer(new SubstitutionOne());
@@ -380,11 +383,6 @@ public class EnglishTokenizer extends AbstractTokenizer
 		}
 	}
 	
-	protected void replaceAmpersands(List<StringBooleanPair> tokens)
-	{
-		
-	}
-	
 	protected void recoverPatterns(List<StringBooleanPair> tokens, Pattern p, String replacement)
 	{
 		for (StringBooleanPair token : tokens)
@@ -466,6 +464,19 @@ public class EnglishTokenizer extends AbstractTokenizer
 		{
 			dest.append(match.group(1));
 			dest.append(S_D0D+M_D0D.get(match.group(2))+"_");
+			dest.append(match.group(3));
+		}
+	}
+	
+	private class SubstitutionOnePlus implements Substitution
+	{
+		@Override
+		public void appendSubstitution(MatchResult match, TextBuffer dest)
+		{
+			dest.append(S_DELIM);
+			dest.append(S_PROTECTED);
+			dest.append(match.group(1));
+			dest.append(S_DELIM);
 			dest.append(match.group(3));
 		}
 	}

@@ -21,13 +21,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.zip.ZipInputStream;
 
+import org.junit.Test;
+
 /**
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class EnglishTokenizerTest
 {
-//	@Test
+	@Test
 	public void testTokenize() throws FileNotFoundException
 	{
 		EnglishTokenizer tok = new EnglishTokenizer(new ZipInputStream(new FileInputStream("src/main/resources/model/dictionary-1.2.0.zip")));
@@ -145,10 +147,11 @@ public class EnglishTokenizerTest
 		trg = "[You, `, paid, ', US$, 170,000, ?!, You, should, 've, paid, only, $, 16.75, .]";
 		assertEquals(tok.getTokens(src).toString(), trg);
 		
-		System.out.println(tok.getTokens(src).toString());
+		src = " 1. Buy a new Chevrolet (37%-owned in the U.S..) . 15%";
+		trg = "[1, ., Buy, a, new, Chevrolet, (, 37, %, -, owned, in, the, U.S., ., ), ., 15, %]";
+		assertEquals(tok.getTokens(src).toString(), trg);
 		
-		
-		
+	//	System.out.println(tok.getTokens(src).toString());
 	//	src = "He said, \"I'd like to know Mr. Choi.\" He's the owner of ClearNLP.";
 	//	for (String t : tok.getTokens(src))	System.out.println(t);
 	}
