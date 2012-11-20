@@ -52,6 +52,8 @@ public class DEPLib
 	/** The delimiter between head ID and label pairs. */
 	static public final String DELIM_HEADS_KEY = ":";
 	
+	static public final String DEP_NON_PROJ = "#NPRJ!";
+	
 	/** @return [Total, LAS, UAS, LS]. */
 	static public int[] getScores(DEPTree tree, StringIntPair[] gHeads)
 	{

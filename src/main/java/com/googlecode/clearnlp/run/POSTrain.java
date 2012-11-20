@@ -35,6 +35,7 @@ import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
+import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.engine.EngineSetter;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
 import com.googlecode.clearnlp.pos.POSLib;
@@ -161,7 +162,7 @@ public class POSTrain extends AbstractRun
 			
 			while ((nodes = reader.next()) != null)
 			{
-				POSLib.normalizeForms(nodes);
+				EngineProcess.normalizeForms(nodes);
 				
 				for (POSNode node : nodes)
 					set.add(node.lemma);

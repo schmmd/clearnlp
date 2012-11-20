@@ -182,7 +182,7 @@ public class DEPParser extends AbstractDEPParser
 			
 			vector = getFeatureVector(f_xml);
 			ps = s_model.predictAll(vector);
-			s_model.toProbability(ps);
+			s_model.normalizeScores(ps);
 			
 			for (StringPrediction p : ps)
 			{

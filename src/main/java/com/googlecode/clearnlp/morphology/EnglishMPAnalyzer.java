@@ -69,6 +69,11 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 	final String ADJ_RULE  = LANG_DIR+"adj.rule";
 	final String ABBR_RULE = LANG_DIR+"abbr.rule";
 	
+	final String POS_NOUN = "N";
+	final String POS_VERB = "V";
+	final String POS_ADJ  = "J";
+	final String POS_ADV  = "R";
+	
 	/** Noun exceptions */
 	Map<String,String> m_noun_exc;
 	/** Verb exceptions */
@@ -267,6 +272,27 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 	{
 		form = MPLib.normalizeBasic(form);
 		return getLemmaAux(form.toLowerCase(), pos);
+	}
+	
+	@Override
+	public Set<String> getPOSTags(String form)
+	{
+		Set<String> set = new HashSet<String>();
+		form = form.toLowerCase();
+		
+		if (m_noun_exc.containsKey(form) || getBaseAux(form, s_noun_base, a_noun_rule) != null)
+			set.add(POS_NOUN);
+		
+		if (m_verb_exc.containsKey(form) || getBaseAux(form, s_verb_base, a_verb_rule) != null)
+			set.add(POS_VERB);
+		
+		if (m_adj_exc.containsKey(form) || getBaseAux(form, s_adj_base , a_adj_rule) != null)
+			set.add(POS_ADJ);
+		
+		if (m_adv_exc .containsKey(form))
+			set.add(POS_ADV);
+
+		return set;
 	}
 	
 	/** Called by {@link EnglishMPAnalyzer#getLemma(String, String)}. */

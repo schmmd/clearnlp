@@ -23,6 +23,8 @@
 */
 package com.googlecode.clearnlp.morphology;
 
+import java.util.Set;
+
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.pos.POSNode;
@@ -40,6 +42,13 @@ abstract public class AbstractMPAnalyzer
 	 * @param pos the POS tag of the word.
 	 */
 	abstract public String getLemma(String form, String pos);
+	
+	/**
+	 * Returns a set of possible part-of-speech tags of the specific form.
+	 * @param form a word-form.
+	 * @return a set of possible part-of-speech tags of the specific form.
+	 */
+	abstract public Set<String> getPOSTags(String form);
 	
 	/**
 	 * Adds lemmas of all word-forms given their POS tags.

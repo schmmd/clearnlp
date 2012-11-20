@@ -23,8 +23,14 @@
 */
 package com.googlecode.clearnlp.util;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.carrotsearch.hppc.IntContainer;
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+import com.carrotsearch.hppc.cursors.ObjectCursor;
 
 public class UTHppc
 {
@@ -70,5 +76,16 @@ public class UTHppc
 		
 		s1.retainAll(s2);
 		return s1;
+	}
+	
+	static public List<String> getSortedKeys(ObjectIntOpenHashMap<String> map)
+	{
+		List<String> keys = new ArrayList<String>(map.size());
+		
+		for (ObjectCursor<String> cur : map.keys())
+			keys.add(cur.value);
+		
+		Collections.sort(keys);
+		return keys;
 	}
 }

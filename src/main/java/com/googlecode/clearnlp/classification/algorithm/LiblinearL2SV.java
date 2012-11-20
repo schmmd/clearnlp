@@ -109,8 +109,9 @@ public class LiblinearL2SV extends AbstractAlgorithm
 		for (i=0; i<N; i++)
 		{
 			index[i] = i;
-			aY   [i] = (ys.get(i) == currLabel) ? (byte)1 : (byte)-1;
-			QD   [i] = diag[GETI(aY, i)];
+			
+			aY[i] = (ys.get(i) == currLabel) ? (byte)1 : (byte)-1;
+			QD[i] = diag[GETI(aY, i)];
 
 			if (bBias)	QD[i] += d_bias * d_bias;
 			
@@ -141,8 +142,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 				i  = index[s];
 				yi = aY[i];
 				xi = xs.get(i);
-			//	U  = upper_bound[GETI(aY, i)];
-				U  = getU(upper_bound, aY, i);
+				U  = upper_bound[GETI(aY, i)];
 				G  = (bBias) ? weight[0] * d_bias : 0;
 								
 				if (space.hasWeight())
@@ -235,22 +235,8 @@ public class LiblinearL2SV extends AbstractAlgorithm
 		for (i = 0; i < N; i++)
 			if (alpha[i] > 0) ++nSV;
 		
-		StringBuilder build = new StringBuilder();
-		
-		build.append("- label = ");
-		build.append(currLabel);
-		build.append(": iter = ");
-		build.append(iter);
-		build.append(", nSV = ");
-		build.append(nSV);
-		System.out.println(build.toString());
-		
+		System.out.printf("- label = %3d: iter = %4d, nSV = %5d\n", currLabel, iter, nSV);
 		return weight;
-	}
-	
-	protected double getU(double[] upper_bound, byte[] aY, int i)
-	{
-		return upper_bound[GETI(aY, i)];
 	}
 }
 	

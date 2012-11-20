@@ -74,7 +74,7 @@ public class DEPDevelop extends DEPTrain
 		Element   eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPReader reader = (DEPReader)getReader(eConfig).o1;
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
-		String[]  trainFiles = UTFile.getSortedFileList(trainDir);
+		String[]  trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true);
 		String[]  devFiles = UTFile.getSortedFileList(devDir); 
 		Set<String> sPunc = getLexica(eConfig, xml, trainFiles, -1);
 		

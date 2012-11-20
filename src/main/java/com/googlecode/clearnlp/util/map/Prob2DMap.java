@@ -77,6 +77,27 @@ public class Prob2DMap extends HashMap<String,ObjectIntOpenHashMap<String>>
 		return (p == null) ? null : p.o2;
 	}
 	
+	public StringDoublePair getBestProb1D(String key)
+	{
+		StringDoublePair[] ps = getProb1D(key);
+		
+		if (ps != null)
+		{
+			StringDoublePair max = ps[0];
+			int i, size = ps.length;
+			
+			for (i=1; i<size; i++)
+			{
+				if (ps[i].d > max.d)
+					max = ps[i];
+			}
+			
+			return max;
+		}
+		
+		return null;
+	}
+	
 	public StringDoublePair[] getProb2D(String key)
 	{
 		Pair<Double,StringDoublePair[]> p = getProb1DAux(key);

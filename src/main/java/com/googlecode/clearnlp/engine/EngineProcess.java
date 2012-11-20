@@ -8,10 +8,11 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.AbstractSRLabeler;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
-import com.googlecode.clearnlp.pos.POSLib;
+import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
+import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.pair.Pair;
@@ -110,16 +111,43 @@ public class EngineProcess
 		return tree;
 	}
 	
-	// ============================= predict: POSNode[] =============================
+	// ============================= process: POSNode[] =============================
 	
 	static public void predictPOS(Pair<POSTagger[],Double> taggers, POSNode[] nodes)
 	{
-		POSLib.normalizeForms(nodes);
+		normalizeForms(nodes);
 
 		if (taggers.o1.length == 1 || taggers.o2 < taggers.o1[0].getCosineSimilarity(nodes))
 			taggers.o1[0].tag(nodes);
 		else
 			taggers.o1[1].tag(nodes);
+	}
+	
+	static public void normalizeForms(POSNode[] nodes)
+	{
+		if (!nodes[0].isSimplifiedForm(AbstractReader.DUMMY_TAG))
+			return;
+		
+		for (POSNode node : nodes)
+		{
+			node.simplifiedForm = MPLib.normalizeBasic(node.form);
+			node.lemma = node.simplifiedForm.toLowerCase();
+		}
+	}
+	
+	// ============================= process: DEPTree =============================
+	
+	static public void normalizeForms(DEPTree tree)
+	{
+		int i, size = tree.size();
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			node.simplifiedForm = MPLib.normalizeBasic(node.form);
+			node.lowerSimplifiedForm = node.simplifiedForm.toLowerCase();
+		}
 	}
 	
 	// ============================= predict: SRL =============================

@@ -29,6 +29,7 @@ import java.util.Arrays;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
+import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
 import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
@@ -114,7 +115,7 @@ public class POSDevelop extends POSTrain
 		while ((nodes = reader.next()) != null)
 		{
 			gold = POSLib.getLabels(nodes);
-			POSLib.normalizeForms(nodes);
+			EngineProcess.normalizeForms(nodes);
 			
 			if (threshold < taggers[0].getCosineSimilarity(nodes))
 				taggers[0].tag(nodes);
@@ -144,7 +145,7 @@ public class POSDevelop extends POSTrain
 		while ((nodes = reader.next()) != null)
 		{
 			gold = POSLib.getLabels(nodes);
-			POSLib.normalizeForms(nodes);
+			EngineProcess.normalizeForms(nodes);
 			Arrays.fill(correct, 0);
 			
 			for (i=0; i<2; i++)

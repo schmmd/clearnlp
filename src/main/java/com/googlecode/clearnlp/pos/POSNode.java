@@ -37,6 +37,8 @@ public class POSNode
 	public String form;
 	/** The simplified form of the word-form (used for POS tagging). */
 	public String simplifiedForm;
+	/** The lowercase simplified form of the word-form (used for POS tagging). */
+	public String lowerSimplifiedForm;
 	/** The part-of-speech tag of the word-form. */
 	public String pos;
 	/** The lemma of the word-form. */
@@ -90,7 +92,8 @@ public class POSNode
 		this.pos   = pos;
 		this.lemma = lemma;
 		
-		simplifiedForm = AbstractReader.DUMMY_TAG; 
+		simplifiedForm      = AbstractReader.DUMMY_TAG;
+		lowerSimplifiedForm = AbstractReader.DUMMY_TAG;
 	}
 	
 	/**

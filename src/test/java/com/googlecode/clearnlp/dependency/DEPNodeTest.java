@@ -42,7 +42,7 @@ public class DEPNodeTest
 		// initialization
 		DEPNode root = new DEPNode();
 
-		assertEquals(DEPLib.NULL_ID , root.id);
+	//	assertEquals(DEPLib.NULL_ID , root.id);
 		assertEquals(AbstractReader.DUMMY_TAG, root.form);
 		assertEquals(AbstractReader.DUMMY_TAG, root.lemma);
 		assertEquals(AbstractReader.DUMMY_TAG, root.pos);

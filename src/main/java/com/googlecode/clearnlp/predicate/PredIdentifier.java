@@ -196,8 +196,6 @@ public class PredIdentifier extends AbstractPredIdentifier
 		if (token.relation != null)
 		{
 			     if (token.isRelation(SRLFtrXml.R_H))	node = node.getHead();
-			else if (token.isRelation(SRLFtrXml.R_LND))	node = node.getLeftNearestDependent();
-			else if (token.isRelation(SRLFtrXml.R_RND))	node = node.getRightNearestDependent();
 			else if (token.isRelation(SRLFtrXml.R_LMD))	node = node.getLeftMostDependent();
 			else if (token.isRelation(SRLFtrXml.R_RMD))	node = node.getRightMostDependent();
 		}

@@ -142,7 +142,7 @@ public class DEPArc implements Comparable<DEPArc>
 	
 	/**
 	 * If both the specific node and label match, returns 1.
-	 * If only the  specific node matches, returns 2.
+	 * If only the specific node matches, returns 2.
 	 * Otherwise, returns 0.
 	 * @param node the node to be compared.
 	 * @param label the label to be compared.

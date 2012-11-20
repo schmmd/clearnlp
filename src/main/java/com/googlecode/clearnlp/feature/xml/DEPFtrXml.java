@@ -130,10 +130,4 @@ public class DEPFtrXml extends AbstractFtrXml
 			   P_FEAT   .matcher(field).matches() ||
 			   P_BOOLEAN.matcher(field).matches();
 	}
-
-	@Override
-	protected String toStringCutoffs()
-	{
-		return null;
-	}
 }

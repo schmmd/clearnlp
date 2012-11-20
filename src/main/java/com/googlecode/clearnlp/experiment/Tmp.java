@@ -59,18 +59,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.carrotsearch.hppc.IntArrayDeque;
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntDeque;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
 import com.googlecode.clearnlp.dependency.DEPArc;
+import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
 import com.googlecode.clearnlp.dependency.srl.SRLabeler;
+import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
-import com.googlecode.clearnlp.pos.POSLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.reader.POSReader;
@@ -95,7 +99,144 @@ public class Tmp
 	//	getTokens(args[0], args[1]);
 	//	converNonASC(args);
 	//	printTreesForCKY(args);
-		wc(args[0]);
+	//	wc(args[0]);
+	//	projectivize(args[0], args[1]);
+	//	evalSubPOS(args[0]);
+	//	measureTime();
+		countLR(args[0]);
+	}
+	
+	void countLR(String inputFile)
+	{
+	//	DEPReader reader = new DEPReader(0, 1, 2, 3, 5, 6, 7);
+		DEPReader reader = new DEPReader(0, 1, 2, 4, 6, 8, 10);
+		reader.open(UTInput.createBufferedFileReader(inputFile));
+		int i, size, left = 0, right = 0, l, r, prevId, depId;
+		DEPTree tree;
+		DEPNode node;
+		
+		while ((tree = reader.next()) != null)
+		{
+			tree.setDependents();
+			size = tree.size();
+			
+			for (i=1; i<size; i++)
+			{
+				node = tree.get(i);
+				prevId = -1;
+				l = r = 0;
+				
+				for (DEPArc arc : node.getDependents())
+				{
+					depId = arc.getNode().id;
+					
+					if (depId - prevId == 1)
+					{
+						if (depId < node.id)	l++;
+						else 					r++;
+					}
+					
+					prevId = depId;
+				}
+				
+				if      (l > 1)	left++;
+				else if (r > 1)	right++;
+			}
+		}
+		
+		reader.close();
+		System.out.printf("Left: %d, Right: %d\n", left, right);
+	}
+	
+	void measureTime()
+	{
+		int i, j, len = 10, size = 1000000;
+		IntArrayList list;
+		IntDeque deque;
+		long st, et;
+		
+		st = System.currentTimeMillis();
+		
+		for (i=0; i<size; i++)
+		{
+			list = new IntArrayList();
+			
+			for (j=0; j<len; j++)
+				list.add(j);
+			
+			list.remove(list.size()-1);
+		}
+		
+		et = System.currentTimeMillis();
+		System.out.println(et-st);
+		
+		st = System.currentTimeMillis();
+		
+		for (i=0; i<size; i++)
+		{
+			deque = new IntArrayDeque();
+			
+			for (j=0; j<len; j++)
+				deque.addLast(j);
+			
+			deque.removeLast();
+		}
+		
+		et = System.currentTimeMillis();
+		System.out.println(et-st);
+	}
+	
+	void evalSubPOS(String inputFile) throws Exception
+	{
+		BufferedReader reader = UTInput.createBufferedFileReader(inputFile);
+		Pattern delim = Pattern.compile("\t");
+		int correct = 0, total = 0;
+		DEPFeat p, g;
+		String[] ls;
+		String line;
+		
+		while ((line = reader.readLine()) != null)
+		{
+			line = line.trim();
+			
+			if (!line.isEmpty())
+			{
+				ls = delim.split(line);
+				g = new DEPFeat(ls[6]);
+				p = new DEPFeat(ls[7]);
+				
+				if (g.get("SubPOS").equals(p.get("SubPOS")))
+					correct++;
+						
+				total++;
+			}
+		}
+		
+		System.out.printf("%5.2f (%d/%d)\n", 100d*correct/total, correct, total);
+	}
+	
+	void projectivize(String inputFile, String outputFile)
+	{
+		DEPReader reader = new DEPReader(0, 1, 2, 4, 6, 8, 10);
+		DEPTree tree;
+		
+		reader.open(UTInput.createBufferedFileReader(inputFile));
+		PrintStream fold = UTOutput.createPrintBufferedFileStream(outputFile+".old");
+		PrintStream fnew = UTOutput.createPrintBufferedFileStream(outputFile+".new");
+		int i;
+		
+		for (i=0; (tree = reader.next()) != null; i++)
+		{
+			fold.println(tree.toStringCoNLL()+"\n");
+			tree.projectivize();
+			fnew.println(tree.toStringCoNLL()+"\n");
+			
+			if (i%1000 == 0)	System.out.print(".");
+		}	System.out.println();
+		
+		reader.close();
+		fold.close();
+		fnew.close();
 	}
 	
 	void wc(String inputFile)
@@ -298,7 +439,7 @@ public class Tmp
 		
 		while ((nodes = reader.next()) != null)
 		{
-			POSLib.normalizeForms(nodes);
+			EngineProcess.normalizeForms(nodes);
 			
 			for (POSNode node : nodes)
 			{
@@ -338,22 +479,6 @@ public class Tmp
 			fout.printf("%s\t%d\n", p.s, p.i);
 				
 		fout.close();
-	}
-	
-	void countNonProjective(String filename)
-	{
-		DEPReader reader = new DEPReader(0, 1, 2, 3, 4, 5, 6);
-		reader.open(UTInput.createBufferedFileReader(filename));
-		int total = 0, count = 0;
-		DEPTree tree;
-		
-		while ((tree = reader.next()) != null)
-		{
-			total++;
-			if (!tree.getNonProjectiveSet().isEmpty()) count++;
-		}
-		
-		System.out.printf("%f (%d/%d)", 100d*count/total, count, total);
 	}
 	
 	void mapPropBankToDependency(String inputFile, String outputFile)

@@ -112,7 +112,7 @@ public class StringModel extends AbstractModel
 		System.out.println();
 	}
 
-	private void loadFeatures(BufferedReader fin) throws IOException
+	public void loadFeatures(BufferedReader fin) throws IOException
 	{
 		ObjectIntOpenHashMap<String> map;
 		int i, j, typeSize, valueSize;
@@ -138,11 +138,10 @@ public class StringModel extends AbstractModel
 			}
 			
 			m_features.put(type, map);
-		//	System.out.println(valueSize-map.size());
 		}
 	}
 	
-	private void saveFeatures(PrintStream fout)
+	public void saveFeatures(PrintStream fout)
 	{
 		ObjectIntOpenHashMap<String> map;
 		StringBuilder build;
@@ -234,4 +233,9 @@ public class StringModel extends AbstractModel
 	{
 		return predictAll(toSparseFeatureVector(x));
 	}
+	
+	public List<StringPrediction> getPredictions(StringFeatureVector x)
+	{
+		return getPredictions(toSparseFeatureVector(x));
+	}	
 }

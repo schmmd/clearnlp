@@ -36,13 +36,13 @@ import com.googlecode.clearnlp.dependency.DEPTree;
  */
 public class DEPReader extends AbstractColumnReader<DEPTree>
 {
-	private int i_id;
-	private int i_form;
-	private int i_lemma;
-	private int i_pos;
-	private int i_feats;
-	private int i_headId;
-	private int i_deprel;
+	protected int i_id;
+	protected int i_form;
+	protected int i_lemma;
+	protected int i_pos;
+	protected int i_feats;
+	protected int i_headId;
+	protected int i_deprel;
 	
 	/**
 	 * Constructs a dependency reader.

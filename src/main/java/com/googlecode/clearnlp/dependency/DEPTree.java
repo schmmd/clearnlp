@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
@@ -42,9 +43,10 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  * @since v0.1
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-@SuppressWarnings("serial")
 public class DEPTree extends ArrayList<DEPNode>
 {
+	private static final long serialVersionUID = -8007954222948953695L;
+	
 	/**
 	 * Constructs a dependency tree.
 	 * An artificial root node gets inserted automatically.
@@ -72,6 +74,17 @@ public class DEPTree extends ArrayList<DEPNode>
 		{
 			return null;
 		}
+	}
+	
+	public String[] getPOSTags()
+	{
+		int i, size = size();
+		String[] tags = new String[size];
+		
+		for (i=1; i<size; i++)
+			tags[i] = get(i).pos;
+		
+		return tags;
 	}
 
 	/**
@@ -140,6 +153,12 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 		
 		return xHeads;
+	}
+	
+	public void clearPOSTags()
+	{
+		for (DEPNode node : this)
+			node.pos = null;
 	}
 	
 	/** Clears dependency head information (excluding secondary dependencies) of all nodes in this tree. */
@@ -243,6 +262,77 @@ public class DEPTree extends ArrayList<DEPNode>
 		return false;
 	}
 	
+	public void projectivize()
+	{
+		IntArrayList ids = new IntArrayList();
+		int i, size = size();
+		DEPNode nonProj;
+		
+		for (i=1; i<size; i++)
+			ids.add(i);
+		
+		while ((nonProj = getSmallestNonProjectiveArc(ids)) != null)
+			nonProj.setHead(nonProj.getHead().getHead(), DEPLib.DEP_NON_PROJ);
+	}
+	
+	/** Called by {@link DEPTree#projectivize()}. */
+	private DEPNode getSmallestNonProjectiveArc(IntArrayList ids)
+	{
+		IntOpenHashSet remove = new IntOpenHashSet();
+		DEPNode wk, nonProj = null;
+		int np, max = 0;
+		
+		for (IntCursor cur : ids)
+		{
+			wk = get(cur.value);
+			np = isNonProjective(wk);
+			
+			if (np == 0)
+			{
+				remove.add(cur.value);
+			}
+			else if (np > max)
+			{
+				nonProj = wk;
+				max = np;
+			}
+		}
+		
+		ids.removeAll(remove);
+		return nonProj;
+	}
+	
+	/** @return 0 if w_k is projective. */
+	public int isNonProjective(DEPNode wk)
+	{
+		DEPNode wi = wk.getHead();
+		DEPNode wj;
+		
+		int bId, eId, j;
+
+		if (wk.id < wi.id)
+		{
+			bId = wk.id;
+			eId = wi.id;
+		}
+		else
+		{
+			bId = wi.id;
+			eId = wk.id;
+		}
+		
+		for (j=bId+1; j<eId; j++)
+		{
+			wj = get(j);
+			
+			if (!wj.isDescendentOf(wi))
+				return Math.abs(wi.id - wk.id);
+		}
+
+		return 0;
+	}
+	
+	@Deprecated
 	public IntOpenHashSet getNonProjectiveSet()
 	{
 		IntObjectOpenHashMap<IntOpenHashSet> map = new IntObjectOpenHashMap<IntOpenHashSet>();
@@ -292,6 +382,7 @@ public class DEPTree extends ArrayList<DEPNode>
 		return getNonProjectiveMapAux(map);
 	}
 	
+	@Deprecated
 	private void addNonProjectiveMap(IntObjectOpenHashMap<IntOpenHashSet> map, int cIdx, int nIdx)
 	{
 		IntOpenHashSet set;
@@ -307,6 +398,7 @@ public class DEPTree extends ArrayList<DEPNode>
 		set.add(nIdx);
 	}
 	
+	@Deprecated
 	private IntOpenHashSet getNonProjectiveMapAux(IntObjectOpenHashMap<IntOpenHashSet> map)
 	{
 		IntIntPair max = new IntIntPair(-1, -1);
@@ -370,6 +462,20 @@ public class DEPTree extends ArrayList<DEPNode>
 		{
 			build.append(DEPReader.DELIM_SENTENCE);
 			build.append(get(i));
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringPOS()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringPOS());
 		}
 
 		return build.substring(DEPReader.DELIM_SENTENCE.length());

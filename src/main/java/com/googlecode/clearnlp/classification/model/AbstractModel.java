@@ -402,7 +402,7 @@ abstract public class AbstractModel
 		return ByteBuffer.wrap(bytes).getDouble();
 	}
 	
-	public void toProbability(List<StringPrediction> ps)
+	public void normalizeScores(List<StringPrediction> ps)
 	{
 		double d;
 		

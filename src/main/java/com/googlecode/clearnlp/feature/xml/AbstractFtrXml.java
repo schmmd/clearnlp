@@ -24,16 +24,23 @@
 package com.googlecode.clearnlp.feature.xml;
 
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Formatter;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
+import com.googlecode.clearnlp.util.pair.IntIntPair;
 
 /**
  * Abstract feature XML templates.
@@ -68,6 +75,7 @@ abstract public class AbstractFtrXml
 	protected boolean       b_skipInvisible;
 	protected int[]         cutoff_label;
 	protected int[]         cutoff_feature;
+	private   Document      xml_doc;
 	
 	/**
 	 * @param fin the input stream of the XML file.
@@ -101,11 +109,11 @@ abstract public class AbstractFtrXml
 		try
 		{
 			DocumentBuilder builder = dFactory.newDocumentBuilder();
-			Document        doc     = builder.parse(fin);
+			xml_doc = builder.parse(fin);
 			
-			initCutoffs (doc);
-			initFeatures(doc);
-			initMore(doc);
+			initCutoffs (xml_doc);
+			initFeatures(xml_doc);
+			initMore(xml_doc);
 		}
 		catch (Exception e) {e.printStackTrace();System.exit(1);}
 	}
@@ -219,6 +227,25 @@ abstract public class AbstractFtrXml
 		System.exit(1);
 	}
 	
+	public IntIntPair getSourceWindow(char source)
+	{
+		int min = 0, max = 0;
+		
+		for (FtrTemplate template : f_templates)
+		{
+			for (FtrToken token : template.tokens)
+			{
+				if (token.source == source)
+				{
+					if      (token.offset < min)	min = token.offset;
+					else if (token.offset > max)	max = token.offset;					
+				}
+			}
+		}
+		
+		return new IntIntPair(min, max);
+	}
+	
 	/**
 	 * Returns the array of feature templates.
 	 * @return the array of feature templates.
@@ -252,18 +279,20 @@ abstract public class AbstractFtrXml
 	
 	public String toString()
 	{
-		Formatter format = new Formatter();
+		String s = null;
 		
-		format.format("<%s>\n", XML_TEMPLATE);
-		format.format("%s", toStringCutoffs());
+		try
+		{
+			TransformerFactory tf = TransformerFactory.newInstance();
+			Transformer transformer = tf.newTransformer();
+			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+			StringWriter writer = new StringWriter();
+			transformer.transform(new DOMSource(xml_doc), new StreamResult(writer));
+			s = writer.getBuffer().toString();			
+		}
+		catch (Exception e) {e.printStackTrace();}
 		
-		for (FtrTemplate ft : f_templates)
-			format.format("  <%s %s/>\n", XML_FEATURE, ft.toString());
-				
-		format.format("</%s>\n", XML_TEMPLATE);
-		format.close();
-		
-		return format.toString();
+		return s;
 	}
 
 
@@ -290,9 +319,4 @@ abstract public class AbstractFtrXml
 	 * @return {@code true} if the specific field is valid.
 	 */
 	abstract protected boolean validField(String filed);
-	/**
-	 * Returns the string representation of cutoffs.
-	 * @return the string representation of cutoffs.
-	 */
-	abstract protected String toStringCutoffs();
 }

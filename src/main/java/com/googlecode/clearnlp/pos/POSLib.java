@@ -23,9 +23,7 @@
 */
 package com.googlecode.clearnlp.pos;
 
-import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
-import com.googlecode.clearnlp.reader.AbstractReader;
 
 /**
  * Part-of-speech library.
@@ -48,18 +46,6 @@ public class POSLib
 			labels[i] = nodes[i].pos;
 		
 		return labels;
-	}
-	
-	static public void normalizeForms(POSNode[] nodes)
-	{
-		if (!nodes[0].isSimplifiedForm(AbstractReader.DUMMY_TAG))
-			return;
-		
-		for (POSNode node : nodes)
-		{
-			node.simplifiedForm = MPLib.normalizeBasic(node.form);
-			node.lemma = node.simplifiedForm.toLowerCase();
-		}
 	}
 	
 	static public String toString(POSNode[] nodes, boolean includeLemma)

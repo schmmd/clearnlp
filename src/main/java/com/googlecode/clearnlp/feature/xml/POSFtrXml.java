@@ -24,7 +24,6 @@
 package com.googlecode.clearnlp.feature.xml;
 
 import java.io.InputStream;
-import java.util.Formatter;
 import java.util.regex.Pattern;
 
 import org.w3c.dom.Document;
@@ -110,16 +109,5 @@ public class POSFtrXml extends AbstractFtrXml
 	public int getNumberOfConfigurations()
 	{
 		return cutoff_ambiguity.length;
-	}
-
-	protected String toStringCutoffs()
-	{
-		Formatter format = new Formatter();
-
-		for (int i=0; i<cutoff_label.length; i++)
-			format.format("  <%s %s=\"%d\" %s=\"%d\" %s=\"%d\" %s=\"%f\"/>\n", XML_CUTOFF, XML_LABEL, cutoff_label[i], XML_FEATURE, cutoff_feature[i], CUTOFF_DOCUMENT_FREQUENCY, cutoff_df[i], CUTOFF_AMBIGUITY, cutoff_ambiguity[i]);
-
-		format.close();
-		return format.toString();
 	}
 }

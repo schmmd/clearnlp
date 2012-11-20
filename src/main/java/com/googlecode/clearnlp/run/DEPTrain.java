@@ -85,7 +85,7 @@ public class DEPTrain extends AbstractRun
 	{
 		Element eConfig = UTXml.getDocumentElement(new FileInputStream(configXml));
 		DEPFtrXml xml = new DEPFtrXml(new FileInputStream(featureXml));
-		String[] trainFiles = UTFile.getSortedFileList(trainDir);
+		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true);
 		Set<String> sPunc = getLexica(eConfig, xml, trainFiles, -1);
 		DEPParser parser;
 		int boot = 0;
@@ -147,44 +147,13 @@ public class DEPTrain extends AbstractRun
 		}
 	}
 	
-/*	public DEPParser getTrainedParserOld(Element eConfig, DEPReader reader, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId) throws Exception
-	{
-		StringTrainSpace space = new StringTrainSpace(false, xml.getLabelCutoff(0), xml.getFeatureCutoff(0));
-		int i, size = trainFiles.length;
-		DEPParser parser;
-		DEPTree tree;
-		
-		if (model == null)	parser = new DEPParser(xml, sPunc, space);
-		else				parser = new DEPParser(xml, sPunc, model, space); 
-		
-		System.out.println("Collecting training instances:");
-		
-		for (i=0; i<size; i++)
-		{
-			if (devId == i)	continue;
-			reader.open(UTInput.createBufferedFileReader(trainFiles[i]));
-			
-			while ((tree = reader.next()) != null)
-				parser.parse(tree);
-			
-			System.out.print(".");
-			reader.close();
-		}
-		
-		System.out.println();
-		
-		model = null;
-		model = (StringModel)getModel(UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN), space, 0);
-		return new DEPParser(xml, sPunc, model);
-	}*/
-	
 	/** @param devId if {@code -1}, train the models using all training files. */
 	public DEPParser getTrainedParser(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId, int boot) throws Exception
 	{
 		int i, size = trainFiles.length, labelCutoff = xml.getLabelCutoff(0), featureCutoff = xml.getFeatureCutoff(0);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN);
 		int numThreads = getNumOfThreads(eTrain);
-
+		
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
 		List<StringTrainSpace> spaces = new ArrayList<StringTrainSpace>();
 		StringTrainSpace space;
@@ -209,21 +178,17 @@ public class DEPTrain extends AbstractRun
 		catch (InterruptedException e) {e.printStackTrace();}
 		
 		System.out.println();
+		space = spaces.get(0);
 		
-		if (spaces.size() == 1)
-		{
-			space = spaces.get(0);
-		}
-		else
+		if ((size = spaces.size()) > 1)
 		{
 			System.out.println("Merging training instances:");
-			space = new StringTrainSpace(false, labelCutoff, featureCutoff);
 			
-			for (StringTrainSpace s : spaces)
+			for (i=1; i<size; i++)
 			{
-				space.appendSpace(s);
+				space.appendSpace(spaces.get(i));
+				spaces.get(i).clear();
 				System.out.print(".");
-				s.clear();
 			}
 			
 			System.out.println();			
@@ -234,64 +199,7 @@ public class DEPTrain extends AbstractRun
 		
 		return new DEPParser(xml, sPunc, model);
 	}
-	
-	/** @param devId if {@code -1}, train the models using all training files. */
-	public DEPParser getTrainedParser(Element eConfig, DEPFtrXml xml, Set<String> sPunc, String[] trainFiles, StringModel model, int devId, int boot, StringTrainSpace gSpace) throws Exception
-	{
-		int i, size = trainFiles.length, labelCutoff = xml.getLabelCutoff(0), featureCutoff = xml.getFeatureCutoff(0);
-		Element eTrain = UTXml.getFirstElementByTagName(eConfig, TAG_TRAIN);
-		int numThreads = getNumOfThreads(eTrain);
 
-		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-		List<StringTrainSpace> spaces = new ArrayList<StringTrainSpace>();
-		StringTrainSpace space;
-		
-		System.out.println("Collecting training instances:");
-		
-		for (i=0; i<size; i++)
-		{
-			if (devId != i)
-			{
-				spaces.add(space = new StringTrainSpace(false, labelCutoff, featureCutoff));
-				executor.execute(new TrainTask(eConfig, xml, sPunc, trainFiles[i], model, space));
-			}
-		}
-		
-		executor.shutdown();
-		
-		try
-		{
-			executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-		}
-		catch (InterruptedException e) {e.printStackTrace();}
-		
-		System.out.println();
-		
-		if (spaces.size() == 1)
-		{
-			space = spaces.get(0);
-		}
-		else
-		{
-			System.out.println("Merging training instances:");
-			space = new StringTrainSpace(false, labelCutoff, featureCutoff);
-			
-			for (StringTrainSpace s : spaces)
-			{
-				space.appendSpace(s);
-				System.out.print(".");
-				s.clear();
-			}
-			
-			System.out.println();			
-		}
-		
-		model = null;
-		model = (StringModel)getModel(eTrain, space, 0);
-		
-		return new DEPParser(xml, sPunc, model);
-	}
-	
 	private class TrainTask implements Runnable
 	{
 		DEPParser d_parser;

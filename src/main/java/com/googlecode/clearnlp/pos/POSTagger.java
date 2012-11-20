@@ -38,6 +38,7 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.engine.AbstractEngine;
+import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.POSFtrXml;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
@@ -150,7 +151,7 @@ public class POSTagger extends AbstractEngine
 	/** Tags the POS nodes. */
 	public void tag(POSNode[] nodes)
 	{
-		POSLib.normalizeForms(nodes);
+		EngineProcess.normalizeForms(nodes);
 		
 		if (i_flag == FLAG_LEXICA)
 		{

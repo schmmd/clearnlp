@@ -202,7 +202,7 @@ abstract public class AbstractRun
 		else if (type.equals(AbstractReader.TYPE_SRL))
 			return new Pair<AbstractReader<?>,String>(getSRLReader(eReader), type);
 		
-		return null;
+		throw new IllegalArgumentException("Unsupported type: "+type);
 	}
 	
 	/** Called by {@link AbstractRun#getReader(Element)}. */

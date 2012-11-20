@@ -26,9 +26,11 @@ package com.googlecode.clearnlp.util;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.googlecode.clearnlp.io.FileExtFilter;
+import com.googlecode.clearnlp.util.pair.StringLongPair;
 
 
 /**
@@ -112,6 +114,31 @@ public class UTFile
 		String[] filelist = new String[list.size()];
 		list.toArray(filelist);
 		Arrays.sort(filelist);
+		
+		return filelist;
+	}
+	
+	static public String[] getSortedFileListBySize(String fileDir, String fileExt, boolean reverse)
+	{
+		List<StringLongPair> list = new ArrayList<StringLongPair>();
+		File file;
+		
+		for (String filepath : new File(fileDir).list(new FileExtFilter(fileExt)))
+		{
+			filepath = fileDir + File.separator + filepath;
+			file = new File(filepath);
+			
+			if (file.isFile())
+				list.add(new StringLongPair(filepath, file.length()));
+		}
+		
+		int i, size = list.size();
+		Collections.sort(list);
+		
+		String[] filelist = new String[size];
+		
+		for (i=0; i<size; i++)
+			filelist[i] = list.get(i).s;
 		
 		return filelist;
 	}

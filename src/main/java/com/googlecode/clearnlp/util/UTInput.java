@@ -24,6 +24,7 @@
 package com.googlecode.clearnlp.util;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
@@ -105,5 +106,10 @@ public class UTInput
 		}
 		
 		return map;
+	}
+	
+	static public ByteArrayInputStream toInputStream(String s)
+	{
+		return new ByteArrayInputStream(s.getBytes());
 	}
 }

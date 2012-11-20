@@ -157,10 +157,4 @@ public class SRLFtrXml extends AbstractFtrXml
 			   P_PATH   .matcher(field).matches() ||
 			   P_ARGN   .matcher(field).matches();
 	}
-
-	@Override
-	protected String toStringCutoffs()
-	{
-		return null;
-	}
 }

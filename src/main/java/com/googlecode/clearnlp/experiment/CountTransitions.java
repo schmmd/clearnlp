@@ -43,6 +43,7 @@ public class CountTransitions
 {
 	final int N = 10;
 	
+	@SuppressWarnings("deprecation")
 	public void countTransitions(String inputFile, boolean isSkip)
 	{
 		PrintStream fout = UTOutput.createPrintBufferedFileStream("tmp.txt");

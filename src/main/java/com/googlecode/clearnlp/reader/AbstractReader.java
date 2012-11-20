@@ -58,6 +58,8 @@ abstract public class AbstractReader<T>
 	static final public String TYPE_SRL = "srl";
 	/** The flag for directed acyclic graph reader. */
 	static final public String TYPE_DAG = "dag";
+	/** The flag for joint reader. */
+	static final public String TYPE_JOINT = "joint";
 	
 	/** The dummy tag for any field. */
 	static public final String DUMMY_TAG = "_N_";

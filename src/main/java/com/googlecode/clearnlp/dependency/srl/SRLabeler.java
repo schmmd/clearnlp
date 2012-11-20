@@ -181,7 +181,7 @@ public class SRLabeler extends AbstractSRLabeler
 	}
 	
 	/** Initializes dependency arcs of all nodes. */
-	private void initArcs()
+	protected void initArcs()
 	{
 		int i, j, len, size = d_tree.size();
 		DEPNode curr, prev, next;

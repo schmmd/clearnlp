@@ -21,43 +21,34 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.experiment;
+package com.googlecode.clearnlp.util.pair;
 
-import java.io.PrintStream;
-
-import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.reader.DEPReader;
-import com.googlecode.clearnlp.util.UTInput;
-import com.googlecode.clearnlp.util.UTOutput;
-
-
-public class PrintNonProjective
+/**
+ * String integer pair.
+ * @since v0.1
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
+public class StringLongPair implements Comparable<StringLongPair>
 {
-	public PrintNonProjective(String inputFile, String outputFile)
+	public String s;
+	public long   l;
+	
+	public StringLongPair(String s, long l)
 	{
-		DEPReader reader = new DEPReader(0, 1, 2, 4, 6, 7, 8);
-		reader.open(UTInput.createBufferedFileReader(inputFile));
-		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
-		DEPTree tree;
-		String mark;
-		int i;
-		
-		while ((tree = reader.next()) != null)
-		{
-			tree.setDependents();
-			mark = tree.getNonProjectiveSet().isEmpty() ? "P" : "N";
-			
-			for (i=tree.size(); i>1; i--)
-				fout.println(mark);
-			
-			fout.println();
-		}
-
-		fout.close();
+		set(s, l);
 	}
 	
-	static public void main(String[] args)
+	public void set(String s, long l)
 	{
-		new PrintNonProjective(args[0], args[1]);
+		this.s = s;
+		this.l = l;
+	}
+
+	@Override
+	public int compareTo(StringLongPair p)
+	{
+		if      (p.l - l > 0)	return  1;
+		else if (p.l - l < 0)	return -1;
+		else					return  0;
 	}
 }

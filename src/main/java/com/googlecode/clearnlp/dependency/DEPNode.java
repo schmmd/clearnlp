@@ -66,7 +66,6 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public DEPNode()
 	{
 		super();
-		id = DEPLib.NULL_ID;
 	}
 	
 	/**
@@ -153,6 +152,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		d_feats.remove(key);
 	}
 	
+	public void setFeats(DEPFeat feats)
+	{
+		d_feats = feats;
+	}
+	
 	/**
 	 * Returns the dependency label of this node to its head. 
 	 * @return the dependency label of this node to its head.
@@ -179,6 +183,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public boolean isLabel(String label)
 	{
 		return d_head.label != null && d_head.isLabel(label);
+	}
+	
+	public boolean isHead(DEPNode head)
+	{
+		return d_head.node == head;
 	}
 	
 	/**
@@ -249,6 +258,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return s_heads;
 	}
 	
+	public void setSHeads(List<DEPArc> sHeads)
+	{
+		s_heads = sHeads;
+	}
+	
 	public List<DEPArc> getSHeadsByLabel(String label)
 	{
 		List<DEPArc> sHeads = new ArrayList<DEPArc>();
@@ -315,110 +329,6 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		for (DEPArc arc : s_heads)
 		{
 			if (arc.isNode(sHead) && arc.isLabel(label))
-				return true;
-		}
-		
-		return false;
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	/**
-	 * Returns secondary heads of this node.
-	 * @return secondary heads of this node.
-	 */
-	public List<DEPArc> getXHeads()
-	{
-		return x_heads;
-	}
-	
-	public Set<DEPNode> getXAncestorSet()
-	{
-		Set<DEPNode> set = new HashSet<DEPNode>();
-		
-		getXAncestorIdSetAux(this, set);
-		return set;
-	}
-	
-	private void getXAncestorIdSetAux(DEPNode node, Set<DEPNode> set)
-	{
-		DEPNode head;
-		
-		for (DEPArc arc : node.x_heads)
-		{
-			head = arc.getNode();
-			
-			set.add(head);
-			getXAncestorIdSetAux(head, set);
-		}
-	}
-	
-	public DEPArc getXHead(DEPNode head)
-	{
-		for (DEPArc arc : x_heads)
-		{
-			if (arc.isNode(head))
-				return arc;
-		}
-		
-		return null;
-	}
-	
-	public List<DEPArc> getXHeads(String label)
-	{
-		List<DEPArc> list = new ArrayList<DEPArc>();
-		
-		for (DEPArc arc : x_heads)
-		{
-			if (arc.isLabel(label))
-				list.add(arc);
-		}
-		
-		return list;
-	}
-	
-	public void addXHead(DEPNode head, String label)
-	{
-		x_heads.add(new DEPArc(head, label));
-	}
-	
-	public boolean hasXHead()
-	{
-		return !x_heads.isEmpty();
-	}
-	
-	
-	
-	public boolean isXDescendentOf(DEPNode node)
-	{
-		return isXDescendentOfAux(this, node);
-	}
-	
-	private boolean isXDescendentOfAux(DEPNode curr, DEPNode node)
-	{
-		for (DEPArc arc : curr.x_heads)
-		{
-			if (arc.isNode(node) || isXDescendentOfAux(arc.getNode(), node))
-				return true;
-		}
-		
-		return false;
-	}
-	
-	public boolean containsXHead(DEPNode xHead)
-	{
-		for (DEPArc arc : x_heads)
-		{
-			if (arc.isNode(xHead))
 				return true;
 		}
 		
@@ -615,6 +525,16 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return list;
 	}
 	
+	public String toStringPOS()
+	{
+		StringBuilder build = new StringBuilder();
+		
+		build.append(form);		build.append(DEPReader.DELIM_COLUMN);
+		build.append(pos);
+		
+		return build.toString();
+	}
+	
 	public String toStringDEP()
 	{
 		StringBuilder build = new StringBuilder();
@@ -720,6 +640,106 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public int compareTo(DEPNode node)
 	{
 		return id - node.id;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/**
+	 * Returns secondary heads of this node.
+	 * @return secondary heads of this node.
+	 */
+	public List<DEPArc> getXHeads()
+	{
+		return x_heads;
+	}
+	
+	public Set<DEPNode> getXAncestorSet()
+	{
+		Set<DEPNode> set = new HashSet<DEPNode>();
+		
+		getXAncestorIdSetAux(this, set);
+		return set;
+	}
+	
+	private void getXAncestorIdSetAux(DEPNode node, Set<DEPNode> set)
+	{
+		DEPNode head;
+		
+		for (DEPArc arc : node.x_heads)
+		{
+			head = arc.getNode();
+			
+			set.add(head);
+			getXAncestorIdSetAux(head, set);
+		}
+	}
+	
+	public DEPArc getXHead(DEPNode head)
+	{
+		for (DEPArc arc : x_heads)
+		{
+			if (arc.isNode(head))
+				return arc;
+		}
+		
+		return null;
+	}
+	
+	public List<DEPArc> getXHeads(String label)
+	{
+		List<DEPArc> list = new ArrayList<DEPArc>();
+		
+		for (DEPArc arc : x_heads)
+		{
+			if (arc.isLabel(label))
+				list.add(arc);
+		}
+		
+		return list;
+	}
+	
+	public void addXHead(DEPNode head, String label)
+	{
+		x_heads.add(new DEPArc(head, label));
+	}
+	
+	public boolean hasXHead()
+	{
+		return !x_heads.isEmpty();
+	}
+	
+	public boolean isXDescendentOf(DEPNode node)
+	{
+		return isXDescendentOfAux(this, node);
+	}
+	
+	private boolean isXDescendentOfAux(DEPNode curr, DEPNode node)
+	{
+		for (DEPArc arc : curr.x_heads)
+		{
+			if (arc.isNode(node) || isXDescendentOfAux(arc.getNode(), node))
+				return true;
+		}
+		
+		return false;
+	}
+	
+	public boolean containsXHead(DEPNode xHead)
+	{
+		for (DEPArc arc : x_heads)
+		{
+			if (arc.isNode(xHead))
+				return true;
+		}
+		
+		return false;
 	}
 	
 /*	protected void addChild(DPNode child)

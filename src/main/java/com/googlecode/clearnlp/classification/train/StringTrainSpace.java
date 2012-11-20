@@ -23,7 +23,9 @@
 */
 package com.googlecode.clearnlp.classification.train;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,24 @@ public class StringTrainSpace extends AbstractTrainSpace
 		m_features  = new HashMap<String, ObjectIntOpenHashMap<String>>();
 	}
 	
+	public void printInstances(PrintStream fout)
+	{
+		int i, size = s_instances.size();
+		String[] instances = new String[size];
+		Pair<String,StringFeatureVector> p;
+		
+		for (i=0; i<size; i++)
+		{
+			p = s_instances.get(i);
+			instances[i] = p.o1+DELIM_COL+p.o2.toString();	
+		}
+		
+		Arrays.sort(instances);
+		
+		for (String instance : instances)
+			fout.println(instance);
+	}
+	
 	/**
 	 * Adds a training instance to this space.
 	 * @param label the label to be added.
@@ -94,12 +114,6 @@ public class StringTrainSpace extends AbstractTrainSpace
 		Pair<String,StringFeatureVector> instance = toInstance(line, b_weight);
 		addInstance(instance.o1, instance.o2);
 	}
-	
-/*	public void appendSpace(StringTrainSpace space)
-	{
-		for (Pair<String,StringFeatureVector> instance : space.s_instances)
-			addInstance(instance.o1, instance.o2);
-	}*/
 	
 	public void appendSpace(StringTrainSpace space)
 	{
@@ -268,6 +282,30 @@ public class StringTrainSpace extends AbstractTrainSpace
 					s_model.addFeature(type, value);
 			}
 		}
+		
+	/*	for (String label : UTHppc.getSortedKeys(m_labels))
+		{
+			if (m_labels.get(label) > l_cutoff)
+				s_model.addLabel(label);
+		}
+		
+		s_model.initLabelArray();
+		
+		// initialize feature map
+		List<String> types = new ArrayList<String>(m_features.keySet());
+		ObjectIntOpenHashMap<String> map;
+		Collections.sort(types);
+		
+		for (String type : types)
+		{
+			map = m_features.get(type);
+			
+			for (String value : UTHppc.getSortedKeys(map))
+			{
+				if (map.get(value) > f_cutoff)
+					s_model.addFeature(type, value);
+			}
+		}*/
 	}
 	
 	/** Pair of label and feature vector. */

@@ -24,6 +24,7 @@
 package com.googlecode.clearnlp.util.map;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,12 @@ public class Prob1DMap extends ObjectIntOpenHashMap<String>
 	{
 		put(key, get(key)+1);
 		i_total++;
+	}
+	
+	public void addAll(Collection<String> col)
+	{
+		for (String s : col)
+			add(s);
 	}
 	
 	public double getProb(String key)
