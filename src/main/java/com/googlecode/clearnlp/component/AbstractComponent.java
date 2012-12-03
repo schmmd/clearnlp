@@ -15,26 +15,29 @@
 */
 package com.googlecode.clearnlp.component;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.utils.IOUtils;
 
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
+import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrTemplate;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.util.pair.StringIntPair;
 
 /**
  * @since 1.3.0
@@ -114,11 +117,26 @@ abstract public class AbstractComponent
 	/** Called by {@link AbstractComponent#loadModels(ZipInputStream)}}. */
 	protected void loadFeatureTemplates(ZipInputStream zin, int index) throws Exception
 	{
-		BufferedInputStream fin = new BufferedInputStream(zin);
 		System.out.println("Loading feature templates.");
 		
-		f_xmls[index] = new JointFtrXml(zin);
-		fin.close();
+		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
+		f_xmls[index] = new JointFtrXml(getFeatureTemplates(fin));
+	}
+	
+	protected ByteArrayInputStream getFeatureTemplates(BufferedReader fin) throws IOException
+	{
+		StringBuilder build = new StringBuilder();
+		String line;
+
+		System.out.println("Loading feature templates.");
+		
+		while ((line = fin.readLine()) != null)
+		{
+			build.append(line);
+			build.append("\n");
+		}
+		
+		return new ByteArrayInputStream(build.toString().getBytes());
 	}
 	
 	/** Called by {@link AbstractComponent#loadModels(ZipInputStream)}}. */
@@ -126,7 +144,6 @@ abstract public class AbstractComponent
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
 		s_models[index] = new StringModel(fin);
-		fin.close();
 	}
 	
 	/** Saves all models of this joint-component. */
@@ -141,10 +158,10 @@ abstract public class AbstractComponent
 		
 		for (i=0; i<size; i++)
 		{
-			zout.putNextEntry(new JarArchiveEntry(entryName+i));
+			zout.putNextEntry(new ZipEntry(entryName+i));
 			fout = new BufferedOutputStream(zout);
 			IOUtils.copy(UTInput.toInputStream(f_xmls[i].toString()), fout);
-			fout.close();
+			fout.flush();
 			zout.closeEntry();
 		}
 	}
@@ -157,10 +174,10 @@ abstract public class AbstractComponent
 		
 		for (i=0; i<size; i++)
 		{
-			zout.putNextEntry(new JarArchiveEntry(entryName+i));
+			zout.putNextEntry(new ZipEntry(entryName+i));
 			fout = new PrintStream(new BufferedOutputStream(zout));
 			s_models[i].save(fout);
-			fout.close();
+			fout.flush();
 			zout.closeEntry();			
 		}
 	}
@@ -182,6 +199,9 @@ abstract public class AbstractComponent
 	/** @return all objects containing lexica. */
 	abstract public Object[] getLexica();
 	
+	/** @return gold-standard tags. */
+	abstract public Object[] getGoldTags();
+	
 //	====================================== PROCESS ======================================
 
 	/** Counts the number of correctly classified labels. */
@@ -189,6 +209,32 @@ abstract public class AbstractComponent
 	
 	/** Process this joint-component. */
 	abstract public void process(DEPTree tree);
+	
+	protected void countAccuracyDEP(int[] counts, StringIntPair[] gHeads)
+	{
+		StringIntPair p;
+		DEPNode node;
+		int i;
+		
+		counts[0] += t_size - 1;
+		
+		for (i=1; i<t_size; i++)
+		{
+			node = d_tree.get(i);
+			p    = gHeads[i];
+			
+			if (node.isHead(d_tree.get(p.i)))
+			{
+				counts[2]++;
+				
+				if (node.isLabel(p.s))
+					counts[1]++;
+			}
+			
+			if (node.isLabel(p.s))
+				counts[3]++;
+		}
+	}
 	
 //	====================================== FEATURE EXTRACTION ======================================
 

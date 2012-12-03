@@ -102,8 +102,8 @@ public class Tmp
 	//	wc(args[0]);
 	//	projectivize(args[0], args[1]);
 	//	evalSubPOS(args[0]);
+	//	countLR(args[0]);
 	//	measureTime();
-		countLR(args[0]);
 	}
 	
 	void countLR(String inputFile)

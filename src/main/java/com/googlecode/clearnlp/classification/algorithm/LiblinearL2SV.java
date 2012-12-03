@@ -95,15 +95,13 @@ public class LiblinearL2SV extends AbstractAlgorithm
 		double PGmax_new, PGmin_new;
 		
 		// for loss function
-		double[] diag        = {0, 0, 0};
-		double[] upper_bound = {d_cost, 0, d_cost};
+		double diag = 0;
+		double upper_bound = d_cost;
 		
 		if (i_lossType == 2)
 		{
-			diag[0] = 0.5 / d_cost;
-			diag[2] = 0.5 / d_cost;
-			upper_bound[0] = Double.POSITIVE_INFINITY;
-			upper_bound[2] = Double.POSITIVE_INFINITY;
+			diag = 0.5 / d_cost;
+			upper_bound = Double.POSITIVE_INFINITY;
 		}
 		
 		for (i=0; i<N; i++)
@@ -111,7 +109,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 			index[i] = i;
 			
 			aY[i] = (ys.get(i) == currLabel) ? (byte)1 : (byte)-1;
-			QD[i] = diag[GETI(aY, i)];
+			QD[i] = diag;
 
 			if (bBias)	QD[i] += d_bias * d_bias;
 			
@@ -142,7 +140,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 				i  = index[s];
 				yi = aY[i];
 				xi = xs.get(i);
-				U  = upper_bound[GETI(aY, i)];
+				U  = upper_bound;
 				G  = (bBias) ? weight[0] * d_bias : 0;
 								
 				if (space.hasWeight())
@@ -159,7 +157,7 @@ public class LiblinearL2SV extends AbstractAlgorithm
 				}
 				
  				G = G * yi - 1;
-				G += alpha[i] * diag[GETI(aY, i)];
+ 				G += alpha[i] * diag;
 				
 				if (alpha[i] == 0)
 				{

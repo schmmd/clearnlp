@@ -25,7 +25,10 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
+import com.googlecode.clearnlp.component.AbstractComponent;
+import com.googlecode.clearnlp.component.CRolesetClassifier;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
 import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
@@ -222,6 +225,23 @@ public class EngineGetter implements EngineLib
 			
 		zin.close();
 		return identifier;
+	}
+	
+	// ============================= getter: component =============================
+	
+	static public AbstractComponent getComponent(String modelFile, String mode) throws IOException
+	{
+		return getComponent(new FileInputStream(modelFile), mode);
+	}
+	
+	static public AbstractComponent getComponent(InputStream stream, String mode) throws IOException
+	{
+		ZipInputStream zin = new ZipInputStream(stream);
+		
+		if (mode.equals(COMLib.MODE_ROLESET))
+			return new CRolesetClassifier(zin);
+		
+		return null;
 	}
 	
 	// ============================= getter: semantic role labeler =============================

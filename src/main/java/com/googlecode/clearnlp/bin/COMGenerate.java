@@ -6,7 +6,7 @@ import java.io.PrintStream;
 import org.w3c.dom.Element;
 
 import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.CPOSTagger0;
+import com.googlecode.clearnlp.component.CPOSTagger;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
@@ -30,12 +30,10 @@ public class COMGenerate extends COMTrain
 	
 	public void generate(String configFile, String[] featureFiles, String trainDir) throws Exception
 	{
-		model_size = featureFiles.length;
-		
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
 		JointFtrXml[]  xmls = getFeatureTemplates(featureFiles);
 		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true);
-		JointReader   reader = getCDEPReader(eConfig);
+		JointReader   reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		String         mode = getMode(eConfig);
 		
 		if (mode.equals(COMLib.MODE_POS))
@@ -45,7 +43,7 @@ public class COMGenerate extends COMTrain
 	protected void generatePOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles) throws Exception
 	{
 		int devId, size = trainFiles.length;
-		CPOSTagger0 tagger;
+		CPOSTagger tagger;
 		
 		for (devId=0; devId<size; devId++)
 		{

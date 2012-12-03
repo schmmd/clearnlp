@@ -34,6 +34,8 @@ import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipInputStream;
 
+import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+
 /**
  * Input utilities.
  * @author Jinho D. Choi (jdchoi77@gmail.com)
@@ -103,6 +105,21 @@ public class UTInput
 		{
 			tmp = fin.readLine().split(delim);
 			map.put(tmp[0], tmp[1]);
+		}
+		
+		return map;
+	}
+	
+	static public ObjectIntOpenHashMap<String> getStringIntOpenHashMap(BufferedReader fin, String delim) throws Exception
+	{
+		ObjectIntOpenHashMap<String> map = new ObjectIntOpenHashMap<String>();
+		int i, size = Integer.parseInt(fin.readLine());
+		String[] tmp;
+		
+		for (i=0; i<size; i++)
+		{
+			tmp = fin.readLine().split(delim);
+			map.put(tmp[0], Integer.parseInt(tmp[1]));
 		}
 		
 		return map;

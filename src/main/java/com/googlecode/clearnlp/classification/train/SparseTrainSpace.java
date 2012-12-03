@@ -80,9 +80,9 @@ public class SparseTrainSpace extends AbstractTrainSpace
 		Pair<String,SparseFeatureVector> instance = toInstance(line, b_weight);
 		addInstance(instance.o1, instance.o2);
 	}
-		
-	/** Generates integer vector space given training instances. */
-	public void build()
+	
+	@Override
+	public void build(boolean clearInstances)
 	{
 		System.out.println("Building:");
 		s_model.initLabelArray();
@@ -90,10 +90,17 @@ public class SparseTrainSpace extends AbstractTrainSpace
 		for (String label : s_ys)
 			a_ys.add(s_model.getLabelIndex(label));
 		
-		s_ys.clear();
 		System.out.println("- # of labels   : "+s_model.getLabelSize());
 		System.out.println("- # of features : "+s_model.getFeatureSize());
 		System.out.println("- # of instances: "+a_ys.size());
+		
+		if (clearInstances)	s_ys.clear();
+	}
+		
+	@Override
+	public void build()
+	{
+		build(true);
 	}
 	
 	/**

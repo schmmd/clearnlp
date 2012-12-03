@@ -30,11 +30,13 @@ import java.util.zip.ZipOutputStream;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
+import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.CDEPParser0;
-import com.googlecode.clearnlp.component.CPOSTagger0;
+import com.googlecode.clearnlp.component.CDEPPassParser;
+import com.googlecode.clearnlp.component.CPOSTagger;
+import com.googlecode.clearnlp.component.CRolesetClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
@@ -61,8 +63,6 @@ public class COMTrain extends AbstractBin
 	protected String s_modelFile;
 	@Option(name="-n", usage="bootstrapping level (default: 2)", required=false, metaVar="<integer>")
 	protected int n_boot = 2;
-
-	protected int model_size;
 	
 	public COMTrain() {}
 	
@@ -79,19 +79,19 @@ public class COMTrain extends AbstractBin
 	
 	public void train(String configFile, String[] featureFiles, String trainDir, String modelFile) throws Exception
 	{
-		model_size = featureFiles.length;
-		
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
 		JointFtrXml[]  xmls = getFeatureTemplates(featureFiles);
 		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true);
-		JointReader  reader = getCDEPReader(eConfig);
+		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		String         mode = getMode(eConfig);
 		AbstractComponent component = null;
 		
 		if      (mode.equals(COMLib.MODE_POS))
 			component = getTrainedPOSTagger(eConfig, reader, xmls, trainFiles, -1);
-		else if (mode.equals(COMLib.MODE_DEP))
-			component = getTrainedDEPParser(eConfig, reader, xmls, trainFiles, -1);
+		else if (mode.equals(COMLib.MODE_DEP_PASS))
+			component = getTrainedDEPPassParser(eConfig, reader, xmls, trainFiles, -1);
+		else if (mode.equals(COMLib.MODE_ROLESET))
+			component = getTrainedRolesetClassifier(eConfig, reader, xmls, trainFiles, -1);
 		
 		component.saveModels(new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(modelFile))));
 	}
@@ -102,9 +102,11 @@ public class COMTrain extends AbstractBin
 	protected AbstractComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(COMLib.MODE_POS))
-			return new CPOSTagger0(xmls, spaces, lexica);
-		else if (mode.equals(COMLib.MODE_DEP))
-			return (models == null) ? new CDEPParser0(xmls, spaces, lexica) : new CDEPParser0(xmls, spaces, models, lexica); 
+			return new CPOSTagger(xmls, spaces, lexica);
+		else if (mode.equals(COMLib.MODE_DEP_PASS))
+			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
+		else if (mode.equals(COMLib.MODE_ROLESET))
+			return new CRolesetClassifier(xmls, spaces, lexica);
 		
 		return null;
 	}
@@ -113,19 +115,21 @@ public class COMTrain extends AbstractBin
 	protected AbstractComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(COMLib.MODE_POS))
-			return new CPOSTagger0(xmls, models, lexica);
-		else if (mode.equals(COMLib.MODE_DEP))
-			return new CDEPParser0(xmls, models, lexica);
-
+			return new CPOSTagger(xmls, models, lexica);
+		else if (mode.equals(COMLib.MODE_DEP_PASS))
+			return new CDEPPassParser(xmls, models, lexica);
+		else if (mode.equals(COMLib.MODE_ROLESET))
+			return new CRolesetClassifier(xmls, models, lexica);
+		
 		return null;
 	}
 	
 	protected JointFtrXml[] getFeatureTemplates(String[] featureFiles) throws Exception
 	{
-		JointFtrXml[] xmls = new JointFtrXml[model_size];
-		int i;
+		int i, size = featureFiles.length;
+		JointFtrXml[] xmls = new JointFtrXml[size];
 		
-		for (i=0; i<model_size; i++)
+		for (i=0; i<size; i++)
 			xmls[i] = new JointFtrXml(new FileInputStream(featureFiles[i]));
 		
 		return xmls;
@@ -157,16 +161,16 @@ public class COMTrain extends AbstractBin
 	
 //	====================================== PART-OF-SPEECH TAGGING ======================================
 	
-	protected CPOSTagger0 getTrainedPOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
+	protected CPOSTagger getTrainedPOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
 	{
 		Set<String> sLsfs = getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId);
-		Object[]   lexica = getLexica(new CPOSTagger0(xmls, sLsfs), reader, xmls, trainFiles, devId);
+		Object[]   lexica = getLexica(new CPOSTagger(xmls, sLsfs), reader, xmls, trainFiles, devId);
 		
-		return (CPOSTagger0)getTrainedComponent(eConfig, xmls, trainFiles, null, lexica, COMLib.MODE_POS, devId);
+		return (CPOSTagger)getTrainedComponent(eConfig, xmls, trainFiles, null, lexica, COMLib.MODE_POS, devId);
 	}
 	
 	/** Called by {@link COMTrain#trainPOSTagger(Element, JointFtrXml[], String[], JointReader)}. */
-	private Set<String> getLowerSimplifiedForms(JointReader reader, JointFtrXml xml, String[] trainFiles, int devId)
+	protected Set<String> getLowerSimplifiedForms(JointReader reader, JointFtrXml xml, String[] trainFiles, int devId)
 	{
 		Set<String> set = new HashSet<String>();
 		int i, j, len, size = trainFiles.length;
@@ -201,20 +205,28 @@ public class COMTrain extends AbstractBin
 	
 //	====================================== DEPENDENCY PARSING ======================================
 
-	protected CDEPParser0 getTrainedDEPParser(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
+	protected CDEPPassParser getTrainedDEPPassParser(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
 	{
-		Object[] lexica = getLexica(new CDEPParser0(xmls), reader, xmls, trainFiles, devId);
+		Object[] lexica = getLexica(new CDEPPassParser(xmls), reader, xmls, trainFiles, devId);
 		StringModel[] models = null;
-		CDEPParser0 parser = null;
+		CDEPPassParser parser = null;
 		int boot;
 		
 		for (boot=0; boot<n_boot; boot++)
 		{
-			parser = (CDEPParser0)getTrainedComponent(eConfig, xmls, trainFiles, models, lexica, COMLib.MODE_DEP, devId);
+			parser = (CDEPPassParser)getTrainedComponent(eConfig, xmls, trainFiles, models, lexica, COMLib.MODE_DEP_PASS, devId);
 			models = parser.getModels();
 		}
 		
 		return parser;
+	}
+	
+//	====================================== ROLESET CLASSIFICATION ======================================
+	
+	protected CRolesetClassifier getTrainedRolesetClassifier(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
+	{
+		Object[] lexica = getLexica(new CRolesetClassifier(xmls), reader, xmls, trainFiles, devId);
+		return (CRolesetClassifier)getTrainedComponent(eConfig, xmls, trainFiles, null, lexica, COMLib.MODE_ROLESET, devId);
 	}
 	
 //	====================================== TRAIN ======================================
@@ -222,9 +234,31 @@ public class COMTrain extends AbstractBin
 	/** Called by {@link COMTrain#getTrainedJointPD(String, String[], String, String)}. */
 	protected AbstractComponent getTrainedComponent(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int devId)
 	{
+		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, devId);
+		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
+		
+		int i, mSize = spaces.length;
+		models = new StringModel[mSize];
+		
+		for (i=0; i<mSize; i++)
+		{
+			if (mode.equals(COMLib.MODE_ROLESET))
+				models[i] = (StringModel)getModel(eTrain, spaces[i], 0);
+			else
+				models[i] = (StringModel)getModel(eTrain, spaces[i], i);
+
+			spaces[i].clear();
+		}
+		
+		return getComponent(xmls, models, lexica, mode);
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected StringTrainSpace[] getStringTrainSpaces(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int devId)
+	{
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		int numThreads = getNumOfThreads(eTrain);
-		int i, j, size = trainFiles.length;
+		int i, j, mSize = 1, size = trainFiles.length;
 		
 		List<StringTrainSpace[]> lSpaces = new ArrayList<StringTrainSpace[]>();
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
@@ -232,11 +266,19 @@ public class COMTrain extends AbstractBin
 		
 		System.out.println("Collecting training instances:");
 		
+		if (mode.equals(COMLib.MODE_ROLESET))
+			mSize = ((ObjectIntOpenHashMap<String>)lexica[1]).size();
+		
 		for (i=0; i<size; i++)
 		{
 			if (devId != i)
 			{
-				lSpaces.add(spaces = getTrainSpaces(xmls));
+				if (mode.equals(COMLib.MODE_ROLESET))
+					spaces = getTrainSpaces(xmls[0], mSize);
+				else
+					spaces = getTrainSpaces(xmls);
+				
+				lSpaces.add(spaces);
 				executor.execute(new TrainTask(eConfig, trainFiles[i], getComponent(xmls, spaces, models, lexica, mode)));
 			}
 		}
@@ -251,12 +293,13 @@ public class COMTrain extends AbstractBin
 		
 		System.out.println();
 		
-		StringTrainSpace space, sp;
-		models = new StringModel[model_size];
-		
-		for (i=0; i<model_size; i++)
+		mSize = lSpaces.get(0).length;
+		spaces = new StringTrainSpace[mSize];
+		StringTrainSpace sp;
+
+		for (i=0; i<mSize; i++)
 		{
-			space = lSpaces.get(0)[i];
+			spaces[i] = lSpaces.get(0)[i];
 			
 			if ((size = lSpaces.size()) > 1)
 			{
@@ -264,18 +307,14 @@ public class COMTrain extends AbstractBin
 				
 				for (j=1; j<size; j++)
 				{
-					space.appendSpace(sp = lSpaces.get(j)[i]);
+					spaces[i].appendSpace(sp = lSpaces.get(j)[i]);
 					sp.clear();
 					System.out.print(".");
 				}				
 			}
-			
-			System.out.println();
-			
-			models[i] = (StringModel)getModel(eTrain, space, i);
-		}
+		}	System.out.println();
 		
-		return getComponent(xmls, models, lexica, mode);
+		return spaces;
 	}
 	
 	protected StringModel[] getModels(Element eTrain, StringTrainSpace[] spaces)
@@ -292,11 +331,23 @@ public class COMTrain extends AbstractBin
 	/** Called by {@link COMTrain#getTrainedComponent(Element, JointFtrXml[], String[], StringModel[], Object[], int)}. */
 	protected StringTrainSpace[] getTrainSpaces(JointFtrXml[] xmls)
 	{
-		StringTrainSpace[] spaces = new StringTrainSpace[model_size];
+		int i, size = xmls.length;
+		StringTrainSpace[] spaces = new StringTrainSpace[size];
+		
+		for (i=0; i<size; i++)
+			spaces[i] = new StringTrainSpace(false, xmls[i].getLabelCutoff(0), xmls[i].getFeatureCutoff(0));
+		
+		return spaces;
+	}
+	
+	/** Called by {@link COMTrain#getTrainedComponent(Element, JointFtrXml[], String[], StringModel[], Object[], int)}. */
+	protected StringTrainSpace[] getTrainSpaces(JointFtrXml xml, int size)
+	{
+		StringTrainSpace[] spaces = new StringTrainSpace[size];
 		int i;
 		
-		for (i=0; i<model_size; i++)
-			spaces[i] = new StringTrainSpace(false, xmls[i].getLabelCutoff(0), xmls[i].getFeatureCutoff(0));
+		for (i=0; i<size; i++)
+			spaces[i] = new StringTrainSpace(false, xml.getLabelCutoff(0), xml.getFeatureCutoff(0));
 		
 		return spaces;
 	}
@@ -310,7 +361,7 @@ public class COMTrain extends AbstractBin
 		public TrainTask(Element eConfig, String trainFile, AbstractComponent component)
 		{
 			j_component = component;
-			j_reader    = getCDEPReader(eConfig);
+			j_reader    = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 			j_reader.open(UTInput.createBufferedFileReader(trainFile));
 		}
 		
@@ -324,5 +375,10 @@ public class COMTrain extends AbstractBin
 			j_reader.close();
 			System.out.print(".");
 		}
+	}
+	
+	static public void main(String[] args)
+	{
+		new COMTrain(args);
 	}
 }

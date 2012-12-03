@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.ner.NERNode;
@@ -58,6 +59,8 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	protected List<DEPArc> s_heads;
 	/** The sorted list of all dependents of this node (default: empty). */
 	protected List<DEPArc> l_dependents;
+	/** {@code true} if this node is a terminal. */
+	public boolean         b_terminal;
 	
 	/**
 	 * Constructs a null dependency node.
@@ -104,7 +107,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		this.form    = form;
 		this.lemma   = lemma;
 		this.pos     = pos;
-		this.namex   = AbstractColumnReader.BLANK_COLUMN;
+		this.nament   = AbstractColumnReader.BLANK_COLUMN;
 		d_feats      = feats;
 		d_head       = new DEPArc();
 	//	x_heads      = new ArrayList<DEPArc>();
@@ -408,6 +411,27 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return null;
 	}
 	
+	/** @return a list of descendents with the specific labels. */
+	public List<DEPNode> getDescendents(Pattern regex)
+	{
+		List<DEPNode> desc = new ArrayList<DEPNode>();
+		getDescendentsAux(this, desc, regex);
+		
+		return desc;
+	}
+	
+	public void getDescendentsAux(DEPNode node, List<DEPNode> desc, Pattern regex)
+	{
+		for (DEPArc arc : node.getDependents())
+		{
+			if (arc.isLabel(regex))
+			{
+				getDescendentsAux(arc.getNode(), desc, regex);
+				desc.add(arc.getNode());
+			}
+		}
+	}
+	
 	/** @param depth > 0. */
 	public List<DEPArc> getDescendents(int depth)
 	{
@@ -614,7 +638,7 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		build.append(toStringDEP());		build.append(DEPReader.DELIM_COLUMN);
 		build.append(toString(x_heads));	build.append(DEPReader.DELIM_COLUMN);
 		build.append(toString(s_heads));	build.append(DEPReader.DELIM_COLUMN);
-		build.append(namex);
+		build.append(nament);
 		
 		return build.toString();
 	}

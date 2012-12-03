@@ -47,6 +47,7 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 	protected int i_headId;
 	protected int i_deprel;
 	protected int i_sheads;
+	protected int i_nament;
 	
 	/**
 	 * Constructs a dependency reader.
@@ -58,13 +59,14 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 	 * @param iHeadId the column index of the head ID field.
 	 * @param iDeprel the column index of the dependency label field.
 	 * @param iSHeads the column index of the semantic head field.
+	 * @param iNament the column index of the named entity tag.
 	 */
-	public JointReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSHeads)
+	public JointReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSHeads, int iNament)
 	{
-		init(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iSHeads);
+		init(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iSHeads, iNament);
 	}
 	
-	public void init(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSHeads)
+	public void init(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSHeads, int iNament)
 	{
 		i_id     = iId;
 		i_form   = iForm;
@@ -74,6 +76,7 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		i_headId = iHeadId;
 		i_deprel = iDeprel;
 		i_sheads = iSHeads;
+		i_nament = iNament;
 	}
 	
 	@Override
@@ -95,7 +98,7 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 
 	protected DEPTree getDEPTree(List<String[]> lines)
 	{
-		String form, lemma, pos, feats;
+		String form, lemma, pos, feats, nament;
 		int id, i, size = lines.size();
 		DEPTree tree = new DEPTree();
 		DEPNode node;
@@ -109,13 +112,15 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		{
 			tmp    = lines.get(i);
 			form   = tmp[i_form];
-			id     = (i_id    < 0) ? i+1  : Integer.parseInt(tmp[i_id]);
-			lemma  = (i_lemma < 0) ? null : tmp[i_lemma];
-			pos    = (i_pos   < 0) ? null : tmp[i_pos];
-			feats  = (i_feats < 0) ? AbstractColumnReader.BLANK_COLUMN : tmp[i_feats];
+			id     = (i_id     < 0) ? i+1  : Integer.parseInt(tmp[i_id]);
+			lemma  = (i_lemma  < 0) ? null : tmp[i_lemma];
+			pos    = (i_pos    < 0) ? null : tmp[i_pos];
+			feats  = (i_feats  < 0) ? AbstractColumnReader.BLANK_COLUMN : tmp[i_feats];
+			nament = (i_nament < 0) ? null : tmp[i_nament]; 
 
 			node = tree.get(id);
 			node.init(id, form, lemma, pos, new DEPFeat(feats));
+			node.nament = nament;
 			
 			if (i_headId >= 0 && !tmp[i_headId].equals(AbstractColumnReader.BLANK_COLUMN))
 				node.setHead(tree.get(Integer.parseInt(tmp[i_headId])), tmp[i_deprel]);

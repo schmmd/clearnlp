@@ -21,43 +21,36 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.classification.algorithm;
-
-import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
+package com.googlecode.clearnlp.classification.prediction;
 
 /**
- * Abstract algorithm.
+ * String prediction.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-abstract public class AbstractAlgorithm
+public class IntPrediction implements Comparable<IntPrediction>
 {
-	/** The flag to indicate L2-regularized L1-loss support vector classification (dual). */
-	static public final byte SOLVER_LIBLINEAR_LR2_L1_SV = 0;
-	/** The flag to indicate L2-regularized L2-loss support vector classification (dual). */
-	static public final byte SOLVER_LIBLINEAR_LR2_L2_SV = 1;
-	/** The flag to indicate L2-regularized logistic regression (dual). */
-	static public final byte SOLVER_LIBLINEAR_LR2_LR = 2;
-	/** The flag to indicate L2-regularized L1-loss support vector classification (dual) with precision bias. */
-	static public final byte SOLVER_LIBLINEAR_LR2_L1_SV_PREC = 3;
+	public int    label;
+	public double score;
 	
-	/**
-	 * Returns the weight vector for the specific label given the training space.
-	 * @param space the training space.
-	 * @param currLabel the label to get the weight vector for.
-	 * @return the weight vector for the specific label given the training space.
-	 */
-	abstract public double[] getWeight(AbstractTrainSpace space, int currLabel);
-	
-	/** Used for liblinear algorithms. */
-	protected int GETI(byte[] y, int i)
+	public IntPrediction(int label, double score)
 	{
-		return y[i] + 1;
+		set(label, score);
 	}
 	
-	/** @param L the number of labels. */
-	protected int getWeightIndex(int L, int label, int index)
+	public void set(int label, double score)
 	{
-		return index * L + label;
+		this.label = label;
+		this.score = score;
+	}
+
+	@Override
+	public int compareTo(IntPrediction p)
+	{
+		double d = score - p.score;
+		
+		if      (d > 0)	return -1;
+		else if (d < 0)	return  1;
+		else			return  0;
 	}
 }

@@ -332,7 +332,7 @@ public class C2DConvertMulti extends AbstractRun
 		DEPNode node;
 		
 		for (i=1; i<size; i++)
-			dTree.get(i).namex = "O";
+			dTree.get(i).nament = "O";
 		
 		for (String name : names)
 		{
@@ -343,12 +343,12 @@ public class C2DConvertMulti extends AbstractRun
 			eIdx = Integer.parseInt(t1[1]);
 			
 			node = dTree.get(cTree.getTerminal(bIdx).getTokenId()+1);
-			node.namex = "B-"+ex;
+			node.nament = "B-"+ex;
 			
 			for (i=bIdx+1; i<=eIdx; i++)
 			{
 				node = dTree.get(cTree.getTerminal(i).getTokenId()+1);
-				node.namex = "I-"+ex;
+				node.nament = "I-"+ex;
 			}
 		}
 	}

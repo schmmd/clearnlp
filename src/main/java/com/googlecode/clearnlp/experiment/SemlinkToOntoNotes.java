@@ -26,7 +26,6 @@ package com.googlecode.clearnlp.experiment;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,79 +49,75 @@ public class SemlinkToOntoNotes
 {
 	public SemlinkToOntoNotes(String ontoDir, String ontoPBFile, String semDir, String semVNFile, String pvMapFile, String outputFile) throws Exception
 	{
-		try
+		List<PBInstance> pbList = PBLib.getPBInstanceList(ontoPBFile, ontoDir, false);
+		Map<String,String> semMap = getSemlinkMap(ontoDir, semDir, semVNFile);
+		PVMap pvMap = new PVMap(new FileInputStream(pvMapFile));
+		int mono = 0, poly = 0, subcls = 0, supcls = 0, none = 0, skip = 0;
+		PVRoleset pvRoleset;
+		PVRoles   pvRoles;
+		String    vncls;
+		
+		for (PBInstance inst : pbList)
 		{
-			List<PBInstance> pbList = PBLib.getPBInstanceList(ontoPBFile, ontoDir, false);
-			Map<String,String> semMap = getSemlinkMap(ontoDir, semDir, semVNFile);
-			PVMap pvMap = new PVMap(new FileInputStream(pvMapFile));
-			int mono = 0, poly = 0, subcls = 0, supcls = 0, none = 0, skip = 0;
-			PVRoleset pvRoleset;
-			PVRoles   pvRoles;
-			String    vncls;
-			
-			for (PBInstance inst : pbList)
+			pvRoleset = pvMap.getRoleset(inst.roleset);
+			     
+			if (pvRoleset != null)
 			{
-				pvRoleset = pvMap.getRoleset(inst.roleset);
-				     
-				if (pvRoleset != null)
+				pvRoles = null;
+				
+				if (pvRoleset.size() == 1)
 				{
-					pvRoles = null;
-					
-					if (pvRoleset.size() == 1)
-					{
-						pvRoles = pvRoleset.getSubVNRoles("");
-						inst.annotator = "mono";
-						mono++;
-					}
-					else
-					{
-						vncls = semMap.get(getKey(inst.treePath, inst.treeId, inst.predId));
-
-						if (vncls != null)
-						{
-							if ((pvRoles = pvRoleset.get(vncls)) != null)
-							{
-								inst.annotator = "poly";
-								poly++;
-							}
-							else if ((pvRoles = pvRoleset.getSubVNRoles(vncls)) != null)
-							{
-								inst.annotator = "subcls";
-								subcls++;
-							}
-							else if ((pvRoles = pvRoleset.getSuperVNRoles(vncls)) != null)
-							{
-								inst.annotator = "supcls";
-								supcls++;
-							}
-						}
-					}
-					
-					if (pvRoles == null)
-					{
-						inst.annotator = "skip";
-						skip++;					
-					}
-					else
-					{
-						pvRoles.addVBRoles(inst);
-					}
+					pvRoles = pvRoleset.getSubVNRoles("");
+					inst.annotator = "mono";
+					mono++;
 				}
 				else
-					none++;
+				{
+					vncls = semMap.get(getKey(inst.treePath, inst.treeId, inst.predId));
+
+					if (vncls != null)
+					{
+						if ((pvRoles = pvRoleset.get(vncls)) != null)
+						{
+							inst.annotator = "poly";
+							poly++;
+						}
+						else if ((pvRoles = pvRoleset.getSubVNRoles(vncls)) != null)
+						{
+							inst.annotator = "subcls";
+							subcls++;
+						}
+						else if ((pvRoles = pvRoleset.getSuperVNRoles(vncls)) != null)
+						{
+							inst.annotator = "supcls";
+							supcls++;
+						}
+					}
+				}
+				
+				if (pvRoles == null)
+				{
+					inst.annotator = "skip";
+					skip++;					
+				}
+				else
+				{
+					pvRoles.addVBRoles(inst);
+				}
 			}
-			
-			PBLib.printPBInstances(pbList, outputFile);
-			
-			System.out.println("Total     : "+pbList.size());
-			System.out.println("Mononymous: "+mono);
-			System.out.println("Polysemous: "+poly);
-			System.out.println("Subclass  : "+subcls);
-			System.out.println("Superclass: "+supcls);
-			System.out.println("Skip      : "+skip);
-			System.out.println("None      : "+none);
+			else
+				none++;
 		}
-		catch (FileNotFoundException e) {e.printStackTrace();}
+		
+		PBLib.printPBInstances(pbList, outputFile);
+		
+		System.out.println("Total     : "+pbList.size());
+		System.out.println("Mononymous: "+mono);
+		System.out.println("Polysemous: "+poly);
+		System.out.println("Subclass  : "+subcls);
+		System.out.println("Superclass: "+supcls);
+		System.out.println("Skip      : "+skip);
+		System.out.println("None      : "+none);
 	}
 	
 	Map<String,String> getSemlinkMap(String ontoDir, String semDir, String semVNFile) throws Exception

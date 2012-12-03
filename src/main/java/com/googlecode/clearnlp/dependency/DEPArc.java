@@ -23,6 +23,8 @@
 */
 package com.googlecode.clearnlp.dependency;
 
+import java.util.regex.Pattern;
+
 import com.googlecode.clearnlp.reader.AbstractReader;
 
 /**
@@ -124,6 +126,11 @@ public class DEPArc implements Comparable<DEPArc>
 	public boolean isLabel(String label)
 	{
 		return this.label.equals(label);
+	}
+	
+	public boolean isLabel(Pattern regex)
+	{
+		return regex.matcher(label).find();
 	}
 	
 	/* (non-Javadoc)

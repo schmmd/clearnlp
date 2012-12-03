@@ -39,11 +39,11 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 import com.googlecode.clearnlp.util.triple.Triple;
 
 /**
- * Dependency parser using transition decomposition.
+ * Dependency parser using pass-transitions.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CDEPParser0 extends AbstractComponent
+public class CDEPPassParser extends AbstractComponent
 {
 	protected final int LEXICA_PUNCTUATION = 0;
 	
@@ -65,32 +65,32 @@ public class CDEPParser0 extends AbstractComponent
 //	====================================== CONSTRUCTORS ======================================
 
 	/** Constructs a dependency parser for collecting lexica. */
-	public CDEPParser0(JointFtrXml[] xmls)
+	public CDEPPassParser(JointFtrXml[] xmls)
 	{
 		super(xmls);
 		p_punc = new Prob1DMap();
 	}
 	
 	/** Constructs a dependency parsing for training. */
-	public CDEPParser0(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
+	public CDEPPassParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
 	{
 		super(xmls, spaces, lexica);
 	}
 	
 	/** Constructs a dependency parsing for developing. */
-	public CDEPParser0(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
+	public CDEPPassParser(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, models, lexica);
 	}
 	
 	/** Constructs a dependency parser for decoding. */
-	public CDEPParser0(ZipInputStream in)
+	public CDEPPassParser(ZipInputStream in)
 	{
 		super(in);
 	}
 	
 	/** Constructs a dependency parser for bootsrapping. */
-	public CDEPParser0(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
+	public CDEPPassParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, spaces, models, lexica);
 	}
@@ -126,6 +126,12 @@ public class CDEPParser0 extends AbstractComponent
 		return lexica;
 	}
 	
+	@Override
+	public Object[] getGoldTags()
+	{
+		return g_heads;
+	}
+	
 //	================================ PROCESS ================================
 	
 	@Override
@@ -154,7 +160,7 @@ public class CDEPParser0 extends AbstractComponent
 		processAux();
 	}
 	
-	/** Called by {@link CDEPParser0#process(DEPTree)}. */
+	/** Called by {@link CDEPPassParser#process(DEPTree)}. */
 	protected void init(DEPTree tree)
 	{
 	 	i_lambda = 0;
@@ -175,7 +181,7 @@ public class CDEPParser0 extends AbstractComponent
 	 		d_tree.clearHeads();
 	}
 	
-	/** Called by {@link CDEPParser0#process(DEPTree)}. */
+	/** Called by {@link CDEPPassParser#process(DEPTree)}. */
 	protected void processAux()
 	{
 		if (i_flag == FLAG_LEXICA)
@@ -184,10 +190,10 @@ public class CDEPParser0 extends AbstractComponent
 			return;
 		}
 		
-		depParse();
+		parse();
 	}
 	
-	/** Called by {@link CDEPParser0#processAux()}. */
+	/** Called by {@link CDEPPassParser#processAux()}. */
 	private void addLexica()
 	{
 		String puncLabel = f_xmls[0].getPunctuationLabel();
@@ -205,8 +211,8 @@ public class CDEPParser0 extends AbstractComponent
 		}
 	}
 	
-	/** Called by {@link CDEPParser0#processAux()}. */
-	protected void depParse()
+	/** Called by {@link CDEPPassParser#processAux()}. */
+	protected void parse()
 	{
 		DEPNode  lambda, beta;
 		DEPLabel label;
@@ -258,7 +264,7 @@ public class CDEPParser0 extends AbstractComponent
 			postProcess();
 	}
 	
-	/** Called by {@link CDEPParser0#depParse()}. */
+	/** Called by {@link CDEPPassParser#parse()}. */
 	protected DEPLabel getLabel()
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
@@ -282,7 +288,7 @@ public class CDEPParser0 extends AbstractComponent
 		return label;
 	}
 	
-	/** Called by {@link CDEPParser0#getLabel()}. */
+	/** Called by {@link CDEPPassParser#getLabel()}. */
 	protected DEPLabel getGoldLabel()
 	{
 		DEPLabel label = getGoldLabelArc();
@@ -301,7 +307,7 @@ public class CDEPParser0 extends AbstractComponent
 		return label;
 	}
 	
-	/** Called by {@link CDEPParser0#getGoldLabel()}. */
+	/** Called by {@link CDEPPassParser#getGoldLabel()}. */
 	private DEPLabel getGoldLabelArc()
 	{
 		StringIntPair head = g_heads[i_lambda];
@@ -317,7 +323,7 @@ public class CDEPParser0 extends AbstractComponent
 		return new DEPLabel(LB_NO, "");
 	}
 	
-	/** Called by {@link CDEPParser0#getGoldLabel()}. */
+	/** Called by {@link CDEPPassParser#getGoldLabel()}. */
 	private boolean isGoldShift()
 	{
 		if (g_heads[i_beta].i < i_lambda)
@@ -337,7 +343,7 @@ public class CDEPParser0 extends AbstractComponent
 		return true;
 	}
 	
-	/** Called by {@link CDEPParser0#getGoldLabel()}. */
+	/** Called by {@link CDEPPassParser#getGoldLabel()}. */
 	private boolean isGoldReduce(boolean hasHead)
 	{
 		if (!hasHead && !d_tree.get(i_lambda).hasHead())
@@ -354,54 +360,54 @@ public class CDEPParser0 extends AbstractComponent
 		return true;
 	}
 	
-	/** Called by {@link CDEPParser0#getLabel()}. */
+	/** Called by {@link CDEPPassParser#getLabel()}. */
 	private DEPLabel getAutoLabel(StringFeatureVector vector)
 	{
 		StringPrediction p = s_models[0].predictBest(vector);
 		return new DEPLabel(p.label);
 	}
 	
-	/** Called by {@link CDEPParser0#depParseAux()}. */
+	/** Called by {@link CDEPPassParser#depParseAux()}. */
 	protected void leftReduce(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		leftArc(lambda, beta, deprel);
 		reduce();
 	}
 	
-	/** Called by {@link CDEPParser0#depParseAux()}. */
+	/** Called by {@link CDEPPassParser#depParseAux()}. */
 	protected void leftPass(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		leftArc(lambda, beta, deprel);
 		pass();
 	}
 	
-	/** Called by {@link CDEPParser0#depParseAux()}. */
+	/** Called by {@link CDEPPassParser#depParseAux()}. */
 	protected void rightShift(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		rightArc(lambda, beta, deprel);
 		shift();
 	}
 	
-	/** Called by {@link CDEPParser0#depParseAux()}. */
+	/** Called by {@link CDEPPassParser#depParseAux()}. */
 	protected void rightPass(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		rightArc(lambda, beta, deprel);
 		pass();
 	}
 	
-	/** Called by {@link CDEPParser0#depParseAux()}. */
+	/** Called by {@link CDEPPassParser#depParseAux()}. */
 	protected void noShift()
 	{
 		shift();
 	}
 	
-	/** Called by {@link CDEPParser0#depParseAux()}. */
+	/** Called by {@link CDEPPassParser#depParseAux()}. */
 	protected void noReduce()
 	{
 		reduce();
 	}
 	
-	/** Called by {@link CDEPParser0#depParseAux()}. */
+	/** Called by {@link CDEPPassParser#depParseAux()}. */
 	protected void noPass()
 	{
 		pass();
@@ -584,7 +590,7 @@ public class CDEPParser0 extends AbstractComponent
 		return null;
 	}
 	
-	/** Called by {@link CDEPParser0#getField(FtrToken)}. */
+	/** Called by {@link CDEPPassParser#getField(FtrToken)}. */
 	private String getLeftNearestPunctuation(int lIdx, int rIdx)
 	{
 		String form;
@@ -601,7 +607,7 @@ public class CDEPParser0 extends AbstractComponent
 		return null;
 	}
 	
-	/** Called by {@link CDEPParser0#getField(FtrToken)}. */
+	/** Called by {@link CDEPPassParser#getField(FtrToken)}. */
 	private String getRightNearestPunctuation(int lIdx, int rIdx)
 	{
 		String form;
@@ -620,7 +626,7 @@ public class CDEPParser0 extends AbstractComponent
 	
 //	================================ NODE GETTER ================================
 	
-	/** Called by {@link CDEPParser0#getField(FtrToken)}. */
+	/** Called by {@link CDEPPassParser#getField(FtrToken)}. */
 	private DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = null;

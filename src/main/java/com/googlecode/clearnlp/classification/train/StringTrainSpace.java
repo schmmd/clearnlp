@@ -211,10 +211,8 @@ public class StringTrainSpace extends AbstractTrainSpace
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.classification.train.AbstractTrainSpace#build()
-	 */
-	public void build()
+	@Override
+	public void build(boolean clearInstances)
 	{
 		System.out.println("Building:");
 		initModelMaps();
@@ -243,11 +241,18 @@ public class StringTrainSpace extends AbstractTrainSpace
 		a_xs.trimToSize();
 		if (b_weight)	a_vs.trimToSize();
 		
-		s_instances.clear();
 		System.out.println();
 		System.out.println("- # of labels   : "+s_model.getLabelSize());
 		System.out.println("- # of features : "+s_model.getFeatureSize());
 		System.out.println("- # of instances: "+a_ys.size());
+		
+		if (clearInstances)	s_instances.clear();
+	}
+	
+	@Override
+	public void build()
+	{
+		build(true);
 	}
 	
 	/** Called by {@link StringTrainSpace#build()}. */

@@ -52,7 +52,7 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CPOSTagger0 extends AbstractComponent
+public class CPOSTagger extends AbstractComponent
 {
 	protected final String ENTRY_FEATURE = COMLib.MODE_POS+"_FEATURE";
 	protected final String ENTRY_MODEL   = COMLib.MODE_POS+"_MODEL";
@@ -70,7 +70,7 @@ public class CPOSTagger0 extends AbstractComponent
 //	====================================== CONSTRUCTORS ======================================
 
 	/** Constructs a part-of-speech tagger for collecting lexica. */
-	public CPOSTagger0(JointFtrXml[] xmls, Set<String> sLsfs)
+	public CPOSTagger(JointFtrXml[] xmls, Set<String> sLsfs)
 	{
 		super(xmls);
 
@@ -79,19 +79,19 @@ public class CPOSTagger0 extends AbstractComponent
 	}
 	
 	/** Constructs a part-of-speech tagger for training. */
-	public CPOSTagger0(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
+	public CPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
 	{
 		super(xmls, spaces, lexica);
 	}
 	
 	/** Constructs a part-of-speech tagger for developing. */
-	public CPOSTagger0(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
+	public CPOSTagger(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, models, lexica);
 	}
 	
 	/** Constructs a part-of-speech tagger for decoding. */
-	public CPOSTagger0(ZipInputStream in)
+	public CPOSTagger(ZipInputStream in)
 	{
 		super(in);
 	}
@@ -180,6 +180,12 @@ public class CPOSTagger0 extends AbstractComponent
 		return lexica;
 	}
 	
+	@Override
+	public Object[] getGoldTags()
+	{
+		return g_tags;
+	}
+	
 	/** {@link AbstractComponent#FLAG_LEXICA}. */
 	public Set<String> getLowerSimplifiedForms()
 	{
@@ -192,7 +198,7 @@ public class CPOSTagger0 extends AbstractComponent
 		s_lsfs.clear();
 	}
 	
-	/** Called by {@link CPOSTagger0#getLexica()}. */
+	/** Called by {@link CPOSTagger#getLexica()}. */
 	private Map<String,String> getAmbiguityClasses()
 	{
 		double threshold = f_xmls[0].getAmbiguityClassThreshold();
@@ -244,7 +250,7 @@ public class CPOSTagger0 extends AbstractComponent
 		processAux();
 	}
 	
-	/** Called by {@link CPOSTagger0#process(DEPTree)}. */
+	/** Called by {@link CPOSTagger#process(DEPTree)}. */
 	protected void init(DEPTree tree)
 	{
 	 	d_tree = tree;
@@ -255,20 +261,20 @@ public class CPOSTagger0 extends AbstractComponent
 	 	
 	 	if (d_tree.get(1) != null)
 	 		d_tree.clearPOSTags();
+	 	
+	 	EngineProcess.normalizeForms(d_tree);
 	}
 	
-	/** Called by {@link CPOSTagger0#process(DEPTree)}. */
+	/** Called by {@link CPOSTagger#process(DEPTree)}. */
 	protected void processAux()
 	{
-		EngineProcess.normalizeForms(d_tree);
-		
 		if (i_flag == FLAG_LEXICA)
 			addLexica();
 		else
-			posTag();
+			tagLR();
 	}
 	
-	/** Called by {@link CPOSTagger0#processAux()}. */
+	/** Called by {@link CPOSTagger#processAux()}. */
 	protected void addLexica()
 	{
 		DEPNode node;
@@ -283,8 +289,8 @@ public class CPOSTagger0 extends AbstractComponent
 		}
 	}
 	
-	/** Called by {@link CPOSTagger0#processAux()}. */
-	protected void posTag()
+	/** Called by {@link CPOSTagger#processAux()}. */
+	protected void tagLR()
 	{
 		DEPNode input;
 		
@@ -295,7 +301,19 @@ public class CPOSTagger0 extends AbstractComponent
 		}
 	}
 	
-	/** Called by {@link CPOSTagger0#posTag()}. */
+	/** Called by {@link CPOSTagger#processAux()}. */
+	protected void tagRL()
+	{
+		DEPNode input;
+		
+		for (i_input=t_size-1; i_input>0; i_input--)
+		{
+			input = d_tree.get(i_input);
+			input.pos = getLabel();
+		}
+	}
+	
+	/** Called by {@link CPOSTagger#tagLR()}. */
 	protected String getLabel()
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
@@ -314,13 +332,13 @@ public class CPOSTagger0 extends AbstractComponent
 		return label;
 	}
 	
-	/** Called by {@link CPOSTagger0#getLabel()}. */
+	/** Called by {@link CPOSTagger#getLabel()}. */
 	private String getGoldLabel()
 	{
 		return g_tags[i_input];
 	}
 	
-	/** Called by {@link CPOSTagger0#getLabel()}. */
+	/** Called by {@link CPOSTagger#getLabel()}. */
 	private String getAutoLabel(StringFeatureVector vector)
 	{
 		StringPrediction p = s_models[0].predictBest(vector);
@@ -352,7 +370,6 @@ public class CPOSTagger0 extends AbstractComponent
 		{
 			return m_ambi.get(node.simplifiedForm);
 		}
-		
 		else if ((m = JointFtrXml.P_BOOLEAN.matcher(token.field)).find())
 		{
 			int field = Integer.parseInt(m.group(1));

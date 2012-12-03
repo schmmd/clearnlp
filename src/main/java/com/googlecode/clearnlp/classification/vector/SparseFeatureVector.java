@@ -79,6 +79,17 @@ public class SparseFeatureVector extends AbstractFeatureVector
 		d_weights.add(weight);
 	}
 	
+	public void addFeatures(int[] indices)
+	{
+		i_indices.add(indices);
+	}
+	
+	public void addFeatures(int[] indices, double[] weights)
+	{
+		i_indices.add(indices);
+		d_weights.add(weights);
+	}
+	
 	/**
 	 * Adds a feature.
 	 * @param feature {@code <index>}{@link SparseFeatureVector#DELIM}{@code [}{@link SparseFeatureVector#DELIM}{@code <weight>]}.

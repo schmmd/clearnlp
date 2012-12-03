@@ -110,6 +110,9 @@ abstract public class AbstractTrainSpace
 	abstract public void addInstance(String line);
 	
 	/** Generates vector space given training instances. */
+	abstract public void build(boolean clearInstances);
+	
+	/** Generates vector space given training instances. */
 	abstract public void build();
 	
 	/**

@@ -34,6 +34,7 @@ import java.util.List;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
+import com.googlecode.clearnlp.classification.prediction.IntPrediction;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.util.UTArray;
@@ -107,6 +108,16 @@ abstract public class AbstractModel
 	public void setSolver(byte solver)
 	{
 		i_solver = solver;
+	}
+	
+	public void setWeights(double[] weights)
+	{
+		d_weights = weights; 
+	}
+	
+	public double[] getWeights()
+	{
+		return d_weights;
 	}
 	
 	/**
@@ -220,6 +231,14 @@ abstract public class AbstractModel
 			weights[i] = d_weights[getWeightIndex(label, i)];
 		
 		return weights;
+	}
+	
+	public void updateWeightVector(int y, int[] xs, double[] costs)
+	{
+		int i, size = xs.length;
+		
+		for (i=0; i<size; i++)
+			d_weights[getWeightIndex(y, xs[i])] += costs[i];
 	}
 	
 	/**
@@ -480,5 +499,27 @@ abstract public class AbstractModel
 	//		toProbability(list);
 		
 		return list;		
+	}
+	
+	public List<IntPrediction> getIntPredictions(SparseFeatureVector x)
+	{
+		List<IntPrediction> list = new ArrayList<IntPrediction>(n_labels);
+		double[] scores = getScores(x);
+		int i;
+		
+		for (i=0; i<n_labels; i++)
+			list.add(new IntPrediction(i, scores[i]));
+		
+		return list;		
+	}
+	
+	static public String getBooleanLabel(boolean b)
+	{
+		return b ? LABEL_TRUE : LABEL_FALSE;
+	}
+	
+	static public boolean toBoolean(String label)
+	{
+		return label.equals(LABEL_TRUE);
 	}
 }

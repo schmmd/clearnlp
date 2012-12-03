@@ -36,10 +36,13 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final char S_STACK	= 's';
 	static public final char S_LAMBDA	= 'l';
 	static public final char S_BETA		= 'b';
+	static public final char S_PRED		= 'p';
 	
 	static public final String R_H		= "h";		// head
 	static public final String R_LMD	= "lmd";	// leftmost dependent
 	static public final String R_RMD	= "rmd";	// rightmost dependent
+	static public final String R_LND	= "lnd";	// left-nearest dependent
+	static public final String R_RND	= "rnd";	// right-nearest dependent
 	static public final String R_LNS	= "lns";	// left-nearest sibling
 	static public final String R_RNS	= "rns";	// right-nearest sibling
 
@@ -65,16 +68,18 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final Pattern P_SUBCAT 	= Pattern.compile("^sc(["+F_POS+F_DEPREL+"])(\\d+)$");
 	static public final Pattern P_PATH	 	= Pattern.compile("^pt(["+F_POS+F_DEPREL+F_DISTANCE+"])(\\d+)$");
 
-	static protected final Pattern P_REL	= UTRegex.getORPattern(R_H, R_LMD, R_RMD, R_LNS, R_RNS); 
+	static protected final Pattern P_REL	= UTRegex.getORPattern(R_H, R_LMD, R_RMD, R_LND, R_RND, R_LNS, R_RNS); 
 	static protected final Pattern P_FIELD	= UTRegex.getORPattern(F_FORM, F_SIMPLIFIED_FORM, F_LOWER_SIMPLIFIED_FORM, F_LEMMA, F_POS, F_POS_SET, F_AMBIGUITY_CLASS, F_DEPREL, F_DISTANCE, F_DEPREL_SET, F_LNPL, F_RNPL, F_LNPB, F_RNPB);
 	
 	final String CUTOFF_AMBIGUITY			= "ambiguity";		// part-of-speech tagging
 	final String CUTOFF_DOCUMENT_FREQUENCY	= "df";				// part-of-speech tagging
+	final String CUTOFF_TERMINAL			= "terminal";		// dependency parsing
 	final String LEXICA_PUNCTUATION 		= "punctuation";	// dependency parsing
 	
-	double        cutoff_ambiguity;		// part-of-speech tagging
-	int           cutoff_df;			// part-of-speech tagging
-	StringIntPair p_punc;				// dependency parsing
+	double cutoff_ambiguity;	// part-of-speech tagging
+	int    cutoff_df;			// part-of-speech tagging
+	double cutoff_terminal;		// dependency parsing
+	StringIntPair p_punc;		// dependency parsing
 	
 	public JointFtrXml(InputStream fin)
 	{
@@ -105,6 +110,12 @@ public class JointFtrXml extends AbstractFtrXml
 		return p_punc.i;
 	}
 	
+	/** For dependency parsing. */
+	public double getTerminalLemmaThreshold()
+	{
+		return cutoff_terminal;
+	}
+	
 	@Override
 	protected void initCutoffMore(NodeList eList)
 	{
@@ -112,6 +123,7 @@ public class JointFtrXml extends AbstractFtrXml
 		
 		cutoff_ambiguity = eCutoff.hasAttribute(CUTOFF_AMBIGUITY) ? Double.parseDouble(eCutoff.getAttribute(CUTOFF_AMBIGUITY)) : 0d;
 		cutoff_df = eCutoff.hasAttribute(CUTOFF_DOCUMENT_FREQUENCY) ? Integer.parseInt(eCutoff.getAttribute(CUTOFF_DOCUMENT_FREQUENCY)) : 0;
+		cutoff_terminal = eCutoff.hasAttribute(CUTOFF_TERMINAL) ? Double.parseDouble(eCutoff.getAttribute(CUTOFF_TERMINAL)) : 0;
 	}
 	
 	@Override
@@ -145,7 +157,7 @@ public class JointFtrXml extends AbstractFtrXml
 	@Override
 	protected boolean validSource(char source)
 	{
-		return source == S_INPUT || source == S_STACK || source == S_LAMBDA || source == S_BETA;
+		return source == S_INPUT || source == S_STACK || source == S_LAMBDA || source == S_BETA || source == S_PRED;
 	}
 
 	@Override

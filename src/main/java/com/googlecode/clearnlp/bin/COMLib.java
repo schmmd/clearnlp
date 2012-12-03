@@ -21,7 +21,13 @@ package com.googlecode.clearnlp.bin;
  */
 public class COMLib
 {
+	static public final String ENTRY_CONFIGURATION	= "_CONFIGURATION";
+	static public final String ENTRY_FEATURE		= "_FEATURE";
+	static public final String ENTRY_LEXICA			= "_LEXICA";
+	static public final String ENTRY_MODEL			= "_MODEL";
+	
 	static public final String MODE_POS			= "pos";
-	static public final String MODE_POS_BEAM	= "pos_beam";
-	static public final String MODE_DEP			= "dep";
+	static public final String MODE_DEP_PASS	= "dep_pass";
+	static public final String MODE_DEP_1		= "dep1";
+	static public final String MODE_ROLESET		= "roleset";
 }

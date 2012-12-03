@@ -55,8 +55,6 @@ public class Trainer
 			trainBinary();
 		else
 			trainMulti(numThreads);
-		
-	//	space.printAccuracies();
 	}
 	
 	private void trainBinary()

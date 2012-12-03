@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 
+import com.carrotsearch.hppc.ObjectIntOpenHashMap;
+import com.carrotsearch.hppc.cursors.ObjectCursor;
+
 /**
  * Output utilities.
  * @author Jinho D. Choi (jdchoi77@gmail.com)
@@ -82,6 +85,23 @@ public class UTOutput
 			build.append(key);
 			build.append(delim);
 			build.append(map.get(key));
+
+			fout.println(build.toString());
+		}
+	}
+
+	static public void printMap(PrintStream fout, ObjectIntOpenHashMap<String> map, String delim)
+	{
+		StringBuilder build;
+		fout.println(map.size());
+		
+		for (ObjectCursor<String> cur : map.keys())
+		{
+			build = new StringBuilder();
+			
+			build.append(cur.value);
+			build.append(delim);
+			build.append(map.get(cur.value));
 
 			fout.println(build.toString());
 		}

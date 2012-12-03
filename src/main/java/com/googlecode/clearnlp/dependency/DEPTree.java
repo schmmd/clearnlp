@@ -86,6 +86,17 @@ public class DEPTree extends ArrayList<DEPNode>
 		
 		return tags;
 	}
+	
+	public String[] getRolesetIDs()
+	{
+		int i, size = size();
+		String[] rolesets = new String[size];
+		
+		for (i=1; i<size; i++)
+			rolesets[i] = get(i).getFeat(DEPLib.FEAT_PB);
+		
+		return rolesets;
+	}
 
 	/**
 	 * Returns an array of (headId, deprel) pair in each node.

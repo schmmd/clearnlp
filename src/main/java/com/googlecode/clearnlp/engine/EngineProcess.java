@@ -3,6 +3,7 @@ package com.googlecode.clearnlp.engine;
 import java.io.BufferedReader;
 import java.util.List;
 
+import com.googlecode.clearnlp.component.CRolesetClassifier;
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
@@ -155,6 +156,14 @@ public class EngineProcess
 	static public void predictSRL(AbstractPredIdentifier identifier, AbstractSRLabeler labeler, DEPTree tree)
 	{
 		identifier.identify(tree);
+		tree.initSHeads();
+		labeler.label(tree);	
+	}
+	
+	static public void predictSRL(AbstractPredIdentifier identifier, CRolesetClassifier classifier, AbstractSRLabeler labeler, DEPTree tree)
+	{
+		identifier.identify(tree);
+		classifier.process(tree);
 		tree.initSHeads();
 		labeler.label(tree);	
 	}

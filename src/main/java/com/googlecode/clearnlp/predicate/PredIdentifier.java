@@ -132,6 +132,7 @@ public class PredIdentifier extends AbstractPredIdentifier
 		}
 	}
 	
+	@Override
 	protected String getField(FtrToken token)
 	{
 		DEPNode node = getNode(token);
@@ -162,6 +163,7 @@ public class PredIdentifier extends AbstractPredIdentifier
 		return null;
 	}
 	
+	@Override
 	protected String[] getFields(FtrToken token)
 	{
 		DEPNode node = getNode(token);
