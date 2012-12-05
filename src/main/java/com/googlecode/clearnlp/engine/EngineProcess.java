@@ -1,10 +1,15 @@
 package com.googlecode.clearnlp.engine;
 
 import java.io.BufferedReader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.googlecode.clearnlp.component.CRolesetClassifier;
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
+import com.googlecode.clearnlp.dependency.DEPArc;
+import com.googlecode.clearnlp.dependency.DEPFeat;
+import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.AbstractSRLabeler;
@@ -13,9 +18,13 @@ import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
+import com.googlecode.clearnlp.propbank.verbnet.PVMap;
+import com.googlecode.clearnlp.propbank.verbnet.PVRole;
+import com.googlecode.clearnlp.propbank.verbnet.PVRoleset;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
+import com.googlecode.clearnlp.util.UTCollection;
 import com.googlecode.clearnlp.util.pair.Pair;
 
 public class EngineProcess
@@ -166,6 +175,49 @@ public class EngineProcess
 		classifier.process(tree);
 		tree.initSHeads();
 		labeler.label(tree);	
+	}
+	
+	static public void addVerbNet(PVMap map, DEPTree tree)
+	{
+		int i, size = tree.size();
+		PVRoleset[] pvRolesets = new PVRoleset[size];
+		PVRoleset pvRoleset;
+		List<String> vnclss;
+		String rolesetId;
+		PVRole pvRole;
+		DEPNode node;
+		String n;
+		
+		for (i=1; i<size; i++)
+		{
+			node = tree.get(i);
+			rolesetId = node.getFeat(DEPLib.FEAT_PB);
+			
+			if (rolesetId != null)
+			{
+				if ((pvRoleset = map.getRoleset(rolesetId)) != null)
+				{
+					vnclss = new ArrayList<String>(pvRoleset.keySet());
+					Collections.sort(vnclss);
+					node.addFeat(DEPLib.FEAT_VN, UTCollection.toString(vnclss, DEPFeat.DELIM_VALUES));
+				}
+				
+				pvRolesets[i] = pvRoleset;
+			}
+		}
+		
+		for (i=1; i<size; i++)
+			for (DEPArc arc : tree.get(i).getSHeads())
+				if ((pvRoleset = pvRolesets[arc.getNode().id]) != null)
+					if (MPLib.containsOnlyDigits(n = arc.getLabel().substring(1, 2)))
+					{
+						vnclss = new ArrayList<String>(pvRoleset.keySet());
+						Collections.sort(vnclss);
+						
+						for (String vncls : vnclss)
+							if ((pvRole = pvRoleset.get(vncls).getRole(n)) != null)
+								arc.appendLabel(pvRole.vntheta);
+					}
 	}
 	
 	// ============================= conversion =============================

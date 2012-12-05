@@ -34,9 +34,9 @@ public class PVRole implements Comparable<PVRole>
 	static public final String ATTR_F		= "f";
 	static public final String ATTR_VNTHETA	= "vntheta";
 
-	String n;
-	String f;
-	String vntheta;
+	public String n;
+	public String f;
+	public String vntheta;
 	
 	public PVRole(Element eRole)
 	{

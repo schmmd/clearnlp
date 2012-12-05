@@ -102,7 +102,7 @@ public class COMTrain extends AbstractBin
 	protected AbstractComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(COMLib.MODE_POS))
-			return new CPOSTagger(xmls, spaces, lexica);
+			return (models == null) ? new CPOSTagger(xmls, spaces, lexica) : new CPOSTagger(xmls, spaces, models, lexica);
 		else if (mode.equals(COMLib.MODE_DEP_PASS))
 			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
 		else if (mode.equals(COMLib.MODE_ROLESET))

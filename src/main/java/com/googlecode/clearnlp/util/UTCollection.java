@@ -10,4 +10,17 @@ public class UTCollection
 		col.toArray(array);
 		return array;
 	}
+	
+	static public String toString(Collection<String> col, String delim)
+	{
+		StringBuilder build = new StringBuilder();
+		
+		for (String item : col)
+		{
+			build.append(delim);
+			build.append(item);
+		}
+		
+		return build.substring(delim.length());
+	}
 }

@@ -96,6 +96,12 @@ public class CPOSTagger extends AbstractComponent
 		super(in);
 	}
 	
+	/** Constructs a part-of-speech tagger for bootstrapping. */
+	public CPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
+	{
+		super(xmls, spaces, models, lexica);
+	}
+	
 	@Override @SuppressWarnings("unchecked")
 	protected void initLexia(Object[] lexica)
 	{
@@ -268,10 +274,8 @@ public class CPOSTagger extends AbstractComponent
 	/** Called by {@link CPOSTagger#process(DEPTree)}. */
 	protected void processAux()
 	{
-		if (i_flag == FLAG_LEXICA)
-			addLexica();
-		else
-			tagLR();
+		if (i_flag == FLAG_LEXICA)	addLexica();
+		else						tag();
 	}
 	
 	/** Called by {@link CPOSTagger#processAux()}. */
@@ -290,7 +294,7 @@ public class CPOSTagger extends AbstractComponent
 	}
 	
 	/** Called by {@link CPOSTagger#processAux()}. */
-	protected void tagLR()
+	protected void tag()
 	{
 		DEPNode input;
 		
@@ -301,19 +305,7 @@ public class CPOSTagger extends AbstractComponent
 		}
 	}
 	
-	/** Called by {@link CPOSTagger#processAux()}. */
-	protected void tagRL()
-	{
-		DEPNode input;
-		
-		for (i_input=t_size-1; i_input>0; i_input--)
-		{
-			input = d_tree.get(i_input);
-			input.pos = getLabel();
-		}
-	}
-	
-	/** Called by {@link CPOSTagger#tagLR()}. */
+	/** Called by {@link CPOSTagger#tag()}. */
 	protected String getLabel()
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
@@ -327,6 +319,11 @@ public class CPOSTagger extends AbstractComponent
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
 			label = getAutoLabel(vector);
+		}
+		else if (i_flag == FLAG_BOOTSTRAP)
+		{
+			label = getAutoLabel(vector);
+			if (vector.size() > 0) s_spaces[0].addInstance(getGoldLabel(), vector);
 		}
 		
 		return label;

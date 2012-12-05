@@ -1,6 +1,7 @@
 package com.googlecode.clearnlp.bin;
 
 import java.io.FileInputStream;
+import java.util.Arrays;
 import java.util.Set;
 
 import org.kohsuke.args4j.Option;
@@ -21,6 +22,7 @@ import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTXml;
+import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
 
 public class COMDevelop extends COMTrain
 {
@@ -60,7 +62,12 @@ public class COMDevelop extends COMTrain
 		Set<String> sLsfs = getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1);
 		Object[]   lexica = getLexica(new CPOSTagger(xmls, sLsfs), reader, xmls, trainFiles, -1);
 		String       mode = COMLib.MODE_POS;
-		
+
+		developPOSTaggerAux(eConfig, reader, xmls, trainFiles, devFiles, lexica, mode);
+	}
+	
+	protected double developPOSTaggerAux(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, Object[] lexica, String mode) throws Exception
+	{
 		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, null, lexica, mode, -1);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		int i, mSize = spaces.length, nUpdate = 1;
@@ -68,7 +75,7 @@ public class COMDevelop extends COMTrain
 		
 		IntObjectOpenHashMap<IntDoubleMap> mMargin = new IntObjectOpenHashMap<IntDoubleMap>();
 		StringModel[] models = new StringModel[mSize];
-		double prevScore, currScore = 0;
+		double prevScore = -1, currScore = 0;
 		
 		do
 		{
@@ -84,6 +91,53 @@ public class COMDevelop extends COMTrain
 			currScore = predict(reader, tagger, devFiles, mode);
 		}
 		while (prevScore < currScore);
+		
+		return prevScore;
+	}
+	
+	protected ObjectDoublePair<StringModel[]> developPOSTaggerAux(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, StringModel[] models, Object[] lexica, String mode) throws Exception
+	{
+		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, -1);
+		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
+		int i, mSize = spaces.length, nUpdate = 1;
+		CPOSTagger tagger;
+		
+		IntObjectOpenHashMap<IntDoubleMap> mMargin = new IntObjectOpenHashMap<IntDoubleMap>();
+		double[][] prevWeights = new double[mSize][];
+		double prevScore, currScore = 0;
+		double[] weights;
+		
+		models = new StringModel[mSize];
+		
+		while (true)
+		{
+			prevScore = currScore;
+
+			for (i=0; i<mSize; i++)
+			{
+				updateModel(eTrain, spaces[i], mMargin, nUpdate++, i);
+				models[i] = (StringModel)spaces[i].getModel();
+			}
+
+			tagger = (CPOSTagger)getComponent(xmls, models, lexica, mode);
+			currScore = predict(reader, tagger, devFiles, mode);
+			
+			if (prevScore >= currScore)	
+			{
+				for (i=0; i<mSize; i++)
+					models[i].setWeights(prevWeights[i]);
+				
+				break;
+			}
+			
+			for (i=0; i<mSize; i++)
+			{
+				weights = models[i].getWeights();
+				prevWeights[i] = Arrays.copyOf(weights, weights.length);
+			}
+		}
+		
+		return new ObjectDoublePair<StringModel[]>(models, prevScore);
 	}
 	
 	protected void developPOSTagger2(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles) throws Exception

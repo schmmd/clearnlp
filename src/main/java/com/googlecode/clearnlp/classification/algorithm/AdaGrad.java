@@ -16,6 +16,7 @@
 package com.googlecode.clearnlp.classification.algorithm;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.carrotsearch.hppc.IntArrayList;
@@ -79,14 +80,10 @@ public class AdaGrad extends AbstractAlgorithm
 		int      yi;
 		int[]    xi;
 		double[] vi = null;
-
-	/*	List<IntPrediction> pss;
-		IntPrediction cur;
-		IntArrayList yns;
-		int   k, max;*/
 		
 		for (i=0; i<n_iter; i++)
 		{
+			Arrays.fill(gs, 0);
 			sum = 0;
 			
 			for (j=0; j<N; j++)
@@ -114,29 +111,10 @@ public class AdaGrad extends AbstractAlgorithm
 					updateCounts (L, gs, yi, fst.label, xi, vi);
 					updateWeights(L, gs, yi, fst.label, xi, vi, weights);
 				}
-				
-			/*	pss = getSortedPredictions(L, xi, vi, weights);
-				yns = new IntArrayList();
-				cur = pss.get(yi);
-				
-				for (k=0; k<L; k++)
-				{
-					if (k != yi)
-					{
-						snd = pss.get(k);
-						
-						if (cur.score - snd.score < 1)
-							yns.add(snd.label);						
-					}
-				}
-				
-				max = UTHppc.max(yns);*/
 			}
 			
 			acc = 100d * sum / N;
 			System.out.printf("- %3d: acc = %7.4f\n", i+1, acc);
-			
-			if (acc >= 97)	break;
 		}
 	}
 	
@@ -185,7 +163,7 @@ public class AdaGrad extends AbstractAlgorithm
 		return new Pair<IntPrediction,IntPrediction>(fst, snd);
 	}
 	
-	protected List<IntPrediction> getSortedPredictions(int L, int[] x, double[] v, double[] weights)
+	protected List<IntPrediction> getAllPredictions(int L, int[] x, double[] v, double[] weights)
 	{
 		List<IntPrediction> ps = new ArrayList<IntPrediction>();
 		int i, label, size = x.length;
@@ -203,7 +181,6 @@ public class AdaGrad extends AbstractAlgorithm
 					ps.add(new IntPrediction(i, weights[getWeightIndex(L, label, x[i])]));
 		}
 		
-	//	Collections.sort(ps);
 		return ps;
 	}
 	
@@ -233,6 +210,61 @@ public class AdaGrad extends AbstractAlgorithm
 		}
 	}
 	
+	protected void updateWeights(int L, double[] gs, int yp, int yn, int[] x, double[] v, double[] weights)
+	{
+		int i, xi, len = x.length;
+		double vi;
+		
+		if (v != null)
+		{
+			for (i=0; i<len; i++)
+			{
+				xi = x[i]; vi = v[i];
+				weights[getWeightIndex(L, yp, xi)] += getUpdate(L, gs, yp, xi) * vi;
+				weights[getWeightIndex(L, yn, xi)] -= getUpdate(L, gs, yn, xi) * vi;
+			}
+		}
+		else
+		{
+			for (i=0; i<len; i++)
+			{
+				xi = x[i];
+				weights[getWeightIndex(L, yp, xi)] += getUpdate(L, gs, yp, xi);
+				weights[getWeightIndex(L, yn, xi)] -= getUpdate(L, gs, yn, xi);
+			}
+		}
+	}
+	
+	protected void updateWeights(int L, double[] gs, int yp, int yn, int[] x, double[] v, double[] weights, int c)
+	{
+		int i, xi, len = x.length;
+		double vi;
+		
+		if (v != null)
+		{
+			for (i=0; i<len; i++)
+			{
+				xi = x[i]; vi = v[i];
+				weights[getWeightIndex(L, yp, xi)] += c * getUpdate(L, gs, yp, xi) * vi;
+				weights[getWeightIndex(L, yn, xi)] -= c * getUpdate(L, gs, yn, xi) * vi;
+			}
+		}
+		else
+		{
+			for (i=0; i<len; i++)
+			{
+				xi = x[i];
+				weights[getWeightIndex(L, yp, xi)] += c * getUpdate(L, gs, yp, xi);
+				weights[getWeightIndex(L, yn, xi)] -= c * getUpdate(L, gs, yn, xi);
+			}
+		}
+	}
+	
+	protected double getUpdate(int L, double[] gs, int y, int x)
+	{
+		return d_alpha / (d_delta + Math.sqrt(gs[getWeightIndex(L, y, x)]));
+	}
+	
 	protected void updateCounts(int L, double[] gs, int yp, IntArrayList yns, int[] x, double[] v)
 	{
 		int i, len = x.length;
@@ -259,95 +291,33 @@ public class AdaGrad extends AbstractAlgorithm
 		}
 	}
 	
-	protected void updateWeights(int L, double[] gs, int yp, int yn, int[] x, double[] v, double[] weights)
-	{
-		int i, len = x.length;
-		double[] cp = new double[len];
-		double[] cn = new double[len];
-		
-		for (i=0; i<len; i++)
-		{
-			cp[i] =  d_alpha / (d_delta + Math.sqrt(gs[getWeightIndex(L, yp, x[i])]));
-			cn[i] = -d_alpha / (d_delta + Math.sqrt(gs[getWeightIndex(L, yn, x[i])]));
-		}
-		
-		if (v != null)
-		{
-			for (i=0; i<len; i++)
-			{
-				weights[getWeightIndex(L, yp, x[i])] += cp[i] * v[i];
-				weights[getWeightIndex(L, yn, x[i])] += cn[i] * v[i];
-			}
-		}
-		else
-		{
-			for (i=0; i<len; i++)
-			{
-				weights[getWeightIndex(L, yp, x[i])] += cp[i];
-				weights[getWeightIndex(L, yn, x[i])] += cn[i];
-			}
-		}
-	}
-	
 	protected void updateWeights(int L, double[] gs, int yp, IntArrayList yns, int[] x, double[] v, double[] weights)
 	{
-		int i, len = x.length;
-		double[] cp = new double[len];
-		double[] cn = new double[len];
-		
-		for (i=0; i<len; i++)
-		{
-			cp[i] =  d_alpha / (d_delta + Math.sqrt(gs[getWeightIndex(L, yp, x[i])]));
-			
-			for (IntCursor cur : yns)
-				cn[i] = -d_alpha / (d_delta + Math.sqrt(gs[getWeightIndex(L, cur.value, x[i])]));
-		}
+		int i, xi, len = x.length;
+		double vi;
 		
 		if (v != null)
 		{
 			for (i=0; i<len; i++)
 			{
-				weights[getWeightIndex(L, yp, x[i])] += cp[i] * v[i];
+				xi = x[i]; vi = v[i];
+				weights[getWeightIndex(L, yp, xi)] += getUpdate(L, gs, yp, xi) * vi;
 				
-				for (IntCursor cur : yns)
-					weights[getWeightIndex(L, cur.value, x[i])] += cn[i] * v[i];
+				for (IntCursor yn : yns)
+					weights[getWeightIndex(L, yn.value, xi)] -= getUpdate(L, gs, yn.value, xi) * vi;
 			}
 		}
 		else
 		{
 			for (i=0; i<len; i++)
 			{
-				weights[getWeightIndex(L, yp, x[i])] += cp[i];
+				xi = x[i];
+				weights[getWeightIndex(L, yp, xi)] += getUpdate(L, gs, yp, xi);
 				
-				for (IntCursor cur : yns)
-					weights[getWeightIndex(L, cur.value, x[i])] += cn[i];
+				for (IntCursor yn : yns)
+					weights[getWeightIndex(L, yn.value, xi)] -= getUpdate(L, gs, yn.value, xi);
 			}
 		}
-	}
-	
-	protected double getAccuracy(AbstractTrainSpace space, int N, int L, double[] weights)
-	{
-		IntArrayList        ys = space.getYs();
-		ArrayList<int[]>    xs = space.getXs();
-		ArrayList<double[]> vs = space.getVs();
-		
-		int      yi;
-		int[]    xi;
-		double[] vi = null;
-		
-		int i, sum = 0;
-		
-		for (i=0; i<N; i++)
-		{
-			yi = ys.get(i);
-			xi = xs.get(i);
-			if (space.hasWeight())	vi = vs.get(i);
-			
-			if (yi == getPredictions(L, xi, vi, weights).o1.label)
-				sum++;
-		}
-		
-		return 100d * sum / N;
 	}
 }
 	

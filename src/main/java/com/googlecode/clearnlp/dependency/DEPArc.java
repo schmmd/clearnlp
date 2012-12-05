@@ -97,6 +97,11 @@ public class DEPArc implements Comparable<DEPArc>
 		this.label = label;
 	}
 	
+	public void appendLabel(String label)
+	{
+		this.label += DEPFeat.DELIM_VALUES + label;
+	}
+	
 	/**
 	 * Sets the linking node and dependency label. 
 	 * @param node the linking node.

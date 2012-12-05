@@ -125,6 +125,17 @@ public class PVRoles extends ArrayList<PVRole>
 		return null;
 	}
 	
+	public PVRole getRole(String n)
+	{
+		for (PVRole role : this)
+		{
+			if (role.n.equals(n))
+				return role;
+		}
+		
+		return null;
+	}
+	
 	public String toString()
 	{
 		StringBuilder build = new StringBuilder();
