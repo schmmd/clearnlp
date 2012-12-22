@@ -26,8 +26,12 @@ public class COMLib
 	static public final String ENTRY_LEXICA			= "_LEXICA";
 	static public final String ENTRY_MODEL			= "_MODEL";
 	
-	static public final String MODE_POS			= "pos";
-	static public final String MODE_DEP_PASS	= "dep_pass";
-	static public final String MODE_DEP_1		= "dep1";
-	static public final String MODE_ROLESET		= "roleset";
+	static public final String MODE_TOK		= "tok";
+	static public final String MODE_SEG		= "seg";
+	static public final String MODE_POS		= "pos";
+	static public final String MODE_MORPH	= "morph";
+	static public final String MODE_DEP		= "dep";
+	static public final String MODE_PRED	= "pred";
+	static public final String MODE_ROLE	= "role";
+	static public final String MODE_SRL		= "srl";
 }

@@ -34,4 +34,9 @@ public class RawReader extends AbstractReader<String>
 		
 		return null;
 	}
+	
+	public String getType()
+	{
+		return TYPE_RAW;
+	}
 }

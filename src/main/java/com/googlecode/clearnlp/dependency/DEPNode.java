@@ -80,6 +80,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		init(id, form, lemma, pos, feats);
 	}
 	
+	public DEPNode(int id, String form)
+	{
+		init(id, form, null, null, new DEPFeat());
+	}
+	
 	public DEPNode(int id, POSNode node)
 	{
 		init(id, node.form, node.lemma, node.pos, new DEPFeat());
@@ -554,6 +559,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		StringBuilder build = new StringBuilder();
 		
 		build.append(form);		build.append(DEPReader.DELIM_COLUMN);
+		build.append(pos);
+		
+		return build.toString();
+	}
+	
+	public String toStringMorph()
+	{
+		StringBuilder build = new StringBuilder();
+		
+		build.append(form);		build.append(DEPReader.DELIM_COLUMN);
+		build.append(lemma);	build.append(DEPReader.DELIM_COLUMN);
 		build.append(pos);
 		
 		return build.toString();

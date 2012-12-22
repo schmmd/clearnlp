@@ -80,14 +80,24 @@ public class PredEvaluate extends AbstractRun
 				gFeats = new DEPFeat(gold[goldIndex]);
 				aFeats = new DEPFeat(auto[autoIndex]);
 
-				if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
+			/*	if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
 					counts[1]++;
 				
 				if ((aPred = aFeats.get(DEPLib.FEAT_PB)) != null)
 					counts[2]++;
 				
 				if (gPred != null && aPred != null)
-					counts[0]++;
+					counts[0]++;*/
+				
+				if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
+				{
+					aPred = aFeats.get(DEPLib.FEAT_PB);
+					counts[1]++;
+					counts[2]++;
+					
+					if (gPred.equals(aPred))
+						counts[0]++;
+				}
 			}
 		}
 		catch (IOException e) {e.printStackTrace();}

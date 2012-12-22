@@ -32,11 +32,13 @@ import java.util.List;
 import org.kohsuke.args4j.Option;
 
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
+import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
+import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
@@ -138,7 +140,7 @@ public class C2DConvertMulti extends AbstractRun
 				
 				if (dTree == null)
 				{
-					fout.println(getNullTree()+"\n");
+				//	fout.println(getNullTree()+"\n");
 				}
 				else
 				{
@@ -146,7 +148,8 @@ public class C2DConvertMulti extends AbstractRun
 					addRolesets(cTree, dTree, instances);
 					if (mSense != null)	addWordSenses(cTree, dTree, mSense.get(n));
 					if (mName  != null)	addNames(cTree, dTree, mName.get(n));
-					
+				
+					dTree = getDEPTreeWithoutEdited(cTree, dTree);
 					fout.println(dTree+"\n");					
 				}
 			}
@@ -154,6 +157,58 @@ public class C2DConvertMulti extends AbstractRun
 			fout.close();
 			reader.close();
 		}
+	}
+	
+	public DEPTree getDEPTreeWithoutEdited(CTTree cTree, DEPTree dTree)
+	{
+		IntOpenHashSet set = new IntOpenHashSet();
+		addEditedTokensAux(cTree.getRoot(), set);
+		int i, j, size = dTree.size();
+		DEPTree tree = new DEPTree();
+		DEPNode node;
+		
+		for (i=1,j=1; i<size; i++)
+		{
+			if (!set.contains(i))
+			{
+				node = dTree.get(i);
+				node.id = j++;
+				removeEditedHeads(node.getXHeads(), set);
+				removeEditedHeads(node.getSHeads(), set);
+				tree.add(node);
+			}
+		}
+		
+		return (tree.size() == 1) ? null : tree;
+	}
+	
+	private void addEditedTokensAux(CTNode curr, IntOpenHashSet set)
+	{
+		for (CTNode child : curr.getChildren())
+		{
+			if (child.isPTag(CTLibEn.PTAG_EDITED) || (child.getChildrenSize() == 1 && child.getChild(0).isPTag(CTLibEn.PTAG_EDITED)))
+			{
+				for (CTNode sub : child.getSubTokens())
+					set.add(sub.getTokenId()+1);
+			}
+			else if (child.isPhrase())
+			{
+				addEditedTokensAux(child, set);
+			}
+		}
+	}
+	
+	private void removeEditedHeads(List<DEPArc> heads, IntOpenHashSet set)
+	{
+		List<DEPArc> remove = new ArrayList<DEPArc>();
+		
+		for (DEPArc arc : heads)
+		{
+			if (set.contains(arc.getNode().id))
+				remove.add(arc);
+		}
+		
+		heads.removeAll(remove);
 	}
 	
 	private IntObjectOpenHashMap<List<PBInstance>> getPBInstances(String propFile)
@@ -328,7 +383,7 @@ public class C2DConvertMulti extends AbstractRun
 		if (names == null)	return;
 		String[] t0, t1;
 		int bIdx, eIdx, i, size = dTree.size();
-		String ex;
+		String ent;
 		DEPNode node;
 		
 		for (i=1; i<size; i++)
@@ -336,24 +391,35 @@ public class C2DConvertMulti extends AbstractRun
 		
 		for (String name : names)
 		{
-			t0 = name.split("-");
-			ex = t0[1];
-			t1 = t0[0].split(":");
+			t0   = name.split("-");
+			t1   = t0[0].split(":");
+			ent  = t0[1];
 			bIdx = Integer.parseInt(t1[0]);
 			eIdx = Integer.parseInt(t1[1]);
 			
-			node = dTree.get(cTree.getTerminal(bIdx).getTokenId()+1);
-			node.nament = "B-"+ex;
-			
-			for (i=bIdx+1; i<=eIdx; i++)
+			if (bIdx == eIdx)
 			{
-				node = dTree.get(cTree.getTerminal(i).getTokenId()+1);
-				node.nament = "I-"+ex;
+				node = dTree.get(cTree.getTerminal(bIdx).getTokenId()+1);
+				node.nament = "U-"+ent;
+			}
+			else
+			{
+				node = dTree.get(cTree.getTerminal(bIdx).getTokenId()+1);
+				node.nament = "B-"+ent;
+				
+				for (i=bIdx+1; i<eIdx; i++)
+				{
+					node = dTree.get(cTree.getTerminal(i).getTokenId()+1);
+					node.nament = "I-"+ent;
+				}
+				
+				node = dTree.get(cTree.getTerminal(eIdx).getTokenId()+1);
+				node.nament = "L-"+ent;
 			}
 		}
 	}
 	
-	private DEPTree getNullTree()
+	public DEPTree getNullTree()
 	{
 		DEPTree tree = new DEPTree();
 		

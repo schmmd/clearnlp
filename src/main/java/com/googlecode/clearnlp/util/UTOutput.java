@@ -25,6 +25,7 @@ package com.googlecode.clearnlp.util;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Map;
 import java.util.Set;
@@ -47,6 +48,19 @@ public class UTOutput
 		try
 		{
 			fout = new PrintStream(new BufferedOutputStream(new FileOutputStream(filename), 65536), false, "UTF-8");
+		}
+		catch (Exception e) {e.printStackTrace();}
+		
+		return fout;
+	}
+	
+	static public PrintStream createPrintBufferedStream(OutputStream stream)
+	{
+		PrintStream fout = null;
+		
+		try
+		{
+			fout = new PrintStream(new BufferedOutputStream(stream), false, "UTF-8");
 		}
 		catch (Exception e) {e.printStackTrace();}
 		

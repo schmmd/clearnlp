@@ -17,7 +17,9 @@ package com.googlecode.clearnlp.bin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.kohsuke.args4j.CmdLineException;
@@ -25,15 +27,19 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
-import com.carrotsearch.hppc.IntDoubleMap;
-import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.algorithm.AdaGrad;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
+import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
-import com.googlecode.clearnlp.classification.train.StringTrainSpace;
-import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.engine.EngineGetter;
+import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.srl.CPredIdentifier;
+import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
+import com.googlecode.clearnlp.component.srl.CSRLabeler;
+import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.AbstractReader;
@@ -42,7 +48,6 @@ import com.googlecode.clearnlp.reader.LineReader;
 import com.googlecode.clearnlp.reader.RawReader;
 import com.googlecode.clearnlp.run.LiblinearTrain;
 import com.googlecode.clearnlp.util.UTXml;
-import com.googlecode.clearnlp.util.pair.Pair;
 
 /**
  * @since 1.3.0
@@ -62,9 +67,10 @@ abstract public class AbstractBin
 	final public String TAG_TRAIN_THREADS			= "threads";
 	
 	final public String TAG_LANGUAGE				= "language";
-	final public String TAG_MODE					= "mode";
-	final public String TAG_MODEL					= "model";
+	final public String TAG_DICTIONARY 				= "dictionary";
 	final public String TAG_MODELS					= "models";
+	final public String TAG_MODEL					= "model";
+	final public String TAG_MODE					= "mode";
 	final public String TAG_PATH					= "path";
 	
 	/** Initializes arguments using args4j. */
@@ -85,18 +91,49 @@ abstract public class AbstractBin
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
+	// ============================= genetic: mode =============================
+	
+	/** @return a component for developing. */
+	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
+	{
+		if      (mode.equals(COMLib.MODE_POS))
+			return new CPOSTagger(xmls, models, lexica);
+		else if (mode.equals(COMLib.MODE_DEP))
+			return new CDEPPassParser(xmls, models, lexica);
+		else if (mode.equals(COMLib.MODE_PRED))
+			return new CPredIdentifier(xmls, models, lexica);
+		else if (mode.equals(COMLib.MODE_ROLE))
+			return new CRolesetClassifier(xmls, models, lexica);
+		else if (mode.equals(COMLib.MODE_SRL))
+			return new CSRLabeler(xmls, models, lexica);
+		
+		return null;
+	}
+	
+	protected String toString(DEPTree tree, String mode)
+	{
+		if      (mode.equals(COMLib.MODE_POS))
+			return tree.toStringPOS();
+		else if (mode.equals(COMLib.MODE_MORPH))
+			return tree.toStringMorph();
+		else if (mode.equals(COMLib.MODE_DEP) || mode.equals(COMLib.MODE_PRED) || mode.equals(COMLib.MODE_ROLE))
+			return tree.toStringDEP();
+		else
+			return tree.toStringSRL();
+	}
+	
 	// ============================= getter: language =============================
 	
-	protected String getLanguage(Element eConfig)
+	protected String getLanguage(Element element)
 	{
-		Element eLanguage = UTXml.getFirstElementByTagName(eConfig, TAG_LANGUAGE);
+		Element eLanguage = UTXml.getFirstElementByTagName(element, TAG_LANGUAGE);
 		return UTXml.getTrimmedTextContent(eLanguage);
 	}
 	
-	protected String getMode(Element eConfig)
+	protected String getDictionary(Element element)
 	{
-		Element eMode = UTXml.getFirstElementByTagName(eConfig, TAG_MODE);
-		return UTXml.getTrimmedTextContent(eMode);
+		Element eDictionary = UTXml.getFirstElementByTagName(element, TAG_DICTIONARY);
+		return UTXml.getTrimmedTextContent(eDictionary);
 	}
 	
 	// ============================= getter: filenames =============================
@@ -106,11 +143,15 @@ abstract public class AbstractBin
 	{
 		List<String[]> filenames = new ArrayList<String[]>();
 		File f = new File(inputPath);
+		String[] inputFiles;
 		String outputFile;
 		
 		if (f.isDirectory())
 		{
-			for (String inputFile : f.list(new FileExtFilter(inputExt)))
+			inputFiles = f.list(new FileExtFilter(inputExt));
+			Arrays.sort(inputFiles);
+			
+			for (String inputFile : inputFiles)
 			{
 				inputFile  = inputPath + File.separator + inputFile;
 				outputFile = inputFile + "." + outputExt;
@@ -123,37 +164,18 @@ abstract public class AbstractBin
 		return filenames;
 	}
 	
-	// ============================= getter: components =============================
-	
-	protected AbstractComponent getComponent(Element eModels, String mode) throws Exception
-	{
-		NodeList list = eModels.getElementsByTagName(TAG_MODEL);
-		int i, size = list.getLength();
-		Element eModel;
-		
-		for (i=0; i<size; i++)
-		{
-			eModel = (Element)list.item(i);
-			
-			if (mode.equals(UTXml.getTrimmedAttribute(eModel, TAG_TYPE)))
-				return EngineGetter.getComponent(UTXml.getTrimmedAttribute(eModel, TAG_PATH), mode);
-		}
-		
-		return null;
-	}
-	
 	// ============================= getter: readers =============================
 	
-	protected Pair<AbstractReader<?>,String> getReader(Element eReader)
+	protected AbstractReader<?> getReader(Element eReader)
 	{
 		String type = UTXml.getTrimmedAttribute(eReader, TAG_TYPE);
 		
 		if      (type.equals(AbstractReader.TYPE_RAW))
-			return new Pair<AbstractReader<?>,String>(new RawReader(), type);
+			return new RawReader();
 		else if (type.equals(AbstractReader.TYPE_LINE))
-			return new Pair<AbstractReader<?>,String>(new LineReader(), type);
+			return new LineReader();
 		else
-			return new Pair<AbstractReader<?>,String>(getJointReader(eReader), type);
+			return getJointReader(eReader);
 	}
 	
 	protected JointReader getJointReader(Element eReader)
@@ -167,10 +189,12 @@ abstract public class AbstractBin
 		int iFeats	= map.get(AbstractColumnReader.FIELD_FEATS)	 - 1;
 		int iHeadId	= map.get(AbstractColumnReader.FIELD_HEADID) - 1;
 		int iDeprel	= map.get(AbstractColumnReader.FIELD_DEPREL) - 1;
+		int iXHeads = map.get(AbstractColumnReader.FIELD_XHEADS) - 1;
 		int iSHeads = map.get(AbstractColumnReader.FIELD_SHEADS) - 1;
-		int iNamex  = map.get(AbstractColumnReader.FIELD_NAMENT) - 1;
+		int iNament = map.get(AbstractColumnReader.FIELD_NAMENT) - 1;
+		int iCoref  = map.get(AbstractColumnReader.FIELD_COREF)  - 1;
 		
-		return new JointReader(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iSHeads, iNamex);
+		return new JointReader(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iXHeads, iSHeads, iNament, iCoref);
 	}
 	
 	/** Called by {@link AbstractBin#getCDEPReader(Element, String)}. */
@@ -195,35 +219,9 @@ abstract public class AbstractBin
 		return map;
 	}
 	
-	// ============================= classification =============================
+	// ============================= getModel =============================
 	
-	protected StringTrainSpace mergeTrainSpaces(List<StringTrainSpace> spaces, int labelCutoff, int featureCutoff)
-	{
-		StringTrainSpace space;
-		
-		if (spaces.size() == 1)
-		{
-			space = spaces.get(0);
-		}
-		else
-		{
-			System.out.println("Merging training instances:");
-			space = new StringTrainSpace(false, labelCutoff, featureCutoff);
-			
-			for (StringTrainSpace s : spaces)
-			{
-				space.appendSpace(s);
-				System.out.print(".");
-				s.clear();
-			}
-			
-			System.out.println();			
-		}
-		
-		return space;
-	}
-	
-	protected AbstractModel getModel(Element eTrain, AbstractTrainSpace space, int index)
+	protected AbstractModel getModel(Element eTrain, AbstractTrainSpace space, int index, int boot)
 	{
 		NodeList list = eTrain.getElementsByTagName(TAG_TRAIN_ALGORITHM);
 		int numThreads = getNumOfThreads(eTrain);
@@ -244,17 +242,20 @@ abstract public class AbstractBin
 		}
 		else if (name.equals("adagrad"))
 		{
-			int    iter  = Integer.parseInt   (UTXml.getTrimmedAttribute(eAlgorithm, "iter"));
-			double alpha = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "alpha"));
-			double delta = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "delta"));
+			String[] tmp = UTXml.getTrimmedAttribute(eAlgorithm, "iter").split(",");
 			
-			return getAdaGradModel(space, numThreads, iter, alpha, delta);
+			int    iter  = Integer.parseInt   (tmp[boot]);
+			int    rand  = Integer.parseInt   (UTXml.getTrimmedAttribute(eAlgorithm, "rand"));
+			double alpha = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "alpha"));
+			double rho   = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "rho"));
+			
+			return getAdaGradModel(space, numThreads, iter, rand, alpha, rho);
 		}
 		
 		return null;
 	}
 	
-	/** Called by {@link AbstractBin#getModel(Element, AbstractTrainSpace, int)}. */
+	/** Called by {@link AbstractBin#getModel(Element, AbstractTrainSpace, int, int)}. */
 	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
 	{
 		space.build();
@@ -263,23 +264,25 @@ abstract public class AbstractBin
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
 	}
 	
-	/** Called by {@link AbstractBin#getModel(Element, AbstractTrainSpace, int)}. */
-	protected AbstractModel getAdaGradModel(AbstractTrainSpace space, int numThreads, int iter, double alpha, double delta)
+	/** Called by {@link AbstractBin#getModel(Element, AbstractTrainSpace, int, int)}. */
+	protected AbstractModel getAdaGradModel(AbstractTrainSpace space, int numThreads, int iter, int rand, double alpha, double rho)
 	{
 		space.build();
 		System.out.println("AdaGrad:");
-		System.out.printf("- iter=%d, alpha=%f, delta=%f\n", iter, alpha, delta);
-		
-		AdaGrad ag = new AdaGrad(iter, alpha, delta);
-		AbstractModel model = space.getModel();
-		
+		System.out.printf("- iter=%d, rand=%d, alpha=%f, rho=%f\n", iter, rand, alpha, rho);
+
 		System.out.println("Training:");
+		AdaGrad ag = new AdaGrad(iter, alpha, rho, new Random(rand));
+		
+		AbstractModel model = space.getModel();
 		model.setWeights(ag.getWeight(space, numThreads));
 		
 		return model;
 	}
 	
-	protected void updateModel(Element eTrain, AbstractTrainSpace space, IntObjectOpenHashMap<IntDoubleMap> mMargin, int nUpdate, int index)
+	// ============================= updateModel =============================
+	
+	protected void updateModel(Element eTrain, AbstractTrainSpace space, Random rand, int nUpdate, int index)
 	{
 		NodeList list = eTrain.getElementsByTagName(TAG_TRAIN_ALGORITHM);
 		int numThreads = getNumOfThreads(eTrain);
@@ -293,13 +296,13 @@ abstract public class AbstractBin
 		{
 			int    iter  = Integer.parseInt   (UTXml.getTrimmedAttribute(eAlgorithm, "iter"));
 			double alpha = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "alpha"));
-			double delta = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "delta"));
+			double rho   = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "rho"));
 			
-			updateAdaGradModel(space, numThreads, mMargin, nUpdate, iter, alpha, delta);
+			updateAdaGradModel(space, rand, numThreads, nUpdate, iter, alpha, rho);
 		}
 	}
 	
-	protected void updateAdaGradModel(AbstractTrainSpace space, int numThreads, IntObjectOpenHashMap<IntDoubleMap> mMargin, int nUpdate, int iter, double alpha, double delta)
+	protected void updateAdaGradModel(AbstractTrainSpace space, Random rand, int numThreads, int nUpdate, int iter, double alpha, double rho)
 	{
 		AbstractModel model = space.getModel();
 		
@@ -309,8 +312,8 @@ abstract public class AbstractBin
 			model.initWeightVector();
 		}
 		
-		System.out.printf("%3d: AdaGrad, iter=%d, alpha=%f, delta=%f\n", nUpdate, iter, alpha, delta);
-		AdaGrad ag = new AdaGrad(iter, alpha, delta);
+		System.out.printf("%3d: AdaGrad, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho);
+		AdaGrad ag = new AdaGrad(iter, alpha, rho, rand);
 		ag.updateWeight(space);
 	}
 	

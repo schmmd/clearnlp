@@ -69,4 +69,9 @@ public class TOKReader extends AbstractColumnReader<List<String>>
 		
 		return tokens;
 	}
+	
+	public String getType()
+	{
+		return TYPE_TOK;
+	}
 }

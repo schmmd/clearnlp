@@ -117,4 +117,9 @@ public class SRLReader extends DEPReader
 			}
 		}
 	}
+	
+	public String getType()
+	{
+		return TYPE_SRL;
+	}
 }

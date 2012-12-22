@@ -49,61 +49,36 @@ public class BeamTree<T>
 	}
 	
 	/**
-	 * Returns the current node and the {@code n} number of previous nodes if exists.
-	 * @param k the index of beam.
-	 * @param n the number of nodes to return (> 0).
-	 * @return the current node and the {@code n} number of previous nodes if exists.
-	 */
-	public List<BeamNode<T>> getSequence(BeamNode<T> curr, int n)
-	{
-		List<BeamNode<T>> nodes = new ArrayList<BeamNode<T>>();
-		int i;
-		
-		for (i=0; i<=n; i++)
-		{
-			if (curr != null)	nodes.add(curr);
-			else				break;
-			
-			curr = curr.getPrevNode();
-		}
-		
-		return nodes;
-	}
-	
-	/**
 	 * Sets the new beam given a sorted list of predictions.
 	 * @param predictions the sorted list of predictions.
 	 */
 	public void setBeam(List<List<StringPrediction>> predictions)
 	{
 		List<BeamNode<T>> bNodes = new ArrayList<BeamNode<T>>();
-		List<StringPrediction> preds;
-		StringPrediction pred;
+		List<StringPrediction> cNodes;
 		BeamNode<T> pNode;
 		double score;
 		int i, size;
 		
 		// add first predictions
-		preds = predictions.get(0);
-		pNode = getPrevNode(0);
-		size  = preds.size();
+		cNodes = predictions.get(0);
+		pNode  = getPrevNode(0);
+		size   = cNodes.size();
 		if (size > n_size)	size = n_size;
 		
 		for (i=0; i<size; i++)
-		{
-			pred = preds.get(i);
-			bNodes.add(new BeamNode<T>(pNode, pred));
-		}
+			bNodes.add(new BeamNode<T>(pNode, cNodes.get(i)));
 		
 		// add 1..k predictions
 		size = predictions.size();
+		
 		for (i=1; i<size; i++)
 		{
-			preds = predictions.get(i);
-			pNode = getPrevNode(i);
-			score = bNodes.get(bNodes.size()-1).getScore();
+			cNodes = predictions.get(i);
+			pNode  = getPrevNode(i);
+			score  = bNodes.get(bNodes.size()-1).getScore();
 				
-			for (StringPrediction p : preds)
+			for (StringPrediction p : cNodes)
 			{
 				if (p.score < score)	break;
 				bNodes.add(new BeamNode<T>(pNode, p));
@@ -118,27 +93,35 @@ public class BeamTree<T>
 		b_nodes = bNodes;
 	}
 	
-	protected List<BeamNode<T>> getMax(List<List<StringPrediction>> predictions)
+	public List<BeamNode<T>> getBestSequence()
 	{
-		BeamNode<T> max = new BeamNode<T>(getPrevNode(0), predictions.get(0).get(0));
-		int i, size = predictions.size();
-		StringPrediction p;
+		List<BeamNode<T>> mSeq = b_nodes.get(0).getSequence(), tSeq;
+		double mScore = getOverallScore(mSeq), tScore;
+		int i, size = b_nodes.size();
 		
 		for (i=1; i<size; i++)
 		{
-			p = predictions.get(i).get(0);
+			tSeq   = b_nodes.get(i).getSequence();
+			tScore = getOverallScore(tSeq);
 			
-			if (p.score > max.getScore())
+			if (tScore > mScore)
 			{
-				max.setPrevNode(getPrevNode(i));
-				max.setPrediction(p);
+				mSeq   = tSeq;
+				mScore = tScore;
 			}
 		}
 		
-		List<BeamNode<T>> list = new ArrayList<BeamNode<T>>(1);
-		list.add(max);
+		return mSeq;
+	}
+	
+	protected double getOverallScore(List<BeamNode<T>> nodes)
+	{
+		double d = 0;
 		
-		return list;
+		for (BeamNode<T> node : nodes)
+			d += node.getScore();
+		
+		return d;
 	}
 	
 	private BeamNode<T> getPrevNode(int k)

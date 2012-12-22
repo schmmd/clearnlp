@@ -433,6 +433,25 @@ public class CTNode implements Comparable<CTNode>
 		return set;
 	}
 	
+	public List<CTNode> getSubTokens()
+	{
+		List<CTNode> tokens = new ArrayList<CTNode>();
+		
+		getSubTokens(this, tokens);
+		return tokens;
+	}
+	
+	private void getSubTokens(CTNode curr, List<CTNode> tokens)
+	{
+		if (curr.isPhrase())
+		{
+			for (CTNode child : curr.ls_children)
+				getSubTokens(child, tokens);
+		}
+		else if (!curr.isEmptyCategory())
+			tokens.add(curr);
+	}
+	
 	public CTNode getFirstTerminal()
 	{
 		return getFirstTerminalAux(this);

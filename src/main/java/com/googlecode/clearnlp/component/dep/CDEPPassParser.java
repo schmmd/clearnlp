@@ -13,19 +13,25 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.component;
+package com.googlecode.clearnlp.component.dep;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
+import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.dependency.DEPLabel;
 import com.googlecode.clearnlp.dependency.DEPLib;
@@ -34,17 +40,24 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 import com.googlecode.clearnlp.util.triple.Triple;
 
 /**
- * Dependency parser using pass-transitions.
+ * Dependency parser using *-pass transitions.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CDEPPassParser extends AbstractComponent
+public class CDEPPassParser extends AbstractStatisticalComponent
 {
+	private final String ENTRY_CONFIGURATION = COMLib.MODE_DEP + COMLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = COMLib.MODE_DEP + COMLib.ENTRY_FEATURE;
+	private final String ENTRY_LEXICA		 = COMLib.MODE_DEP + COMLib.ENTRY_LEXICA;
+	private final String ENTRY_MODEL		 = COMLib.MODE_DEP + COMLib.ENTRY_MODEL;
+	
 	protected final int LEXICA_PUNCTUATION = 0;
 	
 	protected final String LB_LEFT		= "L";
@@ -106,13 +119,61 @@ public class CDEPPassParser extends AbstractComponent
 	@Override
 	public void loadModels(ZipInputStream zin)
 	{
-		// TODO Auto-generated method stub
+		int fLen = ENTRY_FEATURE.length(), mLen = ENTRY_MODEL.length();
+		f_xmls   = new JointFtrXml[1];
+		s_models = null;
+		ZipEntry zEntry;
+		String   entry;
+				
+		try
+		{
+			while ((zEntry = zin.getNextEntry()) != null)
+			{
+				entry = zEntry.getName();
+				
+				if      (entry.equals(ENTRY_CONFIGURATION))
+					loadDefaultConfiguration(zin);
+				else if (entry.startsWith(ENTRY_FEATURE))
+					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
+				else if (entry.startsWith(ENTRY_MODEL))
+					loadStatisticalModels(zin, Integer.parseInt(entry.substring(mLen)));
+				else if (entry.equals(ENTRY_LEXICA))
+					loadLexica(zin);
+			}		
+		}
+		catch (Exception e) {e.printStackTrace();}
 	}
 	
+	private void loadLexica(ZipInputStream zin) throws Exception
+	{
+		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
+		System.out.println("Loading lexica.");
+
+		s_punc = UTInput.getStringSet(fin);
+	}
+
 	@Override
 	public void saveModels(ZipOutputStream zout)
 	{
-		// TODO Auto-generated method stub
+		try
+		{
+			saveDefaultConfiguration(zout, ENTRY_CONFIGURATION);
+			saveFeatureTemplates    (zout, ENTRY_FEATURE);
+			saveLexica              (zout);
+			saveStatisticalModels   (zout, ENTRY_MODEL);
+			zout.close();
+		}
+		catch (Exception e) {e.printStackTrace();}
+	}
+	
+	private void saveLexica(ZipOutputStream zout) throws Exception
+	{
+		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
+		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
+		System.out.println("Saving lexica.");
+		
+		UTOutput.printSet(fout, s_punc);	fout.flush();
+		zout.closeEntry();
 	}
 	
 //	====================================== GETTERS AND SETTERS ======================================
@@ -132,26 +193,34 @@ public class CDEPPassParser extends AbstractComponent
 		return g_heads;
 	}
 	
-//	================================ PROCESS ================================
-	
 	@Override
 	public void countAccuracy(int[] counts)
 	{
+		int i, las = 0, uas = 0, ls = 0;
 		StringIntPair p;
 		DEPNode node;
-		int i;
-		
-		counts[0] += t_size - 1;
 		
 		for (i=1; i<t_size; i++)
 		{
 			node = d_tree.get(i);
 			p    = g_heads[i];
 			
-			if (node.isLabel(p.s) && node.isHead(d_tree.get(p.i)))
-				counts[1]++;
+			if (node.isHead(d_tree.get(p.i)))
+			{
+				uas++;
+				if (node.isLabel(p.s)) las++;
+			}
+			
+			if (node.isLabel(p.s)) ls++;
 		}
+		
+		counts[0] += t_size - 1;
+		counts[1] += las;
+		counts[2] += uas;
+		counts[3] += ls;
 	}
+	
+//	================================ PROCESS ================================
 	
 	@Override
 	public void process(DEPTree tree)
@@ -175,22 +244,17 @@ public class CDEPPassParser extends AbstractComponent
 	 	rn_sibs  = new DEPNode[t_size];
 
 	 	if (i_flag != FLAG_DECODE)
-	 		g_heads = d_tree.getHeads();
-	 	
-	 	if (d_tree.get(1) != null)
-	 		d_tree.clearHeads();
+	 	{
+	 		g_heads = tree.getHeads();
+	 		tree.clearHeads();	
+	 	}
 	}
 	
 	/** Called by {@link CDEPPassParser#process(DEPTree)}. */
 	protected void processAux()
 	{
-		if (i_flag == FLAG_LEXICA)
-		{
-			addLexica();
-			return;
-		}
-		
-		parse();
+		if (i_flag == FLAG_LEXICA)	addLexica();
+		else						parse();
 	}
 	
 	/** Called by {@link CDEPPassParser#processAux()}. */

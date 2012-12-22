@@ -12,7 +12,7 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 
 public class BeamTreeTest
 {
-//	@Test	
+	@Test	
 	public void test1BeamTree()
 	{
 		List<List<StringPrediction>> predictions = new ArrayList<List<StringPrediction>>(); 

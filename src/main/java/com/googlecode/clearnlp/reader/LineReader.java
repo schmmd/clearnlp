@@ -34,4 +34,9 @@ public class LineReader extends AbstractReader<String>
 		
 		return null;
 	}
+	
+	public String getType()
+	{
+		return TYPE_LINE;
+	}
 }

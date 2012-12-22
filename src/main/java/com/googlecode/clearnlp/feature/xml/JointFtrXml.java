@@ -22,6 +22,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.util.UTRegex;
 import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -37,6 +38,7 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final char S_LAMBDA	= 'l';
 	static public final char S_BETA		= 'b';
 	static public final char S_PRED		= 'p';
+	static public final char S_ARG		= 'a';
 	
 	static public final String R_H		= "h";		// head
 	static public final String R_LMD	= "lmd";	// leftmost dependent
@@ -56,6 +58,7 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final String F_DEPREL					= "d";
 	static public final String F_DISTANCE				= "n";
 	static public final String F_DEPREL_SET				= "ds";
+	static public final String F_GRAND_DEPREL_SET		= "gds";
 	static public final String F_LNPL					= "lnpl";	// left-nearest punctuation of lambda
 	static public final String F_RNPL					= "rnpl";	// right-nearest punctuation of lambda
 	static public final String F_LNPB					= "lnpb";	// left-nearest punctuation of beta
@@ -67,19 +70,25 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final Pattern P_FEAT		= Pattern.compile("^ft=(.+)$");		
 	static public final Pattern P_SUBCAT 	= Pattern.compile("^sc(["+F_POS+F_DEPREL+"])(\\d+)$");
 	static public final Pattern P_PATH	 	= Pattern.compile("^pt(["+F_POS+F_DEPREL+F_DISTANCE+"])(\\d+)$");
+	static public final Pattern P_ARGN 	 	= Pattern.compile("^argn(\\d+)$");
 
 	static protected final Pattern P_REL	= UTRegex.getORPattern(R_H, R_LMD, R_RMD, R_LND, R_RND, R_LNS, R_RNS); 
 	static protected final Pattern P_FIELD	= UTRegex.getORPattern(F_FORM, F_SIMPLIFIED_FORM, F_LOWER_SIMPLIFIED_FORM, F_LEMMA, F_POS, F_POS_SET, F_AMBIGUITY_CLASS, F_DEPREL, F_DISTANCE, F_DEPREL_SET, F_LNPL, F_RNPL, F_LNPB, F_RNPB);
 	
-	final String CUTOFF_AMBIGUITY			= "ambiguity";		// part-of-speech tagging
-	final String CUTOFF_DOCUMENT_FREQUENCY	= "df";				// part-of-speech tagging
-	final String CUTOFF_TERMINAL			= "terminal";		// dependency parsing
-	final String LEXICA_PUNCTUATION 		= "punctuation";	// dependency parsing
+	final String CUTOFF_AMBIGUITY			= "ambiguity";	// part-of-speech tagging
+	final String CUTOFF_DOCUMENT_FREQUENCY	= "df";			// part-of-speech tagging
+	final String CUTOFF_PATH_DOWN			= "down";		// semantic role labeling
+	final String CUTOFF_PATH_UP				= "up";			// semantic role labeling
 	
-	double cutoff_ambiguity;	// part-of-speech tagging
-	int    cutoff_df;			// part-of-speech tagging
-	double cutoff_terminal;		// dependency parsing
-	StringIntPair p_punc;		// dependency parsing
+	final String LEXICA_PUNCTUATION 	= "punctuation";	// dependency parsing
+	final String LEXICA_PREDICATE		= "predicate";		// predicate identification
+	
+	double			cutoff_ambiguity;	// part-of-speech tagging
+	int				cutoff_df;			// part-of-speech tagging
+	int				cutoff_pathDown;	// semantic role labeling
+	int				cutoff_pathUp;		// semantic role labeling
+	StringIntPair	p_punc;				// dependency parsing
+	Pattern			p_predicates;		// predicate identification
 	
 	public JointFtrXml(InputStream fin)
 	{
@@ -98,10 +107,16 @@ public class JointFtrXml extends AbstractFtrXml
 		return cutoff_df; 
 	}
 	
-	/** For dependency parsing. */
-	public String getPunctuationLabel()
+	/** Semantic role labeling. */
+	public int getPathDownCutoff()
 	{
-		return p_punc.s;
+		return cutoff_pathDown;
+	}
+	
+	/** Semantic role labeling. */
+	public int getPathUpCutoff()
+	{
+		return cutoff_pathUp;
 	}
 	
 	/** For dependency parsing. */
@@ -111,9 +126,15 @@ public class JointFtrXml extends AbstractFtrXml
 	}
 	
 	/** For dependency parsing. */
-	public double getTerminalLemmaThreshold()
+	public String getPunctuationLabel()
 	{
-		return cutoff_terminal;
+		return p_punc.s;
+	}
+	
+	/** For predicate identification. */
+	public boolean isPredicate(DEPNode node)
+	{
+		return p_predicates.matcher(node.pos).find();
 	}
 	
 	@Override
@@ -123,7 +144,8 @@ public class JointFtrXml extends AbstractFtrXml
 		
 		cutoff_ambiguity = eCutoff.hasAttribute(CUTOFF_AMBIGUITY) ? Double.parseDouble(eCutoff.getAttribute(CUTOFF_AMBIGUITY)) : 0d;
 		cutoff_df = eCutoff.hasAttribute(CUTOFF_DOCUMENT_FREQUENCY) ? Integer.parseInt(eCutoff.getAttribute(CUTOFF_DOCUMENT_FREQUENCY)) : 0;
-		cutoff_terminal = eCutoff.hasAttribute(CUTOFF_TERMINAL) ? Double.parseDouble(eCutoff.getAttribute(CUTOFF_TERMINAL)) : 0;
+		cutoff_pathDown = eCutoff.hasAttribute(CUTOFF_PATH_DOWN) ? Integer.parseInt(eCutoff.getAttribute(CUTOFF_PATH_DOWN)) : 0;
+		cutoff_pathUp = eCutoff.hasAttribute(CUTOFF_PATH_UP)   ? Integer.parseInt(eCutoff.getAttribute(CUTOFF_PATH_UP)) : 0;
 	}
 	
 	@Override
@@ -149,15 +171,17 @@ public class JointFtrXml extends AbstractFtrXml
 			label   = UTXml.getTrimmedAttribute(eLexica, XML_LABEL);
 			cutoff  = Integer.parseInt(UTXml.getTrimmedAttribute(eLexica, XML_CUTOFF));
 			
-			if (type.equals(LEXICA_PUNCTUATION))
+			if      (type.equals(LEXICA_PUNCTUATION))
 				p_punc.set(label, cutoff);
+			else if (type.equals(LEXICA_PREDICATE))
+				p_predicates = Pattern.compile("^"+label+"$");
 		}
 	}
 	
 	@Override
 	protected boolean validSource(char source)
 	{
-		return source == S_INPUT || source == S_STACK || source == S_LAMBDA || source == S_BETA || source == S_PRED;
+		return source == S_INPUT || source == S_STACK || source == S_LAMBDA || source == S_BETA || source == S_PRED || source == S_ARG;
 	}
 
 	@Override
@@ -174,6 +198,7 @@ public class JointFtrXml extends AbstractFtrXml
 			   P_SUFFIX .matcher(field).matches() ||
 			   P_FEAT   .matcher(field).matches() ||
 			   P_SUBCAT .matcher(field).matches() ||
-			   P_PATH   .matcher(field).matches();
+			   P_PATH   .matcher(field).matches() ||
+			   P_ARGN   .matcher(field).matches();
 	}
 }

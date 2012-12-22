@@ -36,6 +36,7 @@ import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
+import com.googlecode.clearnlp.util.pair.Pair;
 
 
 /**
@@ -227,6 +228,11 @@ public class StringModel extends AbstractModel
 	public StringPrediction predictBest(StringFeatureVector x)
 	{
 		return predictBest(toSparseFeatureVector(x));
+	}
+	
+	public Pair<StringPrediction,StringPrediction> predictTwo(StringFeatureVector x)
+	{
+		return predictTwo(toSparseFeatureVector(x));
 	}
 	
 	public List<StringPrediction> predictAll(StringFeatureVector x)

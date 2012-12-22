@@ -13,11 +13,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.component;
+package com.googlecode.clearnlp.component.pos;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,13 +26,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-
 import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
+import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
@@ -48,15 +45,16 @@ import com.googlecode.clearnlp.util.map.Prob2DMap;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 
 /**
- * Part-of-speech tagger using dynamic model selection.
+ * Part-of-speech tagger using document frequency cutoffs.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CPOSTagger extends AbstractComponent
+public class CPOSTagger extends AbstractStatisticalComponent
 {
-	protected final String ENTRY_FEATURE = COMLib.MODE_POS+"_FEATURE";
-	protected final String ENTRY_MODEL   = COMLib.MODE_POS+"_MODEL";
-	protected final String ENTRY_LEXICA  = COMLib.MODE_POS+"_LEXICA";
+	private final String ENTRY_CONFIGURATION = COMLib.MODE_POS + COMLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = COMLib.MODE_POS + COMLib.ENTRY_FEATURE;
+	private final String ENTRY_LEXICA		 = COMLib.MODE_POS + COMLib.ENTRY_LEXICA;
+	private final String ENTRY_MODEL		 = COMLib.MODE_POS + COMLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_LOWER_SIMPLIFIED_FORMS = 0;
 	protected final int LEXICA_AMBIGUITY_CLASSES      = 1;
@@ -96,12 +94,6 @@ public class CPOSTagger extends AbstractComponent
 		super(in);
 	}
 	
-	/** Constructs a part-of-speech tagger for bootstrapping. */
-	public CPOSTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
-	{
-		super(xmls, spaces, models, lexica);
-	}
-	
 	@Override @SuppressWarnings("unchecked")
 	protected void initLexia(Object[] lexica)
 	{
@@ -114,9 +106,9 @@ public class CPOSTagger extends AbstractComponent
 	@Override
 	public void loadModels(ZipInputStream zin)
 	{
-		int fLen = ENTRY_FEATURE.length() + 1, mLen = ENTRY_MODEL.length() + 1;
-		s_models = new StringModel[1];
+		int fLen = ENTRY_FEATURE.length(), mLen = ENTRY_MODEL.length();
 		f_xmls   = new JointFtrXml[1];
+		s_models = null;
 		ZipEntry zEntry;
 		String   entry;
 				
@@ -126,7 +118,9 @@ public class CPOSTagger extends AbstractComponent
 			{
 				entry = zEntry.getName();
 				
-				if (entry.startsWith(ENTRY_FEATURE))
+				if      (entry.equals(ENTRY_CONFIGURATION))
+					loadDefaultConfiguration(zin);
+				else if (entry.startsWith(ENTRY_FEATURE))
 					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
 				else if (entry.startsWith(ENTRY_MODEL))
 					loadStatisticalModels(zin, Integer.parseInt(entry.substring(mLen)));
@@ -139,13 +133,11 @@ public class CPOSTagger extends AbstractComponent
 	
 	private void loadLexica(ZipInputStream zin) throws Exception
 	{
-		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
+		BufferedReader fin = UTInput.createBufferedReader(zin);
 		System.out.println("Loading lexica.");
 		
 		s_lsfs = UTInput.getStringSet(fin);
 		m_ambi = UTInput.getStringMap(fin, " ");
-		
-		fin.close();
 	}
 
 	@Override
@@ -153,23 +145,24 @@ public class CPOSTagger extends AbstractComponent
 	{
 		try
 		{
-			saveFeatureTemplates (zout, ENTRY_FEATURE);
-			saveStatisticalModels(zout, ENTRY_MODEL);
-			saveLexica(zout);
+			saveDefaultConfiguration(zout, ENTRY_CONFIGURATION);
+			saveFeatureTemplates    (zout, ENTRY_FEATURE);
+			saveLexica              (zout);
+			saveStatisticalModels   (zout, ENTRY_MODEL);
+			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
 	private void saveLexica(ZipOutputStream zout) throws Exception
 	{
-		zout.putNextEntry(new JarArchiveEntry(ENTRY_LEXICA));
-		PrintStream fout = new PrintStream(new BufferedOutputStream(zout));
+		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
+		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
 		System.out.println("Saving lexica.");
 		
-		UTOutput.printSet(fout, s_lsfs);
-		UTOutput.printMap(fout, m_ambi, " ");
+		UTOutput.printSet(fout, s_lsfs);		fout.flush();
+		UTOutput.printMap(fout, m_ambi, " ");	fout.flush();
 		
-		fout.close();
 		zout.closeEntry();
 	}
 	
@@ -192,13 +185,13 @@ public class CPOSTagger extends AbstractComponent
 		return g_tags;
 	}
 	
-	/** {@link AbstractComponent#FLAG_LEXICA}. */
+	/** {@link AbstractStatisticalComponent#FLAG_LEXICA}. */
 	public Set<String> getLowerSimplifiedForms()
 	{
 		return s_lsfs;
 	}
 	
-	/** {@link AbstractComponent#FLAG_LEXICA}. */
+	/** {@link AbstractStatisticalComponent#FLAG_LEXICA}. */
 	public void clearLowerSimplifiedForms()
 	{
 		s_lsfs.clear();
@@ -233,21 +226,22 @@ public class CPOSTagger extends AbstractComponent
 		return mAmbi;
 	}
 	
-//	====================================== PROCESS ======================================
-	
 	@Override
 	public void countAccuracy(int[] counts)
 	{
-		int i;
+		int i, correct = 0;
 		
-		counts[0] += t_size - 1;
-
 		for (i=1; i<t_size; i++)
 		{
 			if (d_tree.get(i).pos.equals(g_tags[i]))
-				counts[1]++;
+				correct++;
 		}
+		
+		counts[0] += t_size - 1;
+		counts[1] += correct;
 	}
+	
+//	====================================== PROCESS ======================================
 	
 	@Override
 	public void process(DEPTree tree)
@@ -263,12 +257,12 @@ public class CPOSTagger extends AbstractComponent
 	 	t_size = tree.size();
 
 	 	if (i_flag != FLAG_DECODE)
-	 		g_tags = d_tree.getPOSTags();
+	 	{
+	 		g_tags = tree.getPOSTags();
+	 		tree.clearPOSTags();
+	 	}
 	 	
-	 	if (d_tree.get(1) != null)
-	 		d_tree.clearPOSTags();
-	 	
-	 	EngineProcess.normalizeForms(d_tree);
+	 	EngineProcess.normalizeForms(tree);
 	}
 	
 	/** Called by {@link CPOSTagger#process(DEPTree)}. */
@@ -319,11 +313,6 @@ public class CPOSTagger extends AbstractComponent
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
 			label = getAutoLabel(vector);
-		}
-		else if (i_flag == FLAG_BOOTSTRAP)
-		{
-			label = getAutoLabel(vector);
-			if (vector.size() > 0) s_spaces[0].addInstance(getGoldLabel(), vector);
 		}
 		
 		return label;
@@ -389,6 +378,16 @@ public class CPOSTagger extends AbstractComponent
 		else if ((m = JointFtrXml.P_FEAT.matcher(token.field)).find())
 		{
 			return node.getFeat(m.group(1));
+		}
+		else if ((m = JointFtrXml.P_PREFIX.matcher(token.field)).find())
+		{
+			int n = Integer.parseInt(m.group(1)), len = node.lowerSimplifiedForm.length();
+			return (n <= len) ? node.lowerSimplifiedForm.substring(0, n) : null;
+		}
+		else if ((m = JointFtrXml.P_SUFFIX.matcher(token.field)).find())
+		{
+			int n = Integer.parseInt(m.group(1)), len = node.lowerSimplifiedForm.length();
+			return (n <= len) ? node.lowerSimplifiedForm.substring(len-n, len) : null;
 		}
 		
 		return null;

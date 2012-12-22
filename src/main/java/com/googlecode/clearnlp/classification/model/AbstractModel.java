@@ -38,6 +38,7 @@ import com.googlecode.clearnlp.classification.prediction.IntPrediction;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.util.UTArray;
+import com.googlecode.clearnlp.util.pair.Pair;
 
 
 /**
@@ -466,6 +467,39 @@ abstract public class AbstractModel
 		}
 		
 		return max;
+	}
+	
+	/**
+	 * Returns the first and second best predictions given the feature vector.
+	 * @param x the feature vector.
+	 * @return the first and second best predictions given the feature vector.
+	 */
+	public Pair<StringPrediction,StringPrediction> predictTwo(SparseFeatureVector x)
+	{
+		List<StringPrediction> list = getPredictions(x);
+		StringPrediction fst = list.get(0), snd = list.get(1), p;
+		int i, size = list.size();
+		
+		if (fst.score < snd.score)
+		{
+			fst = snd;
+			snd = list.get(0);
+		}
+		
+		for (i=2; i<size; i++)
+		{
+			p = list.get(i);
+			
+			if (fst.score < p.score)
+			{
+				snd = fst;
+				fst = p;
+			}
+			else if (snd.score < p.score)
+				snd = p;
+		}
+		
+		return new Pair<StringPrediction,StringPrediction>(fst, snd);
 	}
 	
 	/**

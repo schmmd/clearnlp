@@ -15,6 +15,9 @@
 */
 package com.googlecode.clearnlp.beam;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 
 
@@ -39,9 +42,9 @@ public class BeamNode<T> implements Comparable<BeamNode<T>>
 		return g_prevNode;
 	}
 	
-	public void setPrevNode(BeamNode<T> prevNode)
+	public T getConfiguration()
 	{
-		g_prevNode = prevNode;
+		return g_configuration;
 	}
 	
 	public String getLabel()
@@ -54,14 +57,51 @@ public class BeamNode<T> implements Comparable<BeamNode<T>>
 		return g_prediction.score;
 	}
 	
+	public void setPrevNode(BeamNode<T> prevNode)
+	{
+		g_prevNode = prevNode;
+	}
+	
 	public void setPrediction(StringPrediction prediction)
 	{
 		g_prediction = prediction;
 	}
 	
-	public T getConfiguration()
+	public List<BeamNode<T>> getSequence()
 	{
-		return g_configuration;
+		List<BeamNode<T>> nodes = new ArrayList<BeamNode<T>>();
+		BeamNode<T> node = this;
+		
+		while (node != null)
+		{
+			nodes.add(node);
+			node = node.getPrevNode();
+		}
+		
+		return nodes;
+	}
+	
+	/**
+	 * Returns the current node and the {@code n-1} number of previous nodes if exists.
+	 * @param k the index of beam.
+	 * @param n the number of nodes to return (> 0).
+	 * @return the current node and the {@code n} number of previous nodes if exists.
+	 */
+	public List<BeamNode<T>> getSequence(int n)
+	{
+		List<BeamNode<T>> nodes = new ArrayList<BeamNode<T>>();
+		BeamNode<T> node = this;
+		int i;
+		
+		for (i=0; i<n; i++)
+		{
+			if (node != null)	nodes.add(node);
+			else				break;
+			
+			node = node.getPrevNode();
+		}
+		
+		return nodes;
 	}
 
 	@Override

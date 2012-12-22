@@ -52,15 +52,15 @@ abstract public class AbstractReader<T>
 	static final public String TYPE_TOK = "tok";
 	/** The flag for part-of-speech reader. */
 	static final public String TYPE_POS = "pos";
+	/** The flag for morphological analyzer. */
+	static final public String TYPE_MORPH = "morph";
 	/** The flag for dependency reader. */
 	static final public String TYPE_DEP = "dep";
 	/** The flag for semantic role label reader. */
 	static final public String TYPE_SRL = "srl";
 	/** The flag for directed acyclic graph reader. */
 	static final public String TYPE_DAG = "dag";
-	/** The flag for joint reader. */
-	static final public String TYPE_JOINT = "joint";
-	
+
 	/** The dummy tag for any field. */
 	static public final String DUMMY_TAG = "_N_";
 	
@@ -90,9 +90,9 @@ abstract public class AbstractReader<T>
 		catch (IOException e) {e.printStackTrace();}
 	}
 	
-	/**
-	 * Returns the next object of this reader.
-	 * @return the next object of this reader.
-	 */
+	/** @return the next object of this reader. */
 	abstract public T next();
+	
+	/** @return the type of this reader. */
+	abstract public String getType();
 }

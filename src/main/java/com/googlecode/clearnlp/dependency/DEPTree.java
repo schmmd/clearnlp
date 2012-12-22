@@ -31,6 +31,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.googlecode.clearnlp.coreference.Mention;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -46,6 +47,7 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 public class DEPTree extends ArrayList<DEPNode>
 {
 	private static final long serialVersionUID = -8007954222948953695L;
+	private List<Mention> l_mentions;
 	
 	/**
 	 * Constructs a dependency tree.
@@ -57,6 +59,22 @@ public class DEPTree extends ArrayList<DEPNode>
 		
 		root.initRoot();
 		add(root);
+	}
+	
+	public void initXHeads()
+	{
+		int i, size = size();
+		
+		for (i=0; i<size; i++)
+			get(i).x_heads = new ArrayList<DEPArc>();
+	}
+	
+	public void initSHeads()
+	{
+		int i, size = size();
+		
+		for (i=0; i<size; i++)
+			get(i).s_heads = new ArrayList<DEPArc>();
 	}
 	
 	/**
@@ -76,126 +94,33 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 	}
 	
-	public String[] getPOSTags()
+	public DEPNode getNextPredicate(int prevId)
 	{
 		int i, size = size();
-		String[] tags = new String[size];
+		DEPNode pred;
 		
-		for (i=1; i<size; i++)
-			tags[i] = get(i).pos;
+		for (i=prevId+1; i<size; i++)
+		{
+			pred = get(i);
+			
+			if (pred.getFeat(DEPLib.FEAT_PB) != null)
+				return pred;
+		}
 		
-		return tags;
+		return null;
 	}
 	
-	public String[] getRolesetIDs()
+	public boolean containsPredicate()
 	{
 		int i, size = size();
-		String[] rolesets = new String[size];
-		
-		for (i=1; i<size; i++)
-			rolesets[i] = get(i).getFeat(DEPLib.FEAT_PB);
-		
-		return rolesets;
-	}
-
-	/**
-	 * Returns an array of (headId, deprel) pair in each node.
-	 * @return an array of (headId, deprel) pair in each node.
-	 */
-	public StringIntPair[] getHeads()
-	{
-		int i, size = size();
-		DEPArc head;
-		
-		StringIntPair[] heads = new StringIntPair[size];
-		heads[0] = new StringIntPair(DEPLib.ROOT_TAG, DEPLib.NULL_ID);
 		
 		for (i=1; i<size; i++)
 		{
-			head = get(i).d_head;
-			heads[i] = new StringIntPair(head.label, head.getNode().id);
+			if (get(i).getFeat(DEPLib.FEAT_PB) != null)
+				return true;
 		}
 		
-		return heads;
-	}
-	
-	/**
-	 * Returns a list of (xHeadId, xLabel) pair list in each node.
-	 * @return a list of (xHeadId, xLabel) pair list in each node.
-	 */
-	public StringIntPair[][] getXHeads()
-	{
-		return getHeadsAux(true);
-	}
-	
-	/**
-	 * Returns a list of (sHeadId, sLabel) pair list in each node.
-	 * @return a list of (sHeadId, sLabel) pair list in each node.
-	 */
-	public StringIntPair[][] getSHeads()
-	{
-		return getHeadsAux(false);
-	}
-	
-	/** Called by {@link DEPTree#getSHeads()}. */
-	private StringIntPair[][] getHeadsAux(boolean isXhead)
-	{
-		int i, j, len, size = size();
-		StringIntPair[] heads;
-		List<DEPArc> arcs;
-		DEPArc arc;
-		
-		StringIntPair[][] xHeads = new StringIntPair[size][];
-		xHeads[0] = new StringIntPair[0];
-		
-		for (i=1; i<size; i++)
-		{
-			arcs  = isXhead ? get(i).getXHeads() : get(i).getSHeads();
-			len   = arcs.size();
-			heads = new StringIntPair[len];
-			
-			for (j=0; j<len; j++)
-			{
-				arc = arcs.get(j);
-				heads[j] = new StringIntPair(arc.label, arc.getNode().id);
-			}
-			
-			xHeads[i] = heads;
-		}
-		
-		return xHeads;
-	}
-	
-	public void clearPOSTags()
-	{
-		for (DEPNode node : this)
-			node.pos = null;
-	}
-	
-	/** Clears dependency head information (excluding secondary dependencies) of all nodes in this tree. */
-	public void clearHeads()
-	{
-		for (DEPNode node : this)
-			node.d_head.clear();
-	}
-	
-	public void clearXHeads()
-	{
-		for (DEPNode node : this)
-			node.x_heads.clear();
-	}
-	
-	/** Clears semantic head information of all nodes in this tree. */
-	public void clearSHeads()
-	{
-		for (DEPNode node : this)
-			node.s_heads.clear();
-	}
-	
-	public void clearPredicates()
-	{
-		for (DEPNode node : this)
-			node.removeFeat(DEPLib.FEAT_PB);
+		return false;
 	}
 	
 	public void setDependents()
@@ -212,22 +137,6 @@ public class DEPTree extends ArrayList<DEPNode>
 			head = node.getHead();
 			head.addDependent(node, node.getLabel());
 		}
-	}
-	
-	public void initXHeads()
-	{
-		int i, size = size();
-		
-		for (i=0; i<size; i++)
-			get(i).x_heads = new ArrayList<DEPArc>();
-	}
-	
-	public void initSHeads()
-	{
-		int i, size = size();
-		
-		for (i=0; i<size; i++)
-			get(i).s_heads = new ArrayList<DEPArc>();
 	}
 	
 	public List<List<DEPArc>> getArgumentList()
@@ -272,6 +181,18 @@ public class DEPTree extends ArrayList<DEPNode>
 		
 		return false;
 	}
+	
+	public List<Mention> getMentions()
+	{
+		return l_mentions;
+	}
+	
+	public void setMentions(List<Mention> mentions)
+	{
+		l_mentions = mentions;
+	}
+	
+	// --------------------------------- projectivize ---------------------------------
 	
 	public void projectivize()
 	{
@@ -342,6 +263,262 @@ public class DEPTree extends ArrayList<DEPNode>
 
 		return 0;
 	}
+	
+	// --------------------------------- clearGoldTags ---------------------------------
+	
+	public void clearPOSTags()
+	{
+		for (DEPNode node : this)
+			node.pos = null;
+	}
+	
+	public void clearHeads()
+	{
+		for (DEPNode node : this)
+			node.d_head.clear();
+	}
+	
+	public void clearXHeads()
+	{
+		for (DEPNode node : this)
+			node.x_heads.clear();
+	}
+	
+	public void clearSHeads()
+	{
+		for (DEPNode node : this)
+			node.s_heads.clear();
+	}
+	
+	public void clearPredicates()
+	{
+		for (DEPNode node : this)
+			node.removeFeat(DEPLib.FEAT_PB);
+	}
+	
+	// --------------------------------- getGoldTags ---------------------------------
+	
+	public String[] getPOSTags()
+	{
+		int i, size = size();
+		String[] tags = new String[size];
+		
+		for (i=1; i<size; i++)
+			tags[i] = get(i).pos;
+		
+		return tags;
+	}
+	
+	public StringIntPair[] getHeads()
+	{
+		int i, size = size();
+		DEPArc head;
+		
+		StringIntPair[] heads = new StringIntPair[size];
+		heads[0] = new StringIntPair(DEPLib.ROOT_TAG, DEPLib.NULL_ID);
+		
+		for (i=1; i<size; i++)
+		{
+			head = get(i).d_head;
+			heads[i] = new StringIntPair(head.label, head.getNode().id);
+		}
+		
+		return heads;
+	}
+	
+	public Boolean[] getPredicates()
+	{
+		int i, size = size();
+		Boolean[] rolesets = new Boolean[size];
+		
+		for (i=1; i<size; i++)
+			rolesets[i] = get(i).getFeat(DEPLib.FEAT_PB) != null;
+		
+		return rolesets;
+	}
+	
+	public String[] getRolesetIDs()
+	{
+		int i, size = size();
+		String[] rolesets = new String[size];
+		
+		for (i=1; i<size; i++)
+			rolesets[i] = get(i).getFeat(DEPLib.FEAT_PB);
+		
+		return rolesets;
+	}
+	
+	public StringIntPair[][] getXHeads()
+	{
+		return getHeadsAux(true);
+	}
+	
+	public StringIntPair[][] getSHeads()
+	{
+		return getHeadsAux(false);
+	}
+	
+	private StringIntPair[][] getHeadsAux(boolean isXhead)
+	{
+		int i, j, len, size = size();
+		StringIntPair[] heads;
+		List<DEPArc> arcs;
+		DEPArc arc;
+		
+		StringIntPair[][] xHeads = new StringIntPair[size][];
+		xHeads[0] = new StringIntPair[0];
+		
+		for (i=1; i<size; i++)
+		{
+			arcs  = isXhead ? get(i).getXHeads() : get(i).getSHeads();
+			len   = arcs.size();
+			heads = new StringIntPair[len];
+			
+			for (j=0; j<len; j++)
+			{
+				arc = arcs.get(j);
+				if (arc.getNode() == null)
+				{
+					System.err.println(i+"\n"+toStringDEP());
+				}
+				heads[j] = new StringIntPair(arc.label, arc.getNode().id);
+			}
+			
+			xHeads[i] = heads;
+		}
+		
+		return xHeads;
+	}
+	
+	// --------------------------------- toString ---------------------------------
+	
+	public String toString()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i));
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringRaw()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(" ");
+			build.append(get(i).form);
+		}
+		
+		return build.substring(1);
+	}
+	
+	public String toStringPOS()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringPOS());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringMorph()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringMorph());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringDEP()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringDEP());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringDAG()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringDAG());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringCoNLL()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringCoNLL());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	public String toStringSRL()
+	{
+		StringBuilder build = new StringBuilder();
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+		{
+			build.append(DEPReader.DELIM_SENTENCE);
+			build.append(get(i).toStringSRL());
+		}
+
+		return build.substring(DEPReader.DELIM_SENTENCE.length());
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// --------------------------------- depredicated ---------------------------------
 	
 	@Deprecated
 	public IntOpenHashSet getNonProjectiveSet()
@@ -459,135 +636,5 @@ public class DEPTree extends ArrayList<DEPNode>
 		while (removed);
 						
 		return new IntOpenHashSet(map.keys());
-	}
-	
-	/* (non-Javadoc)
-	 * @see java.util.AbstractCollection#toString()
-	 */
-	public String toString()
-	{
-		StringBuilder build = new StringBuilder();
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			build.append(DEPReader.DELIM_SENTENCE);
-			build.append(get(i));
-		}
-
-		return build.substring(DEPReader.DELIM_SENTENCE.length());
-	}
-	
-	public String toStringPOS()
-	{
-		StringBuilder build = new StringBuilder();
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			build.append(DEPReader.DELIM_SENTENCE);
-			build.append(get(i).toStringPOS());
-		}
-
-		return build.substring(DEPReader.DELIM_SENTENCE.length());
-	}
-	
-	public String toStringDEP()
-	{
-		StringBuilder build = new StringBuilder();
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			build.append(DEPReader.DELIM_SENTENCE);
-			build.append(get(i).toStringDEP());
-		}
-
-		return build.substring(DEPReader.DELIM_SENTENCE.length());
-	}
-	
-	public String toStringDAG()
-	{
-		StringBuilder build = new StringBuilder();
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			build.append(DEPReader.DELIM_SENTENCE);
-			build.append(get(i).toStringDAG());
-		}
-
-		return build.substring(DEPReader.DELIM_SENTENCE.length());
-	}
-	
-	public String toStringCoNLL()
-	{
-		StringBuilder build = new StringBuilder();
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			build.append(DEPReader.DELIM_SENTENCE);
-			build.append(get(i).toStringCoNLL());
-		}
-
-		return build.substring(DEPReader.DELIM_SENTENCE.length());
-	}
-	
-	public String toStringSRL()
-	{
-		StringBuilder build = new StringBuilder();
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			build.append(DEPReader.DELIM_SENTENCE);
-			build.append(get(i).toStringSRL());
-		}
-
-		return build.substring(DEPReader.DELIM_SENTENCE.length());
-	}
-	
-	public String toStringRaw()
-	{
-		StringBuilder build = new StringBuilder();
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			build.append(" ");
-			build.append(get(i).form);
-		}
-		
-		return build.substring(1);
-	}
-	
-	public DEPNode getNextPredicate(int prevId)
-	{
-		int i, size = size();
-		DEPNode pred;
-		
-		for (i=prevId+1; i<size; i++)
-		{
-			pred = get(i);
-			
-			if (pred.getFeat(DEPLib.FEAT_PB) != null)
-				return pred;
-		}
-		
-		return null;
-	}
-	
-	public boolean containsPredicate()
-	{
-		int i, size = size();
-		
-		for (i=1; i<size; i++)
-		{
-			if (get(i).getFeat(DEPLib.FEAT_PB) != null)
-				return true;
-		}
-		
-		return false;
 	}
 }

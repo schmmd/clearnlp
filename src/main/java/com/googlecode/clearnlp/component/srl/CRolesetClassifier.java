@@ -13,9 +13,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.component;
+package com.googlecode.clearnlp.component.srl;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -36,6 +35,7 @@ import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
+import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
@@ -47,28 +47,28 @@ import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 
 /**
- * Part-of-speech tagger using dynamic model selection.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CRolesetClassifier extends AbstractComponent
+public class CRolesetClassifier extends AbstractStatisticalComponent
 {
-	protected final String ENTRY_CONFIGURATION	= COMLib.MODE_ROLESET + COMLib.ENTRY_CONFIGURATION;
-	protected final String ENTRY_FEATURE		= COMLib.MODE_ROLESET + COMLib.ENTRY_FEATURE;
-	protected final String ENTRY_LEXICA			= COMLib.MODE_ROLESET + COMLib.ENTRY_LEXICA;
-	protected final String ENTRY_MODEL			= COMLib.MODE_ROLESET + COMLib.ENTRY_MODEL;
+	private final String ENTRY_CONFIGURATION = COMLib.MODE_ROLE + COMLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = COMLib.MODE_ROLE + COMLib.ENTRY_FEATURE;
+	private final String ENTRY_LEXICA		 = COMLib.MODE_ROLE + COMLib.ENTRY_LEXICA;
+	private final String ENTRY_MODEL		 = COMLib.MODE_ROLE + COMLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_ROLESETS  = 0;
 	protected final int LEXICA_LEMMAS    = 1;
 	
-	protected Map<String,Set<String>>	m_collect;	// for collecting lexica
-	protected Map<String,String>		m_rolesets;
-	ObjectIntOpenHashMap<String>		m_lemmas;
-	protected String[]					g_rolesets;
-	protected int 						i_pred;
+	protected Map<String,Set<String>>		m_collect;	// for collecting lexica
+	protected Map<String,String>			m_rolesets;
+	protected ObjectIntOpenHashMap<String>	m_lemmas;
+	protected String[]						g_rolesets;
+	protected int 							i_pred;
 	
 //	====================================== CONSTRUCTORS ======================================
 
+	/** Constructs a roleset classifier for collecting lexica. */
 	public CRolesetClassifier(JointFtrXml[] xmls)
 	{
 		super(xmls);
@@ -116,9 +116,9 @@ public class CRolesetClassifier extends AbstractComponent
 			while ((zEntry = zin.getNextEntry()) != null)
 			{
 				entry = zEntry.getName();
-				System.out.println(entry);
-				if (entry.equals(ENTRY_CONFIGURATION))
-					loadConfiguration(zin);
+				
+				if      (entry.equals(ENTRY_CONFIGURATION))
+					loadDefaultConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
 					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
 				else if (entry.startsWith(ENTRY_MODEL))
@@ -128,15 +128,6 @@ public class CRolesetClassifier extends AbstractComponent
 			}		
 		}
 		catch (Exception e) {e.printStackTrace();}
-	}
-	
-	private void loadConfiguration(ZipInputStream zin) throws Exception
-	{
-		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
-		System.out.println("Loading lexica.");
-		
-		int mSize = Integer.parseInt(fin.readLine());
-		s_models = new StringModel[mSize];
 	}
 	
 	private void loadLexica(ZipInputStream zin) throws Exception
@@ -153,31 +144,19 @@ public class CRolesetClassifier extends AbstractComponent
 	{
 		try
 		{
-			saveConfiguration(zout);
-			saveFeatureTemplates(zout, ENTRY_FEATURE);
-			saveStatisticalModels(zout, ENTRY_MODEL);
-			saveLexica(zout);
+			saveDefaultConfiguration(zout, ENTRY_CONFIGURATION);
+			saveFeatureTemplates    (zout, ENTRY_FEATURE);
+			saveLexica              (zout);
+			saveStatisticalModels   (zout, ENTRY_MODEL);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void saveConfiguration(ZipOutputStream zout) throws Exception
-	{
-		zout.putNextEntry(new ZipEntry(ENTRY_CONFIGURATION));
-		PrintStream fout = new PrintStream(new BufferedOutputStream(zout));
-		System.out.println("Saving configuration.");
-		
-		fout.println(s_models.length);
-		
-		fout.flush();
-		zout.closeEntry();
-	}
-	
 	private void saveLexica(ZipOutputStream zout) throws Exception
 	{
 		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
-		PrintStream fout = new PrintStream(new BufferedOutputStream(zout));
+		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
 		System.out.println("Saving lexica.");
 		
 		UTOutput.printMap(fout, m_rolesets, " ");	fout.flush();
@@ -236,14 +215,12 @@ public class CRolesetClassifier extends AbstractComponent
 		return g_rolesets;
 	}
 	
-//	====================================== PROCESS ======================================
-	
 	@Override
 	public void countAccuracy(int[] counts)
 	{
+		int i, correct = 0, total = 0;
 		String gRoleset;
 		DEPNode node;
-		int i;
 		
 		for (i=1; i<t_size; i++)
 		{
@@ -252,13 +229,18 @@ public class CRolesetClassifier extends AbstractComponent
 			
 			if (gRoleset != null)
 			{
-				counts[0]++;
+				total++;
 				
 				if (gRoleset.equals(node.getFeat(DEPLib.FEAT_PB)))
-					counts[1]++;
+					correct++;
 			}
 		}
+		
+		counts[0] += total;
+		counts[1] += correct;
 	}
+	
+//	====================================== PROCESS ======================================
 	
 	@Override
 	public void process(DEPTree tree)
@@ -276,19 +258,14 @@ public class CRolesetClassifier extends AbstractComponent
 	 	if (i_flag != FLAG_DECODE)
 	 		g_rolesets = d_tree.getRolesetIDs();
 	 	
-	 //	if (d_tree.get(1) != null)
-	 //		d_tree.clearPredicates();
-	 	
 	 	tree.setDependents();
 	}
 	
 	/** Called by {@link CRolesetClassifier#process(DEPTree)}. */
 	protected void processAux()
 	{
-		if (i_flag == FLAG_LEXICA)
-			addLexica();
-		else
-			classify();
+		if (i_flag == FLAG_LEXICA)	addLexica();
+		else						classify();
 	}
 	
 	protected void addLexica()
@@ -350,7 +327,7 @@ public class CRolesetClassifier extends AbstractComponent
 		if (i_flag == FLAG_TRAIN)
 		{
 			label = getGoldLabel();
-			if (vector.size() > 0) s_spaces[modelId].addInstance(label, vector);
+			s_spaces[modelId].addInstance(label, vector);
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{

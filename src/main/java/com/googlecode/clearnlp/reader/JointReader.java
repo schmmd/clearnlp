@@ -24,8 +24,12 @@
 package com.googlecode.clearnlp.reader;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.carrotsearch.hppc.IntStack;
+import com.googlecode.clearnlp.coreference.Mention;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
@@ -46,8 +50,10 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 	protected int i_feats;
 	protected int i_headId;
 	protected int i_deprel;
+	protected int i_xheads;
 	protected int i_sheads;
 	protected int i_nament;
+	protected int i_coref;
 	
 	/**
 	 * Constructs a dependency reader.
@@ -58,15 +64,17 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 	 * @param iFeats the column index of the feats field.
 	 * @param iHeadId the column index of the head ID field.
 	 * @param iDeprel the column index of the dependency label field.
+	 * @param iXHeads the column index of the secondary dependency field.
 	 * @param iSHeads the column index of the semantic head field.
 	 * @param iNament the column index of the named entity tag.
+	 * @param iCoref the column index of the coreference mentions.
 	 */
-	public JointReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSHeads, int iNament)
+	public JointReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iXHeads, int iSHeads, int iNament, int iCoref)
 	{
-		init(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iSHeads, iNament);
+		init(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iXHeads, iSHeads, iNament, iCoref);
 	}
 	
-	public void init(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iSHeads, int iNament)
+	public void init(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel, int iXHeads, int iSHeads, int iNament, int iCoref)
 	{
 		i_id     = iId;
 		i_form   = iForm;
@@ -75,8 +83,10 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		i_feats  = iFeats;
 		i_headId = iHeadId;
 		i_deprel = iDeprel;
+		i_xheads = iXHeads;
 		i_sheads = iSHeads;
 		i_nament = iNament;
+		i_coref  = iCoref;
 	}
 	
 	@Override
@@ -108,6 +118,9 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		for (i=0; i<size; i++)
 			tree.add(new DEPNode());
 		
+		if (i_sheads >= 0)
+			tree.get(0).setSHeads(new ArrayList<DEPArc>());
+		
 		for (i=0; i<size; i++)
 		{
 			tmp    = lines.get(i);
@@ -125,16 +138,21 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 			if (i_headId >= 0 && !tmp[i_headId].equals(AbstractColumnReader.BLANK_COLUMN))
 				node.setHead(tree.get(Integer.parseInt(tmp[i_headId])), tmp[i_deprel]);
 			
-			if (i_sheads >= 0 && !tmp[i_sheads].equals(AbstractColumnReader.BLANK_COLUMN))
+			if (i_sheads >= 0)
 				node.setSHeads(getSHeads(tree, tmp[i_sheads]));
 		}
 		
+		if (i_coref >= 0) tree.setMentions(getMentions(lines));
 		return tree;
 	}
 	
 	private List<DEPArc> getSHeads(DEPTree tree, String heads)
 	{
 		List<DEPArc> sHeads = new ArrayList<DEPArc>();
+		
+		if (heads.equals(AbstractColumnReader.BLANK_COLUMN))
+			return sHeads;
+		
 		int headId, idx;
 		String label;
 		
@@ -148,5 +166,86 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		}
 		
 		return sHeads;
+	}
+	
+	private List<Mention> getMentions(List<String[]> lines)
+	{
+		Map<String,IntStack> map = new HashMap<String,IntStack>();
+		List<Mention> mentions = new ArrayList<Mention>();
+		int i, size = lines.size();
+		String corefs, key;
+		IntStack stack;
+		
+		for (i=0; i<size; i++)
+		{
+			corefs = lines.get(i)[i_coref];
+			
+			if (corefs.equals("-"))
+				continue;
+			
+			for (String coref : DEPFeat.P_FEATS.split(corefs))
+			{
+				if (coref.startsWith("("))
+				{
+					if (coref.endsWith(")"))
+					{
+						key = coref.substring(1, coref.length()-1);
+						mentions.add(new Mention(key, i+1, i+1));
+					}
+					else
+					{
+						key = coref.substring(1);
+						stack = map.get(key);
+						
+						if (stack == null)
+						{
+							stack = new IntStack();
+							map.put(key, stack);
+						}
+						
+						stack.push(i+1);
+					}
+				}
+				else //if (coref.endsWith(")"))
+				{
+					key = coref.substring(0, coref.length()-1);
+					mentions.add(new Mention(key, map.get(key).pop(), i+1));
+				}
+			}
+		}
+		
+		return mentions;
+	}
+	
+	public String getType()
+	{
+		if (i_form < 0)
+		{
+			throw new IllegalArgumentException("The form column must be specified.");
+		}
+		else
+		{
+			if (i_pos >= 0)
+			{
+				if (i_lemma >= 0)
+				{
+					if (i_headId >= 0 && i_deprel >= 0)
+					{
+						if (i_feats >= 0 && i_sheads >= 0)
+						{
+							return TYPE_SRL;
+						}
+						
+						return TYPE_DEP;
+					}
+					
+					return TYPE_MORPH;
+				}
+				
+				return TYPE_POS;
+			}
+			
+			return TYPE_TOK;
+		}
 	}
 }

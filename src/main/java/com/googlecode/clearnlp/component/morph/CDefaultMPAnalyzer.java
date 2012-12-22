@@ -13,16 +13,18 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.component;
+package com.googlecode.clearnlp.component.morph;
 
+import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.dependency.DEPTree;
 
 /**
+ * Default morphological analyzer.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-abstract public class AbstractComponent
+public class CDefaultMPAnalyzer extends AbstractComponent
 {
-	/** Process this joint-component. */
-	abstract public void process(DEPTree tree);
+	@Override
+	public void process(DEPTree tree) {}
 }

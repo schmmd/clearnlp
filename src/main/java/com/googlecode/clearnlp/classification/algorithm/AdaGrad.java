@@ -17,13 +17,13 @@ package com.googlecode.clearnlp.classification.algorithm;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Random;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.cursors.IntCursor;
 import com.googlecode.clearnlp.classification.prediction.IntPrediction;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
-import com.googlecode.clearnlp.util.pair.Pair;
+import com.googlecode.clearnlp.util.UTArray;
+import com.googlecode.clearnlp.util.triple.Triple;
 
 /**
  * AdaGrad algorithm.
@@ -33,18 +33,21 @@ import com.googlecode.clearnlp.util.pair.Pair;
 public class AdaGrad extends AbstractAlgorithm
 {
 	protected int    n_iter;
+	protected Random r_rand;
 	protected double d_alpha;
-	protected double d_delta;
+	protected double d_rho;
+	
 	
 	/**
 	 * @param alpha the learning rate.
-	 * @param delta the smoothing denominator.
+	 * @param rho the smoothing denominator.
 	 */
-	public AdaGrad(int iter, double alpha, double delta)
+	public AdaGrad(int iter, double alpha, double rho, Random rand)
 	{
 		n_iter  = iter;
+		r_rand  = rand;
 		d_alpha = alpha;
-		d_delta = delta;
+		d_rho   = rho;
 	}
 	
 	@Override
@@ -72,9 +75,10 @@ public class AdaGrad extends AbstractAlgorithm
 		ArrayList<int[]>    xs = space.getXs();
 		ArrayList<double[]> vs = space.getVs();
 		
-		Pair<IntPrediction,IntPrediction> ps;
+		Triple<IntPrediction,IntPrediction,IntPrediction> ps;
 		IntPrediction fst, snd;
 		int i, j, sum;
+		int[] indices;
 		double acc;
 		
 		int      yi;
@@ -83,16 +87,17 @@ public class AdaGrad extends AbstractAlgorithm
 		
 		for (i=0; i<n_iter; i++)
 		{
+			indices = getShuffledIndices(N);
 			Arrays.fill(gs, 0);
 			sum = 0;
 			
 			for (j=0; j<N; j++)
 			{
-				yi = ys.get(j);
-				xi = xs.get(j);
-				if (space.hasWeight())	vi = vs.get(j);
+				yi = ys.get(indices[j]);
+				xi = xs.get(indices[j]);
+				if (space.hasWeight())	vi = vs.get(indices[j]);
 				
-				ps  = getPredictions(L, xi, vi, weights);
+				ps  = getPredictions(L, yi, xi, vi, weights);
 				fst = ps.o1;
 				snd = ps.o2;
 				
@@ -118,7 +123,24 @@ public class AdaGrad extends AbstractAlgorithm
 		}
 	}
 	
-	protected Pair<IntPrediction,IntPrediction> getPredictions(int L, int[] x, double[] v, double[] weights)
+	private int[] getShuffledIndices(int N)
+	{
+		int[] indices = new int[N];
+		int i, j;
+		
+		for (i=0; i<N; i++)
+			indices[i] = i;
+		
+		for (i=0; i<N; i++)
+		{
+			j = i + r_rand.nextInt(N - i);
+			UTArray.swap(indices, i, j);
+		}
+		
+		return indices;
+	}
+	
+	protected Triple<IntPrediction,IntPrediction,IntPrediction> getPredictions(int L, int y, int[] x, double[] v, double[] weights)
 	{
 		double[] scores = new double[L];
 		int i, label, size = x.length;
@@ -160,28 +182,7 @@ public class AdaGrad extends AbstractAlgorithm
 				snd.set(label, scores[label]);
 		}
 		
-		return new Pair<IntPrediction,IntPrediction>(fst, snd);
-	}
-	
-	protected List<IntPrediction> getAllPredictions(int L, int[] x, double[] v, double[] weights)
-	{
-		List<IntPrediction> ps = new ArrayList<IntPrediction>();
-		int i, label, size = x.length;
-		
-		if (v != null)
-		{
-			for (i=0; i<size; i++)
-				for (label=0; label<L; label++)
-					ps.add(new IntPrediction(i, weights[getWeightIndex(L, label, x[i])] * v[i]));
-		}
-		else
-		{
-			for (i=0; i<size; i++)
-				for (label=0; label<L; label++)
-					ps.add(new IntPrediction(i, weights[getWeightIndex(L, label, x[i])]));
-		}
-		
-		return ps;
+		return new Triple<IntPrediction,IntPrediction,IntPrediction>(fst, snd, new IntPrediction(y, scores[y]));
 	}
 	
 	protected void updateCounts(int L, double[] gs, int yp, int yn, int[] x, double[] v)
@@ -235,89 +236,9 @@ public class AdaGrad extends AbstractAlgorithm
 		}
 	}
 	
-	protected void updateWeights(int L, double[] gs, int yp, int yn, int[] x, double[] v, double[] weights, int c)
-	{
-		int i, xi, len = x.length;
-		double vi;
-		
-		if (v != null)
-		{
-			for (i=0; i<len; i++)
-			{
-				xi = x[i]; vi = v[i];
-				weights[getWeightIndex(L, yp, xi)] += c * getUpdate(L, gs, yp, xi) * vi;
-				weights[getWeightIndex(L, yn, xi)] -= c * getUpdate(L, gs, yn, xi) * vi;
-			}
-		}
-		else
-		{
-			for (i=0; i<len; i++)
-			{
-				xi = x[i];
-				weights[getWeightIndex(L, yp, xi)] += c * getUpdate(L, gs, yp, xi);
-				weights[getWeightIndex(L, yn, xi)] -= c * getUpdate(L, gs, yn, xi);
-			}
-		}
-	}
-	
 	protected double getUpdate(int L, double[] gs, int y, int x)
 	{
-		return d_alpha / (d_delta + Math.sqrt(gs[getWeightIndex(L, y, x)]));
-	}
-	
-	protected void updateCounts(int L, double[] gs, int yp, IntArrayList yns, int[] x, double[] v)
-	{
-		int i, len = x.length;
-		
-		if (v != null)
-		{
-			double d;
-			
-			for (i=0; i<len; i++)
-			{
-				d = v[i] * v[i];
-
-				gs[getWeightIndex(L, yp, x[i])] += d;
-				for (IntCursor cur : yns) gs[getWeightIndex(L, cur.value, x[i])] += d;
-			}
-		}
-		else
-		{
-			for (i=0; i<len; i++)
-			{
-				gs[getWeightIndex(L, yp, x[i])]++;
-				for (IntCursor cur : yns) gs[getWeightIndex(L, cur.value, x[i])]++;
-			}
-		}
-	}
-	
-	protected void updateWeights(int L, double[] gs, int yp, IntArrayList yns, int[] x, double[] v, double[] weights)
-	{
-		int i, xi, len = x.length;
-		double vi;
-		
-		if (v != null)
-		{
-			for (i=0; i<len; i++)
-			{
-				xi = x[i]; vi = v[i];
-				weights[getWeightIndex(L, yp, xi)] += getUpdate(L, gs, yp, xi) * vi;
-				
-				for (IntCursor yn : yns)
-					weights[getWeightIndex(L, yn.value, xi)] -= getUpdate(L, gs, yn.value, xi) * vi;
-			}
-		}
-		else
-		{
-			for (i=0; i<len; i++)
-			{
-				xi = x[i];
-				weights[getWeightIndex(L, yp, xi)] += getUpdate(L, gs, yp, xi);
-				
-				for (IntCursor yn : yns)
-					weights[getWeightIndex(L, yn.value, xi)] -= getUpdate(L, gs, yn.value, xi);
-			}
-		}
+		return d_alpha / (d_rho + Math.sqrt(gs[getWeightIndex(L, y, x)]));
 	}
 }
 	

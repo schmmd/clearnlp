@@ -139,4 +139,9 @@ public class DEPReader extends AbstractColumnReader<DEPTree>
 		
 		return tree;
 	}
+	
+	public String getType()
+	{
+		return TYPE_DEP;
+	}
 }

@@ -86,4 +86,9 @@ public class POSReader extends AbstractColumnReader<POSNode[]>
 		
 		return nodes;
 	}
+	
+	public String getType()
+	{
+		return TYPE_POS;
+	}
 }

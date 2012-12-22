@@ -33,10 +33,12 @@ import org.w3c.dom.Element;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
-import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.CDEPPassParser;
-import com.googlecode.clearnlp.component.CPOSTagger;
-import com.googlecode.clearnlp.component.CRolesetClassifier;
+import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.srl.CPredIdentifier;
+import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
+import com.googlecode.clearnlp.component.srl.CSRLabeler;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
@@ -55,14 +57,16 @@ public class COMTrain extends AbstractBin
 	protected final String DELIM_FILES	= ":";
 	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
 	protected String s_configFile;
-	@Option(name="-f", usage="feature template files delimited by "+DELIM_FILES+" (required)", required=true, metaVar="<filename>")
+	@Option(name="-f", usage="feature template files delimited by '"+DELIM_FILES+"' (required)", required=true, metaVar="<filename>")
 	protected String s_featureFiles;
 	@Option(name="-i", usage="input directory containing training files (required)", required=true, metaVar="<directory>")
 	protected String s_trainDir;
 	@Option(name="-m", usage="model file (output; required)", required=true, metaVar="<filename>")
 	protected String s_modelFile;
-	@Option(name="-n", usage="bootstrapping level (default: 2)", required=false, metaVar="<integer>")
-	protected int n_boot = 2;
+	@Option(name="-n", usage="bootstrapping level (default: 0)", required=false, metaVar="<integer>")
+	protected int n_boot = 0;
+	@Option(name="-z", usage="mode", required=true, metaVar="<string>")
+	protected String s_mode;
 	
 	public COMTrain() {}
 	
@@ -72,56 +76,70 @@ public class COMTrain extends AbstractBin
 		
 		try
 		{
-			train(s_configFile, s_featureFiles.split(DELIM_FILES), s_trainDir, s_modelFile);
+			train(s_configFile, s_featureFiles.split(DELIM_FILES), s_trainDir, s_modelFile, s_mode);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void train(String configFile, String[] featureFiles, String trainDir, String modelFile) throws Exception
+	public void train(String configFile, String[] featureFiles, String trainDir, String modelFile, String mode) throws Exception
 	{
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
 		JointFtrXml[]  xmls = getFeatureTemplates(featureFiles);
 		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true);
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
-		String         mode = getMode(eConfig);
-		AbstractComponent component = null;
-		
-		if      (mode.equals(COMLib.MODE_POS))
-			component = getTrainedPOSTagger(eConfig, reader, xmls, trainFiles, -1);
-		else if (mode.equals(COMLib.MODE_DEP_PASS))
-			component = getTrainedDEPPassParser(eConfig, reader, xmls, trainFiles, -1);
-		else if (mode.equals(COMLib.MODE_ROLESET))
-			component = getTrainedRolesetClassifier(eConfig, reader, xmls, trainFiles, -1);
-		
+
+		AbstractStatisticalComponent component = getComponent(eConfig, reader, xmls, trainFiles, -1, mode);
 		component.saveModels(new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(modelFile))));
 	}
 	
-//	====================================== GETTERS/SETTERS ======================================
-	
-	/** Called by {@link COMTrain#getTrainedComponent(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
-	protected AbstractComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
+	//	====================================== GETTERS/SETTERS ======================================
+
+	protected AbstractStatisticalComponent getComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId, String mode)
 	{
 		if      (mode.equals(COMLib.MODE_POS))
-			return (models == null) ? new CPOSTagger(xmls, spaces, lexica) : new CPOSTagger(xmls, spaces, models, lexica);
-		else if (mode.equals(COMLib.MODE_DEP_PASS))
-			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
-		else if (mode.equals(COMLib.MODE_ROLESET))
-			return new CRolesetClassifier(xmls, spaces, lexica);
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
+		else if (mode.equals(COMLib.MODE_DEP))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPPassParser(xmls), mode, devId);
+		else if (mode.equals(COMLib.MODE_PRED))
+			return getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, devId);
+		else if (mode.equals(COMLib.MODE_ROLE))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, devId);
+		else if (mode.equals(COMLib.MODE_SRL))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSRLabeler(xmls), mode, devId);
 		
-		return null;
+		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
 	
-	/** Called by {@link COMTrain#getTrainedComponent(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
-	protected AbstractComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
+	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(COMLib.MODE_POS))
-			return new CPOSTagger(xmls, models, lexica);
-		else if (mode.equals(COMLib.MODE_DEP_PASS))
-			return new CDEPPassParser(xmls, models, lexica);
-		else if (mode.equals(COMLib.MODE_ROLESET))
-			return new CRolesetClassifier(xmls, models, lexica);
+			return new CPOSTagger(xmls, spaces, lexica);
+		else if (mode.equals(COMLib.MODE_DEP))
+			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
+		else if (mode.equals(COMLib.MODE_PRED))
+			return new CPredIdentifier(xmls, spaces, lexica);	
+		else if (mode.equals(COMLib.MODE_ROLE))
+			return new CRolesetClassifier(xmls, spaces, lexica);
+		else if (mode.equals(COMLib.MODE_SRL))
+			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
 		
-		return null;
+		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
+	}
+	
+	protected AbstractStatisticalComponent getTrainedComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, AbstractStatisticalComponent component, String mode, int devId) 
+	{
+		Object[] lexica = getLexica(component, reader, xmls, trainFiles, devId);
+		AbstractStatisticalComponent processor = null;
+		StringModel[] models = null;
+		int boot;
+		
+		for (boot=0; boot<=n_boot; boot++)
+		{
+			processor = getTrainedComponent(eConfig, xmls, trainFiles, models, lexica, mode, boot, devId);
+			models = processor.getModels();
+		}
+		
+		return processor;
 	}
 	
 	protected JointFtrXml[] getFeatureTemplates(String[] featureFiles) throws Exception
@@ -135,7 +153,7 @@ public class COMTrain extends AbstractBin
 		return xmls;
 	}
 	
-	protected Object[] getLexica(AbstractComponent component, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId)
+	protected Object[] getLexica(AbstractStatisticalComponent component, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId)
 	{
 		int i, size = trainFiles.length;
 		DEPTree tree;
@@ -145,29 +163,20 @@ public class COMTrain extends AbstractBin
 		for (i=0; i<size; i++)
 		{
 			if (devId == i)	continue;
-			
 			reader.open(UTInput.createBufferedFileReader(trainFiles[i]));
 			
 			while ((tree = reader.next()) != null)
 				component.process(tree);
 			
 			reader.close();
-			
 			System.out.print(".");
-		}	System.out.println();
+		}
 		
+		System.out.println();
 		return component.getLexica();
 	}
 	
-//	====================================== PART-OF-SPEECH TAGGING ======================================
-	
-	protected CPOSTagger getTrainedPOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
-	{
-		Set<String> sLsfs = getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId);
-		Object[]   lexica = getLexica(new CPOSTagger(xmls, sLsfs), reader, xmls, trainFiles, devId);
-		
-		return (CPOSTagger)getTrainedComponent(eConfig, xmls, trainFiles, null, lexica, COMLib.MODE_POS, devId);
-	}
+	//	====================================== PART-OF-SPEECH TAGGING ======================================
 	
 	/** Called by {@link COMTrain#trainPOSTagger(Element, JointFtrXml[], String[], JointReader)}. */
 	protected Set<String> getLowerSimplifiedForms(JointReader reader, JointFtrXml xml, String[] trainFiles, int devId)
@@ -203,36 +212,10 @@ public class COMTrain extends AbstractBin
 		return map.toSet(xml.getDocumentFrequencyCutoff());
 	}
 	
-//	====================================== DEPENDENCY PARSING ======================================
-
-	protected CDEPPassParser getTrainedDEPPassParser(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
-	{
-		Object[] lexica = getLexica(new CDEPPassParser(xmls), reader, xmls, trainFiles, devId);
-		StringModel[] models = null;
-		CDEPPassParser parser = null;
-		int boot;
-		
-		for (boot=0; boot<n_boot; boot++)
-		{
-			parser = (CDEPPassParser)getTrainedComponent(eConfig, xmls, trainFiles, models, lexica, COMLib.MODE_DEP_PASS, devId);
-			models = parser.getModels();
-		}
-		
-		return parser;
-	}
-	
-//	====================================== ROLESET CLASSIFICATION ======================================
-	
-	protected CRolesetClassifier getTrainedRolesetClassifier(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId) 
-	{
-		Object[] lexica = getLexica(new CRolesetClassifier(xmls), reader, xmls, trainFiles, devId);
-		return (CRolesetClassifier)getTrainedComponent(eConfig, xmls, trainFiles, null, lexica, COMLib.MODE_ROLESET, devId);
-	}
-	
-//	====================================== TRAIN ======================================
+	//	====================================== TRAINING ======================================
 	
 	/** Called by {@link COMTrain#getTrainedJointPD(String, String[], String, String)}. */
-	protected AbstractComponent getTrainedComponent(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int devId)
+	protected AbstractStatisticalComponent getTrainedComponent(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int boot, int devId)
 	{
 		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, devId);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
@@ -242,10 +225,10 @@ public class COMTrain extends AbstractBin
 		
 		for (i=0; i<mSize; i++)
 		{
-			if (mode.equals(COMLib.MODE_ROLESET))
-				models[i] = (StringModel)getModel(eTrain, spaces[i], 0);
+			if (mode.equals(COMLib.MODE_ROLE))
+				models[i] = (StringModel)getModel(eTrain, spaces[i], 0, boot);
 			else
-				models[i] = (StringModel)getModel(eTrain, spaces[i], i);
+				models[i] = (StringModel)getModel(eTrain, spaces[i], i, boot);
 
 			spaces[i].clear();
 		}
@@ -253,12 +236,11 @@ public class COMTrain extends AbstractBin
 		return getComponent(xmls, models, lexica, mode);
 	}
 	
-	@SuppressWarnings("unchecked")
 	protected StringTrainSpace[] getStringTrainSpaces(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int devId)
 	{
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
-		int numThreads = getNumOfThreads(eTrain);
 		int i, j, mSize = 1, size = trainFiles.length;
+		int numThreads = getNumOfThreads(eTrain);
 		
 		List<StringTrainSpace[]> lSpaces = new ArrayList<StringTrainSpace[]>();
 		ExecutorService executor = Executors.newFixedThreadPool(numThreads);
@@ -266,19 +248,11 @@ public class COMTrain extends AbstractBin
 		
 		System.out.println("Collecting training instances:");
 		
-		if (mode.equals(COMLib.MODE_ROLESET))
-			mSize = ((ObjectIntOpenHashMap<String>)lexica[1]).size();
-		
 		for (i=0; i<size; i++)
 		{
 			if (devId != i)
 			{
-				if (mode.equals(COMLib.MODE_ROLESET))
-					spaces = getTrainSpaces(xmls[0], mSize);
-				else
-					spaces = getTrainSpaces(xmls);
-				
-				lSpaces.add(spaces);
+				lSpaces.add(spaces = getStringTrainSpaces(xmls, lexica, mode));
 				executor.execute(new TrainTask(eConfig, trainFiles[i], getComponent(xmls, spaces, models, lexica, mode)));
 			}
 		}
@@ -317,19 +291,20 @@ public class COMTrain extends AbstractBin
 		return spaces;
 	}
 	
-	protected StringModel[] getModels(Element eTrain, StringTrainSpace[] spaces)
+	@SuppressWarnings("unchecked")
+	/** Called by {@link COMTrain#getStringTrainSpaces(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
+	protected StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls, Object[] lexica, String mode)
 	{
-		int i, size = spaces.length;
-		StringModel[] models = new StringModel[size];
-		
-		for (i=0; i<size; i++)
-			models[i] = (StringModel)getModel(eTrain, spaces[i], i);
-		
-		return models;
+		if      (mode.equals(COMLib.MODE_ROLE))
+			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());
+		else if (mode.equals(COMLib.MODE_SRL))
+			return getStringTrainSpaces(xmls[0], 2);
+		else
+			return getStringTrainSpaces(xmls);
 	}
 	
-	/** Called by {@link COMTrain#getTrainedComponent(Element, JointFtrXml[], String[], StringModel[], Object[], int)}. */
-	protected StringTrainSpace[] getTrainSpaces(JointFtrXml[] xmls)
+	/** Called by {@link COMTrain#getStringTrainSpaces(JointFtrXml[], Object[], String)}. */
+	private StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls)
 	{
 		int i, size = xmls.length;
 		StringTrainSpace[] spaces = new StringTrainSpace[size];
@@ -340,8 +315,8 @@ public class COMTrain extends AbstractBin
 		return spaces;
 	}
 	
-	/** Called by {@link COMTrain#getTrainedComponent(Element, JointFtrXml[], String[], StringModel[], Object[], int)}. */
-	protected StringTrainSpace[] getTrainSpaces(JointFtrXml xml, int size)
+	/** Called by {@link COMTrain#getStringTrainSpaces(JointFtrXml[], Object[], String)}. */
+	private StringTrainSpace[] getStringTrainSpaces(JointFtrXml xml, int size)
 	{
 		StringTrainSpace[] spaces = new StringTrainSpace[size];
 		int i;
@@ -352,17 +327,17 @@ public class COMTrain extends AbstractBin
 		return spaces;
 	}
 	
-	/** Called by {@link COMTrain#getTrainedComponent(Element, JointFtrXml[], String[], StringModel[], Object[], int)}. */
+	/** Called by {@link COMTrain#getStringTrainSpaces(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
 	private class TrainTask implements Runnable
 	{
-		AbstractComponent j_component;
-		JointReader       j_reader;
+		AbstractStatisticalComponent j_component;
+		JointReader j_reader;
 		
-		public TrainTask(Element eConfig, String trainFile, AbstractComponent component)
+		public TrainTask(Element eConfig, String trainFile, AbstractStatisticalComponent component)
 		{
-			j_component = component;
-			j_reader    = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
+			j_reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 			j_reader.open(UTInput.createBufferedFileReader(trainFile));
+			j_component = component;
 		}
 		
 		public void run()

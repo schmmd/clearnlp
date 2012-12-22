@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import com.googlecode.clearnlp.reader.DEPReader;
 
@@ -45,6 +46,8 @@ public class DEPFeat extends HashMap<String,String>
 	static public final String DELIM_FEATS     = "|";
 	/** The delimiter between keys and values ({@code "="}). */
 	static public final String DELIM_KEY_VALUE = "=";
+	
+	static public final Pattern P_FEATS = Pattern.compile("\\"+DELIM_FEATS);
 
 	/** Constructs an empty feature map. */
 	public DEPFeat() {}
@@ -73,7 +76,7 @@ public class DEPFeat extends HashMap<String,String>
 		String key, value;
 		int    idx;
 		
-		for (String feat : feats.split("\\"+DELIM_FEATS))
+		for (String feat : P_FEATS.split(feats))
 		{
 			idx = feat.indexOf(DELIM_KEY_VALUE);
 			

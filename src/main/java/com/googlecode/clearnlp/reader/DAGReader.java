@@ -132,4 +132,9 @@ public class DAGReader extends AbstractColumnReader<DEPTree>
 		
 		return tree;
 	}
+	
+	public String getType()
+	{
+		return TYPE_DAG;
+	}
 }
