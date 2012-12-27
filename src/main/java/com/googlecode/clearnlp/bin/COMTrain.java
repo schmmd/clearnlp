@@ -63,9 +63,9 @@ public class COMTrain extends AbstractBin
 	protected String s_trainDir;
 	@Option(name="-m", usage="model file (output; required)", required=true, metaVar="<filename>")
 	protected String s_modelFile;
-	@Option(name="-n", usage="bootstrapping level (default: 0)", required=false, metaVar="<integer>")
+	@Option(name="-n", usage="bootstrapping level (default: 2)", required=false, metaVar="<integer>")
 	protected int n_boot = 0;
-	@Option(name="-z", usage="mode", required=true, metaVar="<string>")
+	@Option(name="-z", usage="mode (pos|morph|dep|pred|role|srl)", required=true, metaVar="<string>")
 	protected String s_mode;
 	
 	public COMTrain() {}
@@ -284,9 +284,11 @@ public class COMTrain extends AbstractBin
 					spaces[i].appendSpace(sp = lSpaces.get(j)[i]);
 					sp.clear();
 					System.out.print(".");
-				}				
+				}
+				
+				System.out.println();
 			}
-		}	System.out.println();
+		}
 		
 		return spaces;
 	}

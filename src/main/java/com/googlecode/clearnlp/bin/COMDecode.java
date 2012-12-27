@@ -63,7 +63,7 @@ public class COMDecode extends AbstractBin
 	private String s_inputExt = ".*";
 	@Option(name="-oe", usage="output file extension (default: cnlp)", required=false, metaVar="<string>")
 	private String s_outputExt = "cnlp";
-	@Option(name="-z", usage="mode", required=true, metaVar="<string>")
+	@Option(name="-z", usage="mode (pos|morph|dep|pred|role|srl)", required=true, metaVar="<string>")
 	protected String s_mode;
 	
 	public COMDecode() {}

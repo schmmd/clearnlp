@@ -153,10 +153,11 @@ public class COMDevelop extends COMTrain
 					prevWeights[i] = Arrays.copyOf(d, d.length);
 				}
 				
-				updateModel(eTrain, spaces[i], rand, nUpdate++, i);
+				updateModel(eTrain, spaces[i], rand, nUpdate, i);
 				models[i] = (StringModel)spaces[i].getModel();
 			}
 
+			nUpdate++;
 			component = getComponent(xmls, models, lexica, mode);
 			currScore = decode(reader, component, devFiles, mode);
 		}
@@ -238,7 +239,7 @@ public class COMDevelop extends COMTrain
 	{
 		new COMDevelop(args);
 	}
-
+	
 /*	protected void developPOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles) throws Exception
 	{
 		CPOSTagger tagger = getTrainedPOSTagger(eConfig, reader, xmls, trainFiles, -1);
@@ -262,5 +263,25 @@ public class COMDevelop extends COMTrain
 			currScore = decode(reader, parser, devFiles, COMLib.MODE_DEP);
 		}
 		while (prevScore < currScore);
-	}*/
+	}
+	
+	protected void developSRLabeler(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles) throws Exception
+	{
+		Object[] lexica = getLexica(new CSRLabeler(xmls), reader, xmls, trainFiles, -1);
+		AbstractStatisticalComponent labeler = null;
+		double prevScore, currScore = 0;
+		StringModel[] models = null;
+		
+		do
+		{
+			prevScore = currScore;
+			
+			labeler = getTrainedComponent(eConfig, xmls, trainFiles, models, lexica, COMLib.MODE_SRL, 0, -1);
+			models  = labeler.getModels();
+
+			currScore = decode(reader, labeler, devFiles, COMLib.MODE_SRL);
+		}
+		while (prevScore < currScore);
+	}
+	*/
 }
