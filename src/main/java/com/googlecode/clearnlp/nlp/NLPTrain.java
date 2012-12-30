@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.bin;
+package com.googlecode.clearnlp.nlp;
 
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
@@ -52,7 +52,7 @@ import com.googlecode.clearnlp.util.map.Prob1DMap;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class COMTrain extends AbstractBin
+public class NLPTrain extends AbstractNLP
 {
 	protected final String DELIM_FILES	= ":";
 	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
@@ -68,9 +68,9 @@ public class COMTrain extends AbstractBin
 	@Option(name="-z", usage="mode (pos|morph|dep|pred|role|srl)", required=true, metaVar="<string>")
 	protected String s_mode;
 	
-	public COMTrain() {}
+	public NLPTrain() {}
 	
-	public COMTrain(String[] args)
+	public NLPTrain(String[] args)
 	{
 		initArgs(args);
 		
@@ -96,15 +96,15 @@ public class COMTrain extends AbstractBin
 
 	protected AbstractStatisticalComponent getComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, int devId, String mode)
 	{
-		if      (mode.equals(COMLib.MODE_POS))
+		if      (mode.equals(NLPLib.MODE_POS))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPPassParser(xmls), mode, devId);
-		else if (mode.equals(COMLib.MODE_PRED))
+		else if (mode.equals(NLPLib.MODE_PRED))
 			return getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, devId);
-		else if (mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_ROLE))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, devId);
-		else if (mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_SRL))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSRLabeler(xmls), mode, devId);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
@@ -112,15 +112,15 @@ public class COMTrain extends AbstractBin
 	
 	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
 	{
-		if      (mode.equals(COMLib.MODE_POS))
+		if      (mode.equals(NLPLib.MODE_POS))
 			return new CPOSTagger(xmls, spaces, lexica);
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
-		else if (mode.equals(COMLib.MODE_PRED))
+		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(xmls, spaces, lexica);	
-		else if (mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(xmls, spaces, lexica);
-		else if (mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_SRL))
 			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
@@ -178,7 +178,7 @@ public class COMTrain extends AbstractBin
 	
 	//	====================================== PART-OF-SPEECH TAGGING ======================================
 	
-	/** Called by {@link COMTrain#trainPOSTagger(Element, JointFtrXml[], String[], JointReader)}. */
+	/** Called by {@link NLPTrain#trainPOSTagger(Element, JointFtrXml[], String[], JointReader)}. */
 	protected Set<String> getLowerSimplifiedForms(JointReader reader, JointFtrXml xml, String[] trainFiles, int devId)
 	{
 		Set<String> set = new HashSet<String>();
@@ -214,7 +214,7 @@ public class COMTrain extends AbstractBin
 	
 	//	====================================== TRAINING ======================================
 	
-	/** Called by {@link COMTrain#getTrainedJointPD(String, String[], String, String)}. */
+	/** Called by {@link NLPTrain#getTrainedJointPD(String, String[], String, String)}. */
 	protected AbstractStatisticalComponent getTrainedComponent(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int boot, int devId)
 	{
 		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, devId);
@@ -225,7 +225,7 @@ public class COMTrain extends AbstractBin
 		
 		for (i=0; i<mSize; i++)
 		{
-			if (mode.equals(COMLib.MODE_ROLE))
+			if (mode.equals(NLPLib.MODE_ROLE))
 				models[i] = (StringModel)getModel(eTrain, spaces[i], 0, boot);
 			else
 				models[i] = (StringModel)getModel(eTrain, spaces[i], i, boot);
@@ -297,15 +297,15 @@ public class COMTrain extends AbstractBin
 	/** Called by {@link COMTrain#getStringTrainSpaces(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
 	protected StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls, Object[] lexica, String mode)
 	{
-		if      (mode.equals(COMLib.MODE_ROLE))
+		if      (mode.equals(NLPLib.MODE_ROLE))
 			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());
-		else if (mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_SRL))
 			return getStringTrainSpaces(xmls[0], 2);
 		else
 			return getStringTrainSpaces(xmls);
 	}
 	
-	/** Called by {@link COMTrain#getStringTrainSpaces(JointFtrXml[], Object[], String)}. */
+	/** Called by {@link NLPTrain#getStringTrainSpaces(JointFtrXml[], Object[], String)}. */
 	private StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls)
 	{
 		int i, size = xmls.length;
@@ -317,7 +317,7 @@ public class COMTrain extends AbstractBin
 		return spaces;
 	}
 	
-	/** Called by {@link COMTrain#getStringTrainSpaces(JointFtrXml[], Object[], String)}. */
+	/** Called by {@link NLPTrain#getStringTrainSpaces(JointFtrXml[], Object[], String)}. */
 	private StringTrainSpace[] getStringTrainSpaces(JointFtrXml xml, int size)
 	{
 		StringTrainSpace[] spaces = new StringTrainSpace[size];
@@ -329,7 +329,7 @@ public class COMTrain extends AbstractBin
 		return spaces;
 	}
 	
-	/** Called by {@link COMTrain#getStringTrainSpaces(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
+	/** Called by {@link NLPTrain#getStringTrainSpaces(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
 	private class TrainTask implements Runnable
 	{
 		AbstractStatisticalComponent j_component;
@@ -356,6 +356,6 @@ public class COMTrain extends AbstractBin
 	
 	static public void main(String[] args)
 	{
-		new COMTrain(args);
+		new NLPTrain(args);
 	}
 }

@@ -23,7 +23,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
@@ -37,6 +36,7 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
+import com.googlecode.clearnlp.nlp.NLPLib;
 
 /**
  * PropBank predicate identifier.
@@ -45,9 +45,9 @@ import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
  */
 public class CPredIdentifier extends AbstractStatisticalComponent
 {
-	private final String ENTRY_CONFIGURATION = COMLib.MODE_PRED + COMLib.ENTRY_CONFIGURATION;
-	private final String ENTRY_FEATURE		 = COMLib.MODE_PRED + COMLib.ENTRY_FEATURE;
-	private final String ENTRY_MODEL		 = COMLib.MODE_PRED + COMLib.ENTRY_MODEL;
+	private final String ENTRY_CONFIGURATION = NLPLib.MODE_PRED + NLPLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = NLPLib.MODE_PRED + NLPLib.ENTRY_FEATURE;
+	private final String ENTRY_MODEL		 = NLPLib.MODE_PRED + NLPLib.ENTRY_MODEL;
 	
 	protected Boolean[] g_preds;
 	protected int       i_pred;

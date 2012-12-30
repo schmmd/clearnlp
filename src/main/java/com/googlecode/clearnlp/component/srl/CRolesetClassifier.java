@@ -30,7 +30,6 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
-import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -42,6 +41,7 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.predicate.PredIdentifier;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -52,10 +52,10 @@ import com.googlecode.clearnlp.util.UTOutput;
  */
 public class CRolesetClassifier extends AbstractStatisticalComponent
 {
-	private final String ENTRY_CONFIGURATION = COMLib.MODE_ROLE + COMLib.ENTRY_CONFIGURATION;
-	private final String ENTRY_FEATURE		 = COMLib.MODE_ROLE + COMLib.ENTRY_FEATURE;
-	private final String ENTRY_LEXICA		 = COMLib.MODE_ROLE + COMLib.ENTRY_LEXICA;
-	private final String ENTRY_MODEL		 = COMLib.MODE_ROLE + COMLib.ENTRY_MODEL;
+	private final String ENTRY_CONFIGURATION = NLPLib.MODE_ROLE + NLPLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = NLPLib.MODE_ROLE + NLPLib.ENTRY_FEATURE;
+	private final String ENTRY_LEXICA		 = NLPLib.MODE_ROLE + NLPLib.ENTRY_LEXICA;
+	private final String ENTRY_MODEL		 = NLPLib.MODE_ROLE + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_ROLESETS  = 0;
 	protected final int LEXICA_LEMMAS    = 1;

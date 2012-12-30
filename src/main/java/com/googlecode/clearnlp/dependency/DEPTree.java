@@ -128,6 +128,9 @@ public class DEPTree extends ArrayList<DEPNode>
 		int i, size = size();
 		DEPNode node, head;
 		
+		if (get(0).l_dependents != null)
+			return;
+		
 		for (i=0; i<size; i++)
 			get(i).l_dependents = new ArrayList<DEPArc>();
 		

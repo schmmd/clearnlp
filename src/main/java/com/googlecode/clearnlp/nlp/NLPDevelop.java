@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.bin;
+package com.googlecode.clearnlp.nlp;
 
 import java.io.FileInputStream;
 import java.util.Arrays;
@@ -42,14 +42,14 @@ import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class COMDevelop extends COMTrain
+public class NLPDevelop extends NLPTrain
 {
 	@Option(name="-d", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
 	private String s_devDir;
 	@Option(name="-r", usage="the random seed", required=false, metaVar="<directory>")
 	private int i_rand = 0;
 	
-	public COMDevelop(String[] args)
+	public NLPDevelop(String[] args)
 	{
 		initArgs(args);
 		
@@ -68,15 +68,15 @@ public class COMDevelop extends COMTrain
 		String[]   devFiles = UTFile.getSortedFileListBySize(devDir, ".*", true);
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		
-		if      (mode.equals(COMLib.MODE_POS))
+		if      (mode.equals(NLPLib.MODE_POS))
 			developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode);
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPPassParser(xmls), mode);
-		else if (mode.equals(COMLib.MODE_PRED))
+		else if (mode.equals(NLPLib.MODE_PRED))
 			decode(reader, getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, -1), devFiles, mode);
-		else if (mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_ROLE))
 			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, -1), devFiles, mode);
-		else if (mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_SRL))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CSRLabeler(xmls), mode);
 	}
 	
@@ -135,11 +135,14 @@ public class COMDevelop extends COMTrain
 		AbstractStatisticalComponent component;
 		
 		double prevScore = -1, currScore = 0;
-		Random rand = new Random(i_rand);
+		Random[] rands = new Random[mSize];
 		models = new StringModel[mSize];
 
 		double[][] prevWeights = new double[mSize][];
 		double[] d;
+		
+		for (i=0; i<mSize; i++)
+			rands[i] = new Random(i_rand);
 		
 		do
 		{
@@ -153,7 +156,7 @@ public class COMDevelop extends COMTrain
 					prevWeights[i] = Arrays.copyOf(d, d.length);
 				}
 				
-				updateModel(eTrain, spaces[i], rand, nUpdate, i);
+				updateModel(eTrain, spaces[i], rands[i], nUpdate, i);
 				models[i] = (StringModel)spaces[i].getModel();
 			}
 
@@ -195,11 +198,11 @@ public class COMDevelop extends COMTrain
 	
 	protected int[] getCounts(String mode)
 	{
-		if      (mode.equals(COMLib.MODE_POS) || mode.equals(COMLib.MODE_ROLE))
+		if      (mode.equals(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE))
 			return new int[2];
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return new int[4];
-		else if (mode.equals(COMLib.MODE_PRED) || mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
 			return new int[3];
 		
 		return null;
@@ -209,19 +212,19 @@ public class COMDevelop extends COMTrain
 	{
 		double score = 0;
 		
-		if (mode.equals(COMLib.MODE_POS) || mode.equals(COMLib.MODE_ROLE))
+		if (mode.equals(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE))
 		{
 			score = 100d * counts[1] / counts[0];
 			System.out.printf("- ACC: %5.2f (%d/%d)\n", score, counts[1], counts[0]);
 		}
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 		{
 			score = 100d * counts[1] / counts[0];
 			System.out.printf("- LAS: %5.2f (%d/%d)\n", score, counts[1], counts[0]);
 			System.out.printf("- UAS: %5.2f (%d/%d)\n", 100d*counts[2]/counts[0], counts[2], counts[0]);
 			System.out.printf("- LS : %5.2f (%d/%d)\n", 100d*counts[3]/counts[0], counts[3], counts[0]);
 		}
-		else if (mode.equals(COMLib.MODE_PRED) || mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
 		{
 			double p = 100d * counts[0] / counts[1];
 			double r = 100d * counts[0] / counts[2];
@@ -237,7 +240,7 @@ public class COMDevelop extends COMTrain
 	
 	static public void main(String[] args)
 	{
-		new COMDevelop(args);
+		new NLPDevelop(args);
 	}
 	
 /*	protected void developPOSTagger(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles) throws Exception

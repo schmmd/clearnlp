@@ -26,7 +26,6 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
-import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -40,6 +39,7 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
@@ -53,10 +53,10 @@ import com.googlecode.clearnlp.util.triple.Triple;
  */
 public class CDEPPassParser extends AbstractStatisticalComponent
 {
-	private final String ENTRY_CONFIGURATION = COMLib.MODE_DEP + COMLib.ENTRY_CONFIGURATION;
-	private final String ENTRY_FEATURE		 = COMLib.MODE_DEP + COMLib.ENTRY_FEATURE;
-	private final String ENTRY_LEXICA		 = COMLib.MODE_DEP + COMLib.ENTRY_LEXICA;
-	private final String ENTRY_MODEL		 = COMLib.MODE_DEP + COMLib.ENTRY_MODEL;
+	private final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP + NLPLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;
+	private final String ENTRY_LEXICA		 = NLPLib.MODE_DEP + NLPLib.ENTRY_LEXICA;
+	private final String ENTRY_MODEL		 = NLPLib.MODE_DEP + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_PUNCTUATION = 0;
 	

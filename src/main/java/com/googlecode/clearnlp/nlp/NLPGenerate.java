@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.bin;
+package com.googlecode.clearnlp.nlp;
 
 import java.io.FileInputStream;
 import java.io.PrintStream;
@@ -35,14 +35,14 @@ import com.googlecode.clearnlp.util.UTXml;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class COMGenerate extends COMTrain
+public class NLPGenerate extends NLPTrain
 {
 	@Option(name="-b", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
 	private int b_dev = -1;
 	@Option(name="-e", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
 	private int e_dev = -1;
 	
-	public COMGenerate(String[] args)
+	public NLPGenerate(String[] args)
 	{
 		initArgs(args);
 		
@@ -90,6 +90,6 @@ public class COMGenerate extends COMTrain
 	
 	static public void main(String[] args)
 	{
-		new COMGenerate(args);
+		new NLPGenerate(args);
 	}
 }

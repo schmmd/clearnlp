@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.bin;
+package com.googlecode.clearnlp.nlp;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ import com.googlecode.clearnlp.util.UTXml;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-abstract public class AbstractBin
+abstract public class AbstractNLP
 {
 	final public String TAG_READER					= "reader";
 	final public String TAG_TYPE					= "type";
@@ -96,15 +96,15 @@ abstract public class AbstractBin
 	/** @return a component for developing. */
 	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
 	{
-		if      (mode.equals(COMLib.MODE_POS))
+		if      (mode.equals(NLPLib.MODE_POS))
 			return new CPOSTagger(xmls, models, lexica);
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return new CDEPPassParser(xmls, models, lexica);
-		else if (mode.equals(COMLib.MODE_PRED))
+		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(xmls, models, lexica);
-		else if (mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(xmls, models, lexica);
-		else if (mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(xmls, models, lexica);
 		
 		return null;
@@ -112,11 +112,11 @@ abstract public class AbstractBin
 	
 	protected String toString(DEPTree tree, String mode)
 	{
-		if      (mode.equals(COMLib.MODE_POS))
+		if      (mode.equals(NLPLib.MODE_POS))
 			return tree.toStringPOS();
-		else if (mode.equals(COMLib.MODE_MORPH))
+		else if (mode.equals(NLPLib.MODE_MORPH))
 			return tree.toStringMorph();
-		else if (mode.equals(COMLib.MODE_DEP) || mode.equals(COMLib.MODE_PRED) || mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_DEP) || mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_ROLE))
 			return tree.toStringDEP();
 		else
 			return tree.toStringSRL();
@@ -197,7 +197,7 @@ abstract public class AbstractBin
 		return new JointReader(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, iXHeads, iSHeads, iNament, iCoref);
 	}
 	
-	/** Called by {@link AbstractBin#getCDEPReader(Element, String)}. */
+	/** Called by {@link AbstractNLP#getCDEPReader(Element, String)}. */
 	private ObjectIntOpenHashMap<String> getFieldMap(Element eReader)
 	{
 		NodeList list = eReader.getElementsByTagName(TAG_READER_COLUMN);
@@ -255,7 +255,7 @@ abstract public class AbstractBin
 		return null;
 	}
 	
-	/** Called by {@link AbstractBin#getModel(Element, AbstractTrainSpace, int, int)}. */
+	/** Called by {@link AbstractNLP#getModel(Element, AbstractTrainSpace, int, int)}. */
 	protected AbstractModel getLiblinearModel(AbstractTrainSpace space, int numThreads, byte solver, double cost, double eps, double bias)
 	{
 		space.build();
@@ -264,7 +264,7 @@ abstract public class AbstractBin
 		return LiblinearTrain.getModel(space, numThreads, solver, cost, eps, bias);
 	}
 	
-	/** Called by {@link AbstractBin#getModel(Element, AbstractTrainSpace, int, int)}. */
+	/** Called by {@link AbstractNLP#getModel(Element, AbstractTrainSpace, int, int)}. */
 	protected AbstractModel getAdaGradModel(AbstractTrainSpace space, int numThreads, int iter, int rand, double alpha, double rho)
 	{
 		space.build();

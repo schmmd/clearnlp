@@ -48,16 +48,18 @@ public class PredEvaluate extends AbstractRun
 	private int    i_goldIndex;
 	@Option(name="-si", usage="column index of extra features in a system-generated file (required)", required=true, metaVar="<integer>")
 	private int    i_autoIndex;
+	@Option(name="-z", usage="true for predicate identification, false for roleset classification (default)", required=false, metaVar="<boolean>")
+	private boolean b_pred;
 	
 	public PredEvaluate() {}
 	
 	public PredEvaluate(String[] args)
 	{
 		initArgs(args);
-		run(s_goldFile, s_autoFile, i_goldIndex-1, i_autoIndex-1);
+		run(s_goldFile, s_autoFile, i_goldIndex-1, i_autoIndex-1, b_pred);
 	}
 	
-	public void run(String goldFile, String autoFile, int goldIndex, int autoIndex)
+	public void run(String goldFile, String autoFile, int goldIndex, int autoIndex, boolean bPred)
 	{
 		BufferedReader fGold = UTInput.createBufferedFileReader(goldFile);
 		BufferedReader fAuto = UTInput.createBufferedFileReader(autoFile);
@@ -79,24 +81,29 @@ public class PredEvaluate extends AbstractRun
 				
 				gFeats = new DEPFeat(gold[goldIndex]);
 				aFeats = new DEPFeat(auto[autoIndex]);
-
-			/*	if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
-					counts[1]++;
 				
-				if ((aPred = aFeats.get(DEPLib.FEAT_PB)) != null)
-					counts[2]++;
-				
-				if (gPred != null && aPred != null)
-					counts[0]++;*/
-				
-				if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
+				if (bPred)
 				{
-					aPred = aFeats.get(DEPLib.FEAT_PB);
-					counts[1]++;
-					counts[2]++;
+					if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
+						counts[1]++;
 					
-					if (gPred.equals(aPred))
-						counts[0]++;
+					if ((aPred = aFeats.get(DEPLib.FEAT_PB)) != null)
+						counts[2]++;
+					
+					if (gPred != null && aPred != null)
+						counts[0]++;	
+				}
+				else
+				{
+					if ((gPred = gFeats.get(DEPLib.FEAT_PB)) != null)
+					{
+						aPred = aFeats.get(DEPLib.FEAT_PB);
+						counts[1]++;
+						counts[2]++;
+						
+						if (gPred.equals(aPred))
+							counts[0]++;
+					}
 				}
 			}
 		}

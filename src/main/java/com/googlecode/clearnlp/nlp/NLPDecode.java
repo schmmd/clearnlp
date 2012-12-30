@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.bin;
+package com.googlecode.clearnlp.nlp;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -53,7 +53,7 @@ import com.googlecode.clearnlp.util.UTXml;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class COMDecode extends AbstractBin
+public class NLPDecode extends AbstractNLP
 {
 	@Option(name="-c", usage="configuration file (required)", required=true, metaVar="<filename>")
 	private String s_configXml;
@@ -63,12 +63,12 @@ public class COMDecode extends AbstractBin
 	private String s_inputExt = ".*";
 	@Option(name="-oe", usage="output file extension (default: cnlp)", required=false, metaVar="<string>")
 	private String s_outputExt = "cnlp";
-	@Option(name="-z", usage="mode (pos|morph|dep|pred|role|srl)", required=true, metaVar="<string>")
+	@Option(name="-z", usage="mode (pos|morph|dep|srl)", required=true, metaVar="<string>")
 	protected String s_mode;
 	
-	public COMDecode() {}
+	public NLPDecode() {}
 	
-	public COMDecode(String[] args)
+	public NLPDecode(String[] args)
 	{
 		initArgs(args);
 		
@@ -162,7 +162,7 @@ public class COMDecode extends AbstractBin
 		}
 	}
 	
-	private DEPTree toDEPTree(List<String> tokens)
+	public DEPTree toDEPTree(List<String> tokens)
 	{
 		DEPTree tree = new DEPTree();
 		int i, size = tokens.size();
@@ -179,17 +179,17 @@ public class COMDecode extends AbstractBin
 	{
 		ZipInputStream zin = new ZipInputStream(stream);
 		
-		if      (mode.equals(COMLib.MODE_POS))
+		if      (mode.equals(NLPLib.MODE_POS))
 			return new CPOSTagger(zin);
-		else if (mode.equals(COMLib.MODE_MORPH))
+		else if (mode.equals(NLPLib.MODE_MORPH))
 			return getMPAnalyzer(zin, language);
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 			return new CDEPPassParser(zin);
-		else if (mode.equals(COMLib.MODE_PRED))
+		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(zin);
-		else if (mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(zin);
-		else if (mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(zin);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
@@ -207,60 +207,60 @@ public class COMDecode extends AbstractBin
 	{
 		List<String> modes = new ArrayList<String>();
 		
-		if (mode.equals(COMLib.MODE_POS))
+		if (mode.equals(NLPLib.MODE_POS))
 		{
-			modes.add(COMLib.MODE_POS);
+			modes.add(NLPLib.MODE_POS);
 		}
-		if (mode.equals(COMLib.MODE_MORPH))
+		if (mode.equals(NLPLib.MODE_MORPH))
 		{
 			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
-				modes.add(COMLib.MODE_POS);
+				modes.add(NLPLib.MODE_POS);
 			
-			modes.add(COMLib.MODE_MORPH);
+			modes.add(NLPLib.MODE_MORPH);
 		}
-		else if (mode.equals(COMLib.MODE_DEP))
+		else if (mode.equals(NLPLib.MODE_DEP))
 		{
 			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
 			{
-				modes.add(COMLib.MODE_POS);
-				modes.add(COMLib.MODE_MORPH);
+				modes.add(NLPLib.MODE_POS);
+				modes.add(NLPLib.MODE_MORPH);
 			}
 			else if (readerType.equals(AbstractReader.TYPE_POS))
 			{
-				modes.add(COMLib.MODE_MORPH);
+				modes.add(NLPLib.MODE_MORPH);
 			}
 			
-			modes.add(COMLib.MODE_DEP);
+			modes.add(NLPLib.MODE_DEP);
 		}
-		else if (mode.equals(COMLib.MODE_PRED))
+		else if (mode.equals(NLPLib.MODE_PRED))
 		{
-			modes.add(COMLib.MODE_PRED);
+			modes.add(NLPLib.MODE_PRED);
 		}
-		else if (mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_ROLE))
 		{
-			modes.add(COMLib.MODE_ROLE);
+			modes.add(NLPLib.MODE_ROLE);
 		}
-		else if (mode.equals(COMLib.MODE_SRL))
+		else if (mode.equals(NLPLib.MODE_SRL))
 		{
 			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
 			{
-				modes.add(COMLib.MODE_POS);
-				modes.add(COMLib.MODE_MORPH);
-				modes.add(COMLib.MODE_DEP);
+				modes.add(NLPLib.MODE_POS);
+				modes.add(NLPLib.MODE_MORPH);
+				modes.add(NLPLib.MODE_DEP);
 			}
 			else if (readerType.equals(AbstractReader.TYPE_POS))
 			{
-				modes.add(COMLib.MODE_MORPH);
-				modes.add(COMLib.MODE_DEP);
+				modes.add(NLPLib.MODE_MORPH);
+				modes.add(NLPLib.MODE_DEP);
 			}
 			else if (readerType.equals(AbstractReader.TYPE_MORPH))
 			{
-				modes.add(COMLib.MODE_DEP);
+				modes.add(NLPLib.MODE_DEP);
 			}
 			
-			modes.add(COMLib.MODE_PRED);
-			modes.add(COMLib.MODE_ROLE);
-			modes.add(COMLib.MODE_SRL);
+			modes.add(NLPLib.MODE_PRED);
+			modes.add(NLPLib.MODE_ROLE);
+			modes.add(NLPLib.MODE_SRL);
 		}
 		
 		return modes;
@@ -306,7 +306,7 @@ public class COMDecode extends AbstractBin
 		return EngineGetter.getTokenizer(language, new FileInputStream(dictionary));
 	}
 	
-	/** Called by {@link COMDecode#getComponent(Element, List)}. */
+	/** Called by {@link NLPDecode#getComponent(Element, List)}. */
 	private ObjectIntOpenHashMap<String> getModeMap(List<String> modes)
 	{
 		ObjectIntOpenHashMap<String> map = new ObjectIntOpenHashMap<String>();
@@ -320,6 +320,6 @@ public class COMDecode extends AbstractBin
 	
 	static public void main(String[] args)
 	{
-		new COMDecode(args);
+		new NLPDecode(args);
 	}
 }

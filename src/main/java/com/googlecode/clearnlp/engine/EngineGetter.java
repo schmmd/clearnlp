@@ -25,11 +25,15 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
-import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.component.AbstractComponent;
+import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.morph.CDefaultMPAnalyzer;
+import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
+import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
+import com.googlecode.clearnlp.component.srl.CSRLabeler;
 import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
 import com.googlecode.clearnlp.conversion.EnglishC2DConverter;
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
@@ -43,6 +47,7 @@ import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.morphology.DefaultMPAnalyzer;
 import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.pos.POSTagger;
 import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
 import com.googlecode.clearnlp.predicate.PredIdentifier;
@@ -230,21 +235,32 @@ public class EngineGetter implements EngineLib
 	
 	// ============================= getter: component =============================
 	
-	static public AbstractStatisticalComponent getComponent(String modelFile, String mode) throws IOException
-	{
-		return getComponent(new FileInputStream(modelFile), mode);
-	}
-	
-	static public AbstractStatisticalComponent getComponent(InputStream stream, String mode) throws IOException
+	static public AbstractComponent getComponent(InputStream stream, String language, String mode) throws IOException
 	{
 		ZipInputStream zin = new ZipInputStream(stream);
 		
-		if      (mode.equals(COMLib.MODE_POS))
+		if      (mode.equals(NLPLib.MODE_POS))
 			return new CPOSTagger(zin);
-		else if (mode.equals(COMLib.MODE_ROLE))
+		else if (mode.equals(NLPLib.MODE_MORPH))
+			return getCMPAnalyzer(zin, language);
+		else if (mode.equals(NLPLib.MODE_DEP))
+			return new CDEPPassParser(zin);
+		else if (mode.equals(NLPLib.MODE_PRED))
+			return new CPredIdentifier(zin);
+		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(zin);
+		else if (mode.equals(NLPLib.MODE_SRL))
+			return new CSRLabeler(zin);
 		
-		return null;
+		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
+	}
+	
+	static private AbstractComponent getCMPAnalyzer(ZipInputStream zin, String language) throws IOException
+	{
+		if (language.equals(AbstractReader.LANG_EN))
+			return new CEnglishMPAnalyzer(zin);
+		
+		return new CDefaultMPAnalyzer();
 	}
 	
 	// ============================= getter: semantic role labeler =============================

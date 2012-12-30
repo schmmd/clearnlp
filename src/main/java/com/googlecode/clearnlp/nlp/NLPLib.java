@@ -13,13 +13,13 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.bin;
+package com.googlecode.clearnlp.nlp;
 
 /**
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class COMLib
+public class NLPLib
 {
 	static public final String ENTRY_CONFIGURATION	= "_CONFIGURATION";
 	static public final String ENTRY_FEATURE		= "_FEATURE";

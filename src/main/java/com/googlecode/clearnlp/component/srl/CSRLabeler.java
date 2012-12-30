@@ -36,7 +36,6 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
-import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
@@ -48,6 +47,7 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLLib;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
@@ -59,10 +59,10 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  */
 public class CSRLabeler extends AbstractStatisticalComponent
 {
-	private final String ENTRY_CONFIGURATION = COMLib.MODE_SRL + COMLib.ENTRY_CONFIGURATION;
-	private final String ENTRY_FEATURE		 = COMLib.MODE_SRL + COMLib.ENTRY_FEATURE;
-	private final String ENTRY_LEXICA		 = COMLib.MODE_SRL + COMLib.ENTRY_LEXICA;
-	private final String ENTRY_MODEL		 = COMLib.MODE_SRL + COMLib.ENTRY_MODEL;
+	private final String ENTRY_CONFIGURATION = NLPLib.MODE_SRL + NLPLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = NLPLib.MODE_SRL + NLPLib.ENTRY_FEATURE;
+	private final String ENTRY_LEXICA		 = NLPLib.MODE_SRL + NLPLib.ENTRY_LEXICA;
+	private final String ENTRY_MODEL		 = NLPLib.MODE_SRL + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_PATH_UP	 = 0;
 	protected final int LEXICA_PATH_DOWN = 1;
@@ -253,6 +253,8 @@ public class CSRLabeler extends AbstractStatisticalComponent
 			g_heads = tree.getSHeads();
 			tree.clearSHeads();
 		}
+		else
+			tree.initSHeads();
 
 		initArcs();
 	}

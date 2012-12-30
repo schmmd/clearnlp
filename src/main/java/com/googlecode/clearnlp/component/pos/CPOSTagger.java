@@ -26,7 +26,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import com.googlecode.clearnlp.bin.COMLib;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -37,6 +36,7 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -51,10 +51,10 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
  */
 public class CPOSTagger extends AbstractStatisticalComponent
 {
-	private final String ENTRY_CONFIGURATION = COMLib.MODE_POS + COMLib.ENTRY_CONFIGURATION;
-	private final String ENTRY_FEATURE		 = COMLib.MODE_POS + COMLib.ENTRY_FEATURE;
-	private final String ENTRY_LEXICA		 = COMLib.MODE_POS + COMLib.ENTRY_LEXICA;
-	private final String ENTRY_MODEL		 = COMLib.MODE_POS + COMLib.ENTRY_MODEL;
+	private final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
+	private final String ENTRY_FEATURE		 = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
+	private final String ENTRY_LEXICA		 = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
+	private final String ENTRY_MODEL		 = NLPLib.MODE_POS + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_LOWER_SIMPLIFIED_FORMS = 0;
 	protected final int LEXICA_AMBIGUITY_CLASSES      = 1;
@@ -204,7 +204,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		Map<String,String> mAmbi = new HashMap<String,String>();
 		StringDoublePair[] ps;
 		StringBuilder build;
-				
+		
 		for (String key : p_ambi.keySet())
 		{
 			build = new StringBuilder();
