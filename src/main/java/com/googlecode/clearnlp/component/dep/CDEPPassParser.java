@@ -18,6 +18,7 @@ package com.googlecode.clearnlp.component.dep;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -43,6 +44,7 @@ import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
+import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 import com.googlecode.clearnlp.util.triple.Triple;
 
@@ -74,6 +76,8 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	protected DEPNode[]			lm_deps, rm_deps;
 	protected DEPNode[]			ln_sibs, rn_sibs;
 	protected int				i_lambda, i_beta;
+	
+	protected List<List<StringIntPair>> l_2nd;
 	
 //	====================================== CONSTRUCTORS ======================================
 
@@ -242,7 +246,12 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	 	rm_deps  = new DEPNode[t_size];
 	 	ln_sibs  = new DEPNode[t_size];
 	 	rn_sibs  = new DEPNode[t_size];
-
+	 	
+	 	l_2nd = new ArrayList<List<StringIntPair>>();
+	 	
+	 	int i; for (i=0; i<t_size; i++)
+	 		l_2nd.add(new ArrayList<StringIntPair>());
+	 	
 	 	if (i_flag != FLAG_DECODE)
 	 	{
 	 		g_heads = tree.getHeads();
@@ -427,8 +436,70 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	/** Called by {@link CDEPPassParser#getLabel()}. */
 	private DEPLabel getAutoLabel(StringFeatureVector vector)
 	{
-		StringPrediction p = s_models[0].predictBest(vector);
-		return new DEPLabel(p.label);
+		Pair<StringPrediction,StringPrediction> ps = s_models[0].predictTwo(vector);
+		DEPLabel fst = new DEPLabel(ps.o1.label);
+		DEPLabel snd = new DEPLabel(ps.o2.label);
+		List<StringIntPair> p;
+		
+		if (ps.o1.score - ps.o2.score < 1)
+		{
+			if (fst.isArc(LB_NO))
+			{
+				if (snd.isArc(LB_LEFT))
+				{
+					p = l_2nd.get(i_lambda);
+					p.add(new StringIntPair(snd.deprel, i_beta));
+				}
+				else if (snd.isArc(LB_RIGHT))
+				{
+					p = l_2nd.get(i_beta);
+					p.add(new StringIntPair(snd.deprel, i_lambda));
+				}
+			}
+		}
+		
+		return fst;
+	}
+	
+	protected int[] getCosts()
+	{
+		int[] costs = new int[2];
+		
+		costs[0] = getCostReduce();
+		costs[1] = getCostShift();
+		
+		return costs;
+	}
+	
+	private int getCostReduce()
+	{
+		int cost = (g_heads[i_lambda].i > i_beta) ? 1 : 0;
+		int i;
+		
+		for (i=i_beta+1; i<t_size; i++)
+		{
+			if (g_heads[i].i == i_lambda)
+				cost++;
+		}
+		
+		return cost;
+	}
+	
+	private int getCostShift()
+	{
+		int cost = (g_heads[i_beta].i < i_lambda) ? 1 : 0;
+		int i;
+		
+		for (i=i_lambda-1; i>0; i--)
+		{
+			if (s_reduce.contains(i))
+				continue;
+			
+			if (g_heads[i].i == i_beta)
+				cost++;
+		}
+		
+		return cost;
 	}
 	
 	/** Called by {@link CDEPPassParser#depParseAux()}. */
@@ -530,7 +601,8 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		Triple<DEPNode,String,Double> max = new Triple<DEPNode,String,Double>(null, null, -1d);
 		DEPNode root = d_tree.get(DEPLib.ROOT_ID);
 		int i, size = d_tree.size();
-		DEPNode node;
+		List<StringIntPair> list;
+		DEPNode node, head;
 		
 		for (i=1; i<size; i++)
 		{
@@ -538,12 +610,29 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 			
 			if (!node.hasHead())
 			{
-				max.set(root, DEPLibEn.DEP_ROOT, -1d);
+				if (!(list = l_2nd.get(node.id)).isEmpty())
+				{
+					for (StringIntPair p : list)
+					{
+						head = d_tree.get(p.i);
+						
+						if (!head.isDescendentOf(node))
+						{
+							node.setHead(head, p.s);
+							break;
+						}
+					}
+				}
 				
-				postProcessAux(node, -1, max);
-				postProcessAux(node, +1, max);
-				
-				node.setHead(max.o1, max.o2);
+				if (!node.hasHead())
+				{
+					max.set(root, DEPLibEn.DEP_ROOT, -1d);
+					
+					postProcessAux(node, -1, max);
+					postProcessAux(node, +1, max);
+					
+					node.setHead(max.o1, max.o2);					
+				}
 			}
 		}
 	}

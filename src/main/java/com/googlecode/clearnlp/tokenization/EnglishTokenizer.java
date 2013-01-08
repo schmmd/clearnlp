@@ -16,7 +16,6 @@
 package com.googlecode.clearnlp.tokenization;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,7 +42,7 @@ import com.googlecode.clearnlp.util.pair.StringBooleanPair;
  */
 public class EnglishTokenizer extends AbstractTokenizer
 {
-	protected final String F_DIR			= "tokenize"+File.separator;
+	protected final String F_DIR			= "tokenize/";
 	protected final String F_EMOTICONS		= F_DIR+"emoticons.txt";
 	protected final String F_ABBREVIATIONS	= F_DIR+"abbreviations.txt";
 	protected final String F_HYPHENS		= F_DIR+"hyphens.txt";

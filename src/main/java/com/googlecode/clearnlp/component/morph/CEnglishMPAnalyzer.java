@@ -16,7 +16,6 @@
 package com.googlecode.clearnlp.component.morph;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -47,7 +46,7 @@ public class CEnglishMPAnalyzer extends AbstractComponent
 {
 	final public String FIELD_DELIM = "_";
 	
-	final String LANG_DIR  = AbstractReader.LANG_EN + File.separator;
+	final String LANG_DIR  = AbstractReader.LANG_EN + "/";
 	final String NOUN_EXC  = LANG_DIR+"noun.exc";
 	final String VERB_EXC  = LANG_DIR+"verb.exc";
 	final String ADJ_EXC   = LANG_DIR+"adj.exc";
