@@ -57,6 +57,8 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	
 //	====================================== CONSTRUCTORS ======================================
 	
+	public AbstractStatisticalComponent() {}
+	
 	/** Constructs a component for collecting lexica. */
 	public AbstractStatisticalComponent(JointFtrXml[] xmls)
 	{

@@ -65,16 +65,6 @@ public class StringModel extends AbstractModel
 		super(reader);
 	}
 	
-	/**
-	 * Constructs a string model by copying the specific model.
-	 * @param model the model to be copied.
-	 */
-	public StringModel(StringModel model)
-	{
-		super(model);
-		m_features = new HashMap<String, ObjectIntOpenHashMap<String>>(model.m_features);
-	}
-	
 	/* (non-Javadoc)
 	 * @see edu.colorado.clear.classification.model.AbstractModel#load(java.io.Reader)
 	 */

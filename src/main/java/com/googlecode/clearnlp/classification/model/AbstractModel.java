@@ -81,20 +81,6 @@ abstract public class AbstractModel
 	}
 	
 	/**
-	 * Constructs an abstract model by copying the specific model.
-	 * @param model the model to be copied.
-	 */
-	protected AbstractModel(AbstractModel model)
-	{
-		n_labels   = model.n_labels;
-		n_features = model.n_features;
-		d_weights  = Arrays.copyOf(model.d_weights, model.d_weights.length);
-		a_labels   = Arrays.copyOf(model.a_labels , model.a_labels.length);
-		m_labels   = new ObjectIntOpenHashMap<String>(model.m_labels);
-		i_solver   = model.i_solver;
-	}
-	
-	/**
 	 * Loads this model from the specific reader.
 	 * @param reader the reader to load the model from.
 	 */

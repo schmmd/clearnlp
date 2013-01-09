@@ -52,15 +52,6 @@ public class SparseModel extends AbstractModel
 		super(reader);
 	}
 	
-	/**
-	 * Constructs a sparse model by copying the specific model.
-	 * @param model the model to be copied.
-	 */
-	public SparseModel(SparseModel model)
-	{
-		super(model);
-	}
-	
 	/* (non-Javadoc)
 	 * @see edu.colorado.clear.classification.model.AbstractModel#load(java.io.Reader)
 	 */

@@ -27,8 +27,8 @@ import com.googlecode.clearnlp.util.triple.Triple;
 
 /**
  * AdaGrad algorithm.
- * @since 1.0.0
- * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ * @since 1.3.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
 public class AdaGrad extends AbstractAlgorithm
 {
@@ -36,7 +36,6 @@ public class AdaGrad extends AbstractAlgorithm
 	protected Random r_rand;
 	protected double d_alpha;
 	protected double d_rho;
-	
 	
 	/**
 	 * @param alpha the learning rate.
@@ -138,6 +137,38 @@ public class AdaGrad extends AbstractAlgorithm
 		}
 		
 		return indices;
+	}
+	
+	protected IntPrediction getPrediction(int L, int y, int[] x, double[] v, double[] weights)
+	{
+		double[] scores = new double[L];
+		int i, label, size = x.length;
+		
+		Arrays.fill(scores, 1);
+		scores[y] = 0;
+		
+		if (v != null)
+		{
+			for (i=0; i<size; i++)
+				for (label=0; label<L; label++)
+					scores[label] += weights[getWeightIndex(L, label, x[i])] * v[i];
+		}
+		else
+		{
+			for (i=0; i<size; i++)
+				for (label=0; label<L; label++)
+					scores[label] += weights[getWeightIndex(L, label, x[i])];
+		}
+		
+		IntPrediction max = new IntPrediction(0, scores[0]);
+		
+		for (label=1; label<L; label++)
+		{
+			if (max.score < scores[label])
+				max.set(label, scores[label]);
+		}
+		
+		return max;
 	}
 	
 	protected Triple<IntPrediction,IntPrediction,IntPrediction> getPredictions(int L, int y, int[] x, double[] v, double[] weights)
