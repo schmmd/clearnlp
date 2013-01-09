@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.online;
+package com.googlecode.clearnlp.classification.model;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -22,10 +22,10 @@ import java.util.List;
 import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.component.AbstractComponent;
+import com.googlecode.clearnlp.component.pos.ONPOSTagger;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.nlp.NLPDecode;
-import com.googlecode.clearnlp.online.ONPOSTagger;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
@@ -40,8 +40,8 @@ public class DemoONDecoder
 	
 	public DemoONDecoder(String dictFile, String posModelFile, String depModelFile, String predModelFile, String roleModelFile, String srlModelFile, String inputFile, String outputFile) throws Exception
 	{
-		AbstractTokenizer tokenizer  = EngineGetter.getTokenizer(language, new FileInputStream(dictFile));
-		ONPOSTagger tagger = new ONPOSTagger(new ZipInputStream(new FileInputStream(posModelFile)), 0.01, 0.1);
+		AbstractTokenizer tokenizer = EngineGetter.getTokenizer(language, new FileInputStream(dictFile));
+		ONPOSTagger tagger = new ONPOSTagger(new ZipInputStream(new FileInputStream(posModelFile)), 10, 0.01, 0.1);
 				
 	/*	AbstractComponent analyzer   = EngineGetter.getComponent(new FileInputStream(dictFile)     , language, NLPLib.MODE_MORPH);
 		AbstractComponent parser     = EngineGetter.getComponent(new FileInputStream(depModelFile) , language, NLPLib.MODE_DEP);
@@ -52,17 +52,25 @@ public class DemoONDecoder
 	//	AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, labeler};
 		AbstractComponent[] components = {tagger};
 		
-		String sentence = "CUTE GUY AT SAFEWAY JUST SMILED AT ME";
-		DEPTree tree = process(tokenizer, components, sentence);
+		String sentence;
+		DEPTree tree;
+		
+		sentence = "CUTE GUY AT SAFEWAY JUST SMILED AT ME";
+		tree = process(tokenizer, components, sentence);
 		
 		tree.get(1).pos = "JJ";
 		tree.get(2).pos = "NN";
 		tree.get(3).pos = "IN";
-		tree.get(6).pos = "VBD";
 		tree.get(7).pos = "IN";
 		tree.get(8).pos = "PRP";
 		
 		tagger.trainHard(tree);
+
+		
+		
+		
+		
+		
 		
 	//	process(tokenizer, components, UTInput.createBufferedFileReader(inputFile), UTOutput.createPrintBufferedFileStream(outputFile));
 	}

@@ -51,10 +51,10 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
  */
 public class CPOSTagger extends AbstractStatisticalComponent
 {
-	private final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
-	private final String ENTRY_FEATURE		 = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
-	private final String ENTRY_LEXICA		 = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
-	private final String ENTRY_MODEL		 = NLPLib.MODE_POS + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
+	protected final String ENTRY_FEATURE		 = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
+	protected final String ENTRY_LEXICA		 = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
+	protected final String ENTRY_MODEL		 = NLPLib.MODE_POS + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_LOWER_SIMPLIFIED_FORMS = 0;
 	protected final int LEXICA_AMBIGUITY_CLASSES      = 1;
@@ -67,6 +67,8 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	
 //	====================================== CONSTRUCTORS ======================================
 
+	public CPOSTagger() {}
+	
 	/** Constructs a part-of-speech tagger for collecting lexica. */
 	public CPOSTagger(JointFtrXml[] xmls, Set<String> sLsfs)
 	{
@@ -131,7 +133,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void loadLexica(ZipInputStream zin) throws Exception
+	protected void loadLexica(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = UTInput.createBufferedReader(zin);
 		System.out.println("Loading lexica.");
@@ -154,7 +156,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void saveLexica(ZipOutputStream zout) throws Exception
+	protected void saveLexica(ZipOutputStream zout) throws Exception
 	{
 		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
 		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
@@ -319,7 +321,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	}
 	
 	/** Called by {@link CPOSTagger#getLabel()}. */
-	private String getGoldLabel()
+	protected String getGoldLabel()
 	{
 		return g_tags[i_input];
 	}

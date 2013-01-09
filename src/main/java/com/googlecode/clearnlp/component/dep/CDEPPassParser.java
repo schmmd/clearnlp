@@ -55,10 +55,10 @@ import com.googlecode.clearnlp.util.triple.Triple;
  */
 public class CDEPPassParser extends AbstractStatisticalComponent
 {
-	private final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP + NLPLib.ENTRY_CONFIGURATION;
-	private final String ENTRY_FEATURE		 = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;
-	private final String ENTRY_LEXICA		 = NLPLib.MODE_DEP + NLPLib.ENTRY_LEXICA;
-	private final String ENTRY_MODEL		 = NLPLib.MODE_DEP + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP + NLPLib.ENTRY_CONFIGURATION;
+	protected final String ENTRY_FEATURE		 = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;
+	protected final String ENTRY_LEXICA		 = NLPLib.MODE_DEP + NLPLib.ENTRY_LEXICA;
+	protected final String ENTRY_MODEL		 = NLPLib.MODE_DEP + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_PUNCTUATION = 0;
 	
@@ -81,6 +81,8 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	
 //	====================================== CONSTRUCTORS ======================================
 
+	public CDEPPassParser() {}
+	
 	/** Constructs a dependency parser for collecting lexica. */
 	public CDEPPassParser(JointFtrXml[] xmls)
 	{
@@ -148,7 +150,7 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void loadLexica(ZipInputStream zin) throws Exception
+	protected void loadLexica(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
 		System.out.println("Loading lexica.");
@@ -170,7 +172,7 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	private void saveLexica(ZipOutputStream zout) throws Exception
+	protected void saveLexica(ZipOutputStream zout) throws Exception
 	{
 		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
 		PrintStream fout = UTOutput.createPrintBufferedStream(zout);

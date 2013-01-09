@@ -55,6 +55,12 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 	protected int i_nament;
 	protected int i_coref;
 	
+	/** For part-of-speech tagging. */
+	public JointReader(int iForm, int iPos)
+	{
+		init(-1, iForm, -1, iPos, -1, -1, -1, -1, -1, -1, -1);
+	}
+	
 	/**
 	 * Constructs a dependency reader.
 	 * @param iId the column index of the node ID field.

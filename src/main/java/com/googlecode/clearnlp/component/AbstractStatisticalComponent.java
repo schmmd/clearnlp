@@ -25,6 +25,7 @@ import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.utils.IOUtils;
 
+import com.googlecode.clearnlp.classification.model.ONStringModel;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
@@ -212,6 +213,22 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	public StringModel[] getModels()
 	{
 		return s_models;
+	}
+	
+	/** For online decoders. */
+	protected ONStringModel getOnlineModel(ZipInputStream zin, double alpha, double rho) throws Exception
+	{
+		BufferedReader fin = UTInput.createBufferedReader(zin);
+		return new ONStringModel(fin, alpha, rho);
+	}
+	
+	protected void saveOnlineModel(ZipOutputStream zout, String entryName, ONStringModel model) throws Exception
+	{
+		zout.putNextEntry(new ZipEntry(entryName));
+		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
+		model.save(fout);
+		fout.flush();
+		zout.closeEntry();
 	}
 	
 	/** @return all objects containing lexica. */
