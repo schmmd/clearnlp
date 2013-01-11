@@ -47,7 +47,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
 public class StringModel extends AbstractModel
 {
 	/** The map between features and their indices. */
-	private Map<String,ObjectIntOpenHashMap<String>> m_features;
+	protected Map<String,ObjectIntOpenHashMap<String>> m_features;
 	
 	/** Constructs a string model for training. */
 	public StringModel()
@@ -103,7 +103,7 @@ public class StringModel extends AbstractModel
 		System.out.println();
 	}
 
-	public void loadFeatures(BufferedReader fin) throws IOException
+	protected void loadFeatures(BufferedReader fin) throws IOException
 	{
 		ObjectIntOpenHashMap<String> map;
 		int i, j, typeSize, valueSize;
@@ -132,7 +132,7 @@ public class StringModel extends AbstractModel
 		}
 	}
 	
-	public void saveFeatures(PrintStream fout)
+	protected void saveFeatures(PrintStream fout)
 	{
 		ObjectIntOpenHashMap<String> map;
 		StringBuilder build;

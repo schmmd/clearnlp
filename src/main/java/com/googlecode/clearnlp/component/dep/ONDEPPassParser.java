@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.component.pos;
+package com.googlecode.clearnlp.component.dep;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,17 +28,17 @@ import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.util.pair.Pair;
 
 /**
- * Part-of-speech tagger using document frequency cutoffs.
+ * Dependency parser using *-pass transitions.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class ONPOSTagger extends CPOSTagger
+public class ONDEPPassParser extends CDEPPassParser
 {
-	ONStringModel o_model;
+	private ONStringModel o_model;
 	
 //	====================================== CONSTRUCTORS ======================================
-	
-	public ONPOSTagger(ZipInputStream zin, double alpha, double rho)
+
+	public ONDEPPassParser(ZipInputStream zin, double alpha, double rho)
 	{
 		loadModels(zin, alpha, rho);
 		
@@ -77,10 +77,30 @@ public class ONPOSTagger extends CPOSTagger
 	
 //	====================================== TRAIN ======================================
 	
+	private void initOnline(DEPTree tree)
+	{
+		i_lambda = 0;
+	 	i_beta   = 1;
+	 	
+	 	s_reduce.clear();
+	 	
+	 	int i; for (i=0; i<t_size; i++)
+	 	{
+	 		lm_deps[i] = null;
+	 		rm_deps[i] = null;
+	 		ln_sibs[i] = null;
+	 		rn_sibs[i] = null;
+	 		
+	 		l_2nd.get(i).clear();
+	 	}
+	 	
+	 	tree.clearHeads();
+	}
+	
 	public void trainHard(DEPTree tree, int maxIter)
 	{
 		List<Pair<String,StringFeatureVector>> insts;
-		int[] counts = new int[2];
+		int[] counts = new int[4];
 		byte flag = i_flag;
 		int i;
 		
@@ -89,10 +109,10 @@ public class ONPOSTagger extends CPOSTagger
 		
 		for (i=0; i<maxIter; i++)
 		{
-			tree.clearPOSTags();
+			initOnline(tree);
 			Arrays.fill(counts, 0);
 			
-			insts = tag();
+			insts = parse();
 			countAccuracy(counts);
 			
 			if (counts[0] == counts[1])	break;
@@ -105,7 +125,7 @@ public class ONPOSTagger extends CPOSTagger
 	public void trainSoft(List<DEPTree> trees)
 	{
 		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(), tmp;
-		int[] counts = new int[2];
+		int[] counts = new int[4];
 		byte flag = i_flag;
 		
 		i_flag = FLAG_BOOTSTRAP;
@@ -115,7 +135,7 @@ public class ONPOSTagger extends CPOSTagger
 			init(tree);
 			Arrays.fill(counts, 0);
 			
-			tmp = tag();
+			tmp = parse();
 			countAccuracy(counts);
 			
 			if (counts[0] != counts[1])

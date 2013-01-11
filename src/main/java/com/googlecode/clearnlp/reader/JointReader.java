@@ -61,6 +61,12 @@ public class JointReader extends AbstractColumnReader<DEPTree>
 		init(-1, iForm, -1, iPos, -1, -1, -1, -1, -1, -1, -1);
 	}
 	
+	/** For dependency parsing. */
+	public JointReader(int iId, int iForm, int iLemma, int iPos, int iFeats, int iHeadId, int iDeprel)
+	{
+		init(iId, iForm, iLemma, iPos, iFeats, iHeadId, iDeprel, -1, -1, -1, -1);
+	} 
+	
 	/**
 	 * Constructs a dependency reader.
 	 * @param iId the column index of the node ID field.

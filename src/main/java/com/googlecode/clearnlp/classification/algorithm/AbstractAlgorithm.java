@@ -38,8 +38,8 @@ abstract public class AbstractAlgorithm
 	static public final byte SOLVER_LIBLINEAR_LR2_L2_SV = 1;
 	/** The flag to indicate L2-regularized logistic regression (dual). */
 	static public final byte SOLVER_LIBLINEAR_LR2_LR = 2;
-	/** The flag to indicate L2-regularized L1-loss support vector classification (dual) with precision bias. */
-	static public final byte SOLVER_LIBLINEAR_LR2_L1_SV_PREC = 3;
+	/** The flag to indicate adaptive gradient method. */
+	static public final byte SOLVER_ADAGRAD = 3;
 	
 	/**
 	 * Returns the weight vector for the specific label given the training space.

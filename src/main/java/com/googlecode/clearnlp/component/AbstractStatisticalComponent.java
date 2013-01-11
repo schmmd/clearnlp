@@ -153,6 +153,13 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 		s_models[index] = new StringModel(fin);
 	}
 	
+	/** For online decoders. */
+	protected void loadOnlineModels(ZipInputStream zin, int index, double alpha, double rho) throws Exception
+	{
+		BufferedReader fin = UTInput.createBufferedReader(zin);
+		s_models[index] = new ONStringModel(fin, alpha, rho);
+	}
+	
 	/** Saves all models of this joint-component. */
 	abstract public void saveModels(ZipOutputStream zout);
 	
@@ -213,22 +220,6 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	public StringModel[] getModels()
 	{
 		return s_models;
-	}
-	
-	/** For online decoders. */
-	protected ONStringModel getOnlineModel(ZipInputStream zin, double alpha, double rho) throws Exception
-	{
-		BufferedReader fin = UTInput.createBufferedReader(zin);
-		return new ONStringModel(fin, alpha, rho);
-	}
-	
-	protected void saveOnlineModel(ZipOutputStream zout, String entryName, ONStringModel model) throws Exception
-	{
-		zout.putNextEntry(new ZipEntry(entryName));
-		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		model.save(fout);
-		fout.flush();
-		zout.closeEntry();
 	}
 	
 	/** @return all objects containing lexica. */

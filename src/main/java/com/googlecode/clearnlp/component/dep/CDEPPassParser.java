@@ -264,8 +264,18 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	/** Called by {@link CDEPPassParser#process(DEPTree)}. */
 	protected void processAux()
 	{
-		if (i_flag == FLAG_LEXICA)	addLexica();
-		else						parse();
+		if (i_flag == FLAG_LEXICA)
+			addLexica();
+		else
+		{
+			List<Pair<String,StringFeatureVector>> insts = parse();
+			
+			if (i_flag == FLAG_TRAIN || i_flag == FLAG_BOOTSTRAP)
+			{
+				for (Pair<String,StringFeatureVector> inst : insts)
+					s_spaces[0].addInstance(inst.o1, inst.o2);				
+			}
+		}
 	}
 	
 	/** Called by {@link CDEPPassParser#processAux()}. */
@@ -287,8 +297,9 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	}
 	
 	/** Called by {@link CDEPPassParser#processAux()}. */
-	protected void parse()
+	protected List<Pair<String,StringFeatureVector>> parse()
 	{
+		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>();
 		DEPNode  lambda, beta;
 		DEPLabel label;
 		
@@ -302,7 +313,7 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 			
 			lambda = d_tree.get(i_lambda);
 			beta   = d_tree.get(i_beta);
-			label  = getLabel();
+			label  = getLabel(insts);
 			
 			if (label.isArc(LB_LEFT))
 			{
@@ -337,10 +348,12 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		
 		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 			postProcess();
+		
+		return insts;
 	}
 	
 	/** Called by {@link CDEPPassParser#parse()}. */
-	protected DEPLabel getLabel()
+	protected DEPLabel getLabel(List<Pair<String,StringFeatureVector>> insts)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
 		DEPLabel label = null;
@@ -348,7 +361,7 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		if (i_flag == FLAG_TRAIN)
 		{
 			label = getGoldLabel();
-			s_spaces[0].addInstance(label.toString(), vector);
+			insts.add(new Pair<String,StringFeatureVector>(label.toString(), vector));
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
@@ -357,7 +370,7 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		else if (i_flag == FLAG_BOOTSTRAP)
 		{
 			label = getAutoLabel(vector);
-			s_spaces[0].addInstance(getGoldLabel().toString(), vector);
+			insts.add(new Pair<String,StringFeatureVector>(getGoldLabel().toString(), vector));
 		}
 
 		return label;
@@ -641,8 +654,6 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	
 	protected void postProcessAux(DEPNode node, int dir, Triple<DEPNode,String,Double> max)
 	{
-		JointFtrXml xml   = f_xmls[0];
-		StringModel model = s_models[0];
 		StringFeatureVector vector;
 		List<StringPrediction> ps;
 		int i, size = d_tree.size();
@@ -659,9 +670,9 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 			if (dir < 0)	i_lambda = i;
 			else			i_beta   = i;
 			
-			vector = getFeatureVector(xml);
-			ps = model.predictAll(vector);
-			model.normalizeScores(ps);
+			vector = getFeatureVector(f_xmls[0]);
+			ps = s_models[0].predictAll(vector);
+			s_models[0].normalizeScores(ps);
 			
 			for (StringPrediction p : ps)
 			{

@@ -15,19 +15,17 @@
 */
 package com.googlecode.clearnlp.demo;
 
-import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.PrintStream;
-import java.util.List;
 import java.util.zip.ZipInputStream;
 
 import com.googlecode.clearnlp.component.AbstractComponent;
+import com.googlecode.clearnlp.component.dep.ONDEPPassParser;
 import com.googlecode.clearnlp.component.pos.ONPOSTagger;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.nlp.NLPDecode;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.reader.AbstractReader;
-import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 
 /**
@@ -40,22 +38,21 @@ public class DemoONDecoder
 	
 	public DemoONDecoder(String dictFile, String posModelFile, String depModelFile, String predModelFile, String roleModelFile, String srlModelFile, String inputFile, String outputFile) throws Exception
 	{
-		AbstractTokenizer tokenizer = EngineGetter.getTokenizer(language, new FileInputStream(dictFile));
-		ONPOSTagger tagger = new ONPOSTagger(new ZipInputStream(new FileInputStream(posModelFile)), 10, 0.01, 0.1);
-				
-	/*	AbstractComponent analyzer   = EngineGetter.getComponent(new FileInputStream(dictFile)     , language, NLPLib.MODE_MORPH);
-		AbstractComponent parser     = EngineGetter.getComponent(new FileInputStream(depModelFile) , language, NLPLib.MODE_DEP);
+		AbstractTokenizer tokenizer  = EngineGetter.getTokenizer(language, new FileInputStream(dictFile));
+		AbstractComponent analyzer   = EngineGetter.getComponent(new FileInputStream(dictFile), language, NLPLib.MODE_MORPH);
 		AbstractComponent identifier = EngineGetter.getComponent(new FileInputStream(predModelFile), language, NLPLib.MODE_PRED);
 		AbstractComponent classifier = EngineGetter.getComponent(new FileInputStream(roleModelFile), language, NLPLib.MODE_ROLE);
-		AbstractComponent labeler    = EngineGetter.getComponent(new FileInputStream(srlModelFile) , language, NLPLib.MODE_SRL);*/
+		AbstractComponent labeler    = EngineGetter.getComponent(new FileInputStream(srlModelFile) , language, NLPLib.MODE_SRL);
 		
-	//	AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, labeler};
-		AbstractComponent[] components = {tagger};
+		ONPOSTagger     tagger = new ONPOSTagger(new ZipInputStream(new FileInputStream(posModelFile)), 0.01, 0.1);
+		ONDEPPassParser parser = new ONDEPPassParser(new ZipInputStream(new FileInputStream(depModelFile)), 0.01, 0.1);
+				
+		AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, labeler};
 		
 		String sentence;
 		DEPTree tree;
 		
-		sentence = "CUTE GUY AT SAFEWAY JUST SMILED AT ME";
+		sentence = "CUTE GIRL AT SAFEWAY JUST SMILED AT ME";
 		tree = process(tokenizer, components, sentence);
 		
 		tree.get(1).pos = "JJ";
@@ -64,15 +61,18 @@ public class DemoONDecoder
 		tree.get(7).pos = "IN";
 		tree.get(8).pos = "PRP";
 		
-		tagger.trainHard(tree);
-
+		tagger.trainHard(tree, 10);
+		tree = process(tokenizer, components, sentence);
 		
+		sentence = "Is this person's sex male or female?";
+		tree = process(tokenizer, components, sentence);
 		
+		tree.get(3).setHead(tree.get(5), "poss");
+		tree.get(5).setHead(tree.get(1), "nsubj");
+		tree.get(6).setHead(tree.get(1), "attr");
 		
-		
-		
-		
-	//	process(tokenizer, components, UTInput.createBufferedFileReader(inputFile), UTOutput.createPrintBufferedFileStream(outputFile));
+		parser.trainHard(tree, 10);
+		tree = process(tokenizer, components, sentence);
 	}
 	
 	public DEPTree process(AbstractTokenizer tokenizer, AbstractComponent[] components, String sentence)
@@ -83,29 +83,10 @@ public class DemoONDecoder
 		for (AbstractComponent component : components)
 			component.process(tree);
 
-		System.out.println(tree.toStringPOS()+"\n");
+		System.out.println(tree.toStringSRL()+"\n");
 		return tree;
 	}
 	
-	public void process(AbstractTokenizer tokenizer, AbstractComponent[] components, BufferedReader reader, PrintStream fout)
-	{
-		AbstractSegmenter segmenter = EngineGetter.getSegmenter(language, tokenizer);
-		NLPDecode nlp = new NLPDecode();
-		DEPTree tree;
-		
-		for (List<String> tokens : segmenter.getSentences(reader))
-		{
-			tree = nlp.toDEPTree(tokens);
-			
-			for (AbstractComponent component : components)
-				component.process(tree);
-			
-			fout.println(tree.toStringSRL()+"\n");
-		}
-		
-		fout.close();
-	}
-
 	public static void main(String[] args)
 	{
 		String dictFile      = args[0];	// e.g., dictionary-1.2.0.zip

@@ -17,8 +17,10 @@ package com.googlecode.clearnlp.component.pos;
 
 import java.io.BufferedReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -42,6 +44,7 @@ import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.UTString;
 import com.googlecode.clearnlp.util.map.Prob2DMap;
+import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 
 /**
@@ -270,8 +273,18 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	/** Called by {@link CPOSTagger#process(DEPTree)}. */
 	protected void processAux()
 	{
-		if (i_flag == FLAG_LEXICA)	addLexica();
-		else						tag();
+		if (i_flag == FLAG_LEXICA)
+			addLexica();
+		else
+		{
+			List<Pair<String,StringFeatureVector>> insts = tag();
+			
+			if (i_flag == FLAG_TRAIN || i_flag == FLAG_BOOTSTRAP)
+			{
+				for (Pair<String,StringFeatureVector> inst : insts)
+					s_spaces[0].addInstance(inst.o1, inst.o2);				
+			}
+		}
 	}
 	
 	/** Called by {@link CPOSTagger#processAux()}. */
@@ -290,19 +303,22 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	}
 	
 	/** Called by {@link CPOSTagger#processAux()}. */
-	protected void tag()
+	protected List<Pair<String,StringFeatureVector>> tag()
 	{
+		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>();
 		DEPNode input;
 		
 		for (i_input=1; i_input<t_size; i_input++)
 		{
 			input = d_tree.get(i_input);
-			input.pos = getLabel();
+			input.pos = getLabel(insts);
 		}
+		
+		return insts;
 	}
 	
 	/** Called by {@link CPOSTagger#tag()}. */
-	protected String getLabel()
+	protected String getLabel(List<Pair<String,StringFeatureVector>> insts)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
 		String label = null;
@@ -310,11 +326,16 @@ public class CPOSTagger extends AbstractStatisticalComponent
 		if (i_flag == FLAG_TRAIN)
 		{
 			label = getGoldLabel();
-			if (vector.size() > 0) s_spaces[0].addInstance(label, vector);
+			if (vector.size() > 0)	insts.add(new Pair<String,StringFeatureVector>(label, vector));
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
 			label = getAutoLabel(vector);
+		}
+		else if (i_flag == FLAG_BOOTSTRAP)
+		{
+			label = getAutoLabel(vector);
+			if (vector.size() > 0)	insts.add(new Pair<String,StringFeatureVector>(getGoldLabel(), vector));
 		}
 		
 		return label;
@@ -327,7 +348,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	}
 	
 	/** Called by {@link CPOSTagger#getLabel()}. */
-	private String getAutoLabel(StringFeatureVector vector)
+	protected String getAutoLabel(StringFeatureVector vector)
 	{
 		StringPrediction p = s_models[0].predictBest(vector);
 		return p.label;

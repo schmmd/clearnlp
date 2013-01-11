@@ -20,15 +20,14 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
+import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.prediction.IntPrediction;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
@@ -41,28 +40,24 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.3.1
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class ONStringModel
+public class ONStringModel extends StringModel
 {
-	/** The total number of labels. */
-	protected int n_labels;
-	/** The total number of features. */
-	protected int n_features;
 	/** The weight vector for all labels. */
 	protected List<DoubleArrayList> d_weights;
-	/** Update counts. */
-	protected List<DoubleArrayList> d_gs;
 	/** The list of all labels. */
 	protected List<String> a_labels;
-	/** The map between labels and their indices. */
-	protected ObjectIntOpenHashMap<String> m_labels;
-	/** The map between features and their indices. */
-	protected Map<String,ObjectIntOpenHashMap<String>> m_features;
-	/** The solver type (e.g., AdaGrad). */
-	protected byte i_solver;
+	/** Update counts for AdaGrad. */
+	protected List<DoubleArrayList> d_gs;
 	/** AdaGrad parameters. */
 	protected double d_alpha, d_rho;
 
 	// ----------------------------------- CONSTRUCTORS -----------------------------------
+	
+	public ONStringModel(double alpha, double rho)
+	{
+		initModel();
+		initAdaGrad(alpha, rho);
+	}
 	
 	/**
 	 * Constructs an abstract model for decoding.
@@ -74,7 +69,19 @@ public class ONStringModel
 		initAdaGrad(alpha, rho);
 	}
 	
-	protected void initAdaGrad(double alpha, double rho)
+	private void initModel()
+	{
+		n_labels   = 0;
+		n_features = 1;
+		d_weights  = new ArrayList<DoubleArrayList>();
+		d_gs       = new ArrayList<DoubleArrayList>();
+		a_labels   = new ArrayList<String>();
+		m_labels   = new ObjectIntOpenHashMap<String>();
+		m_features = new HashMap<String,ObjectIntOpenHashMap<String>>();
+		i_solver   = AbstractAlgorithm.SOLVER_ADAGRAD;
+	}
+	
+	private void initAdaGrad(double alpha, double rho)
 	{
 		d_gs = new ArrayList<DoubleArrayList>(n_features);
 		
@@ -98,10 +105,7 @@ public class ONStringModel
 	
 	// ----------------------------------- LOAD MODELS -----------------------------------
 	
-	/**
-	 * Loads this model from the specific reader.
-	 * @param reader the reader to load the model from.
-	 */
+	@Override
 	public void load(BufferedReader reader)
 	{
 		System.out.println("Loading model:");
@@ -118,7 +122,7 @@ public class ONStringModel
 		System.out.println();
 	}
 	
-	/** Loads labels from the specific reader. */
+	@Override
 	protected void loadLabels(BufferedReader fin) throws IOException
 	{
 		n_labels = Integer.parseInt(fin.readLine());
@@ -132,7 +136,8 @@ public class ONStringModel
 			m_labels.put(labels[i], i+1);
 	}
 	
-	public void loadFeatures(BufferedReader fin) throws IOException
+	@Override
+	protected void loadFeatures(BufferedReader fin) throws IOException
 	{
 		ObjectIntOpenHashMap<String> map;
 		int i, j, typeSize, valueSize;
@@ -161,11 +166,7 @@ public class ONStringModel
 		}
 	}
 	
-	/**
-	 * Loads the weight vector from the specific reader.
-	 * @param fin the reader to load the weight vector from.
-	 * @throws Exception
-	 */
+	@Override
 	protected void loadWeightVector(BufferedReader fin) throws Exception
 	{
 		int[] buffer = new int[128];
@@ -203,10 +204,7 @@ public class ONStringModel
 	
 	// ----------------------------------- SAVE MODELS -----------------------------------
 	
-	/**
-	 * Saves this model to the specific stream.
-	 * @param fout the stream to save this model to.
-	 */
+	@Override
 	public void save(PrintStream fout)
 	{
 		System.out.println("Saving model:");
@@ -223,14 +221,15 @@ public class ONStringModel
 		System.out.println();
 	}
 	
-	/** Saves labels to the specific reader. */
+	@Override
 	protected void saveLabels(PrintStream fout)
 	{
 		fout.println(n_labels);
 		fout.println(UTArray.join(a_labels, " "));
 	}
 	
-	public void saveFeatures(PrintStream fout)
+	@Override
+	protected void saveFeatures(PrintStream fout)
 	{
 		ObjectIntOpenHashMap<String> map;
 		StringBuilder build;
@@ -259,10 +258,7 @@ public class ONStringModel
 		}
 	}
 
-	/**
-	 * Saves the weight vector to the specific stream.
-	 * @param fout the output stream to save the weight vector to.
-	 */
+	@Override
 	protected void saveWeightVector(PrintStream fout)
 	{
 		DoubleArrayList weight;
@@ -289,58 +285,9 @@ public class ONStringModel
 		fout.println();
 	}
 	
-	// ----------------------------------- GETTERS -----------------------------------
-	
-	public byte getSolver()
-	{
-		return i_solver;
-	}
-	
-	public String getLabel(int index)
-	{
-		return a_labels.get(index);
-	}
-	
-	/**
-	 * Returns the index of the specific label.
-	 * Returns {@code -1} if the label is not found in this model.
-	 * @param label the label to get the index for.
-	 * @return the index of the specific label.
-	 */
-	public int getLabelIndex(String label)
-	{
-		return m_labels.get(label) - 1;
-	}
-	
-	/**
-	 * Returns the total number of labels in this model.
-	 * @return the total number of labels in this model.
-	 */
-	public int getLabelSize()
-	{
-		return n_labels;
-	}
-	
-	/**
-	 * Returns the total number of features in this model.
-	 * @return the total number of features in this model.
-	 */
-	public int getFeatureSize()
-	{
-		return n_features;
-	}
-	
 	// ----------------------------------- SETTERS -----------------------------------
 	
-	public void setSolver(byte solver)
-	{
-		i_solver = solver;
-	}
-	
-	/**
-	 * Adds the specific label to this model.
-	 * @param label the label to be added.
-	 */
+	@Override
 	public void addLabel(String label)
 	{
 		if (!m_labels.containsKey(label))
@@ -360,19 +307,7 @@ public class ONStringModel
 		}
 	}
 	
-	public void addFeatures(StringFeatureVector vector)
-	{
-		int i, size = vector.size();
-		
-		for (i=0; i<size; i++)
-			addFeature(vector.getType(i), vector.getValue(i));
-	}
-	
-	/**
-	 * Adds the specific feature to this model.
-	 * @param type the feature type.
-	 * @param value the feature value.
-	 */
+	@Override
 	public void addFeature(String type, String value)
 	{
 		ObjectIntOpenHashMap<String> map = m_features.get(type);
@@ -396,15 +331,17 @@ public class ONStringModel
 		d_gs.add(getBlankDoubleArrayList(n_labels));
 	}
 	
+	public void addFeatures(StringFeatureVector vector)
+	{
+		int i, size = vector.size();
+		
+		for (i=0; i<size; i++)
+			addFeature(vector.getType(i), vector.getValue(i));
+	}
+	
 	// ----------------------------------- PREDICT SPARSE -----------------------------------
 	
-	/**
-	 * Returns the scores of all labels given the feature vector.
-	 * For binary classification, this method calls {@link ONStringModel#getScoresBinary(SparseFeatureVector)}.
-	 * For multi-classification, this method calls {@link ONStringModel#getScoresMulti(SparseFeatureVector)}.
-	 * @param x the feature vector.
-	 * @return the scores of all labels given the feature vector.
-	 */
+	@Override
 	public double[] getScores(SparseFeatureVector x)
 	{
 		double[] scores = d_weights.get(0).toArray();
@@ -433,11 +370,7 @@ public class ONStringModel
 		return scores;
 	}
 	
-	/**
-	 * Returns an unsorted list of predictions given the specific feature vector.
-	 * @param x the feature vector.
-	 * @return an unsorted list of predictions given the specific feature vector.
-	 */
+	@Override
 	public List<StringPrediction> getPredictions(SparseFeatureVector x)
 	{
 		List<StringPrediction> list = new ArrayList<StringPrediction>(n_labels);
@@ -448,162 +381,6 @@ public class ONStringModel
 			list.add(new StringPrediction(a_labels.get(i), scores[i]));
 		
 		return list;		
-	}
-	
-	public List<IntPrediction> getIntPredictions(SparseFeatureVector x)
-	{
-		List<IntPrediction> list = new ArrayList<IntPrediction>(n_labels);
-		double[] scores = getScores(x);
-		int i;
-		
-		for (i=0; i<n_labels; i++)
-			list.add(new IntPrediction(i, scores[i]));
-		
-		return list;		
-	}
-	
-	/**
-	 * Returns {@code true} if the specific feature index is within the range of this model.
-	 * @param featureIndex the index of the feature.
-	 * @return {@code true} if the specific feature index is within the range of this model.
-	 */
-	public boolean isRange(int featureIndex)
-	{
-		return 0 < featureIndex && featureIndex < n_features;
-	}
-	
-	public void normalizeScores(List<StringPrediction> ps)
-	{
-		double sum = 0, d;
-		
-		for (StringPrediction p : ps)
-		{
-			d = 1 / (1 + Math.exp(-p.score));
-			p.score = d;
-			sum += d;
-		}
-		
-		for (StringPrediction p : ps)
-			p.score /= sum;
-	}
-	
-	/**
-	 * Returns the best prediction given the feature vector.
-	 * @param x the feature vector.
-	 * @return the best prediction given the feature vector.
-	 */
-	public StringPrediction predictBest(SparseFeatureVector x)
-	{
-		List<StringPrediction> list = getPredictions(x);
-		StringPrediction max = list.get(0), p;
-		int i;
-		
-		for (i=1; i<n_labels; i++)
-		{
-			p = list.get(i);
-			if (max.score < p.score) max = p;
-		}
-		
-		return max;
-	}
-	
-	/**
-	 * Returns the first and second best predictions given the feature vector.
-	 * @param x the feature vector.
-	 * @return the first and second best predictions given the feature vector.
-	 */
-	public Pair<StringPrediction,StringPrediction> predictTwo(SparseFeatureVector x)
-	{
-		List<StringPrediction> list = getPredictions(x);
-		StringPrediction fst = list.get(0), snd = list.get(1), p;
-		int i;
-		
-		if (fst.score < snd.score)
-		{
-			fst = snd;
-			snd = list.get(0);
-		}
-		
-		for (i=2; i<n_labels; i++)
-		{
-			p = list.get(i);
-			
-			if (fst.score < p.score)
-			{
-				snd = fst;
-				fst = p;
-			}
-			else if (snd.score < p.score)
-				snd = p;
-		}
-		
-		return new Pair<StringPrediction,StringPrediction>(fst, snd);
-	}
-	
-	/**
-	 * Returns a sorted list of predictions given the specific feature vector.
-	 * @param x the feature vector.
-	 * @return a sorted list of predictions given the specific feature vector.
-	 */
-	public List<StringPrediction> predictAll(SparseFeatureVector x)
-	{
-		List<StringPrediction> list = getPredictions(x);
-		Collections.sort(list);
-		
-		return list;
-	}
-	
-	// ----------------------------------- PREDICT STRING -----------------------------------
-	
-	public StringPrediction predictBest(StringFeatureVector x)
-	{
-		return predictBest(toSparseFeatureVector(x));
-	}
-	
-	public Pair<StringPrediction,StringPrediction> predictTwo(StringFeatureVector x)
-	{
-		return predictTwo(toSparseFeatureVector(x));
-	}
-	
-	public List<StringPrediction> predictAll(StringFeatureVector x)
-	{
-		return predictAll(toSparseFeatureVector(x));
-	}
-	
-	public List<StringPrediction> getPredictions(StringFeatureVector x)
-	{
-		return getPredictions(toSparseFeatureVector(x));
-	}
-	
-	/**
-	 * Returns the sparse feature vector converted from the string feature vector.
-	 * During the conversion, discards features not found in this model.
-	 * @param vector the string feature vector.
-	 * @return the sparse feature vector converted from the string feature vector.
-	 */
-	public SparseFeatureVector toSparseFeatureVector(StringFeatureVector vector)
-	{
-		SparseFeatureVector sparse = new SparseFeatureVector(vector.hasWeight());
-		ObjectIntOpenHashMap<String> map;
-		int i, index, size = vector.size();
-		String type, value;
-		
-		for (i=0; i<size; i++)
-		{
-			type  = vector.getType(i);
-			value = vector.getValue(i);
-			
-			if ((map = m_features.get(type)) != null && (index = map.get(value)) > 0)
-			{
-				if (sparse.hasWeight())
-					sparse.addFeature(index, vector.getWeight(i));
-				else
-					sparse.addFeature(index);
-			}
-		}
-		
-		sparse.trimToSize();
-		return sparse;
 	}
 	
 	// ----------------------------------- UPDATE -----------------------------------
