@@ -23,6 +23,7 @@
 */
 package com.googlecode.clearnlp.util;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -112,6 +113,16 @@ public class UTArray
 			arr[i++] = list.get(bIdx);
 		
 		return arr;
+	}
+	
+	static public List<String> toList(String[] arr)
+	{
+		List<String> list = new ArrayList<String>(arr.length);
+		
+		for (String item : arr)
+			list.add(item);
+		
+		return list;
 	}
 	
 	static public Set<String> toSet(String... sArr)

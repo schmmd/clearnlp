@@ -38,10 +38,22 @@ public class ONDEPPassParser extends CDEPPassParser
 	
 //	====================================== CONSTRUCTORS ======================================
 
+	public ONDEPPassParser(JointFtrXml[] xmls, Object[] lexica, double alpha, double rho)
+	{
+		f_xmls   = xmls;
+		s_models = new ONStringModel[]{new ONStringModel(alpha, rho)};
+		initLexia(lexica);
+		initOnline();
+	}
+	
 	public ONDEPPassParser(ZipInputStream zin, double alpha, double rho)
 	{
 		loadModels(zin, alpha, rho);
-		
+		initOnline();
+	}
+	
+	private void initOnline()
+	{
 		i_flag  = FLAG_DECODE;
 		o_model = (ONStringModel)s_models[0];
 	}
@@ -122,7 +134,7 @@ public class ONDEPPassParser extends CDEPPassParser
 		i_flag = flag;
 	}
 	
-	public void trainSoft(List<DEPTree> trees)
+	public void train(List<DEPTree> trees)
 	{
 		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(), tmp;
 		int[] counts = new int[4];
@@ -144,5 +156,15 @@ public class ONDEPPassParser extends CDEPPassParser
 
 		o_model.updateWeights(insts);
 		i_flag = flag;		
+	}
+	
+	public void develop(DEPTree tree)
+	{
+		byte flag = i_flag;
+		
+		i_flag = FLAG_DECODE;
+		process(tree);
+		
+		i_flag = flag;
 	}
 }

@@ -36,7 +36,7 @@ public class DemoONDecoder
 {
 	final String language = AbstractReader.LANG_EN;
 	
-	public DemoONDecoder(String dictFile, String posModelFile, String depModelFile, String predModelFile, String roleModelFile, String srlModelFile, String inputFile, String outputFile) throws Exception
+	public DemoONDecoder(String dictFile, String posModelFile, String depModelFile, String predModelFile, String roleModelFile, String srlModelFile) throws Exception
 	{
 		AbstractTokenizer tokenizer  = EngineGetter.getTokenizer(language, new FileInputStream(dictFile));
 		AbstractComponent analyzer   = EngineGetter.getComponent(new FileInputStream(dictFile), language, NLPLib.MODE_MORPH);
@@ -49,10 +49,21 @@ public class DemoONDecoder
 				
 		AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, labeler};
 		
-		String sentence;
-		DEPTree tree;
+		String sentence1, sentence2;
+		DEPTree tree1, tree2;
 		
-		sentence = "CUTE GIRL AT SAFEWAY JUST SMILED AT ME";
+		sentence1 = "The ping tests to the router are failing.";
+		tree1 = process(tokenizer, components, sentence1);
+		
+		sentence2 = "Are ping tests failing?";
+		tree2 = process(tokenizer, components, sentence2);
+		
+		tree1.get(3).pos = "NNS";
+		tagger.trainHard(tree1, 10);
+		
+		process(tokenizer, components, sentence1);
+		
+	/*	sentence = "CUTE GIRL AT SAFEWAY JUST SMILED AT ME";
 		tree = process(tokenizer, components, sentence);
 		
 		tree.get(1).pos = "JJ";
@@ -72,7 +83,7 @@ public class DemoONDecoder
 		tree.get(6).setHead(tree.get(1), "attr");
 		
 		parser.trainHard(tree, 10);
-		tree = process(tokenizer, components, sentence);
+		tree = process(tokenizer, components, sentence);*/
 	}
 	
 	public DEPTree process(AbstractTokenizer tokenizer, AbstractComponent[] components, String sentence)
@@ -95,12 +106,10 @@ public class DemoONDecoder
 		String predModelFile = args[3];	// e.g., ontonotes-en-pred-1.3.0.jar
 		String roleModelFile = args[4];	// e.g., ontonotes-en-role-1.3.0.jar
 		String srlModelFile  = args[5];	// e.g., ontonotes-en-srl-1.3.0.jar
-		String inputFile     = args[6];
-		String outputFile    = args[7];
 
 		try
 		{
-			new DemoONDecoder(dictFile, posModelFile, depModelFile, predModelFile, roleModelFile, srlModelFile, inputFile, outputFile);
+			new DemoONDecoder(dictFile, posModelFile, depModelFile, predModelFile, roleModelFile, srlModelFile);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}

@@ -19,7 +19,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -79,6 +78,8 @@ public class ONStringModel extends StringModel
 		m_labels   = new ObjectIntOpenHashMap<String>();
 		m_features = new HashMap<String,ObjectIntOpenHashMap<String>>();
 		i_solver   = AbstractAlgorithm.SOLVER_ADAGRAD;
+		
+		d_weights.add(getBlankDoubleArrayList(n_labels));
 	}
 	
 	private void initAdaGrad(double alpha, double rho)
@@ -128,7 +129,7 @@ public class ONStringModel extends StringModel
 		n_labels = Integer.parseInt(fin.readLine());
 		
 		String[] labels = fin.readLine().split(" ");
-		a_labels = Arrays.asList(labels);
+		a_labels = UTArray.toList(labels);
 		
 		m_labels = new ObjectIntOpenHashMap<String>();
 		

@@ -102,7 +102,7 @@ public class ONPOSTagger extends CPOSTagger
 		i_flag = flag;
 	}
 	
-	public void trainSoft(List<DEPTree> trees)
+	public void train(List<DEPTree> trees)
 	{
 		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(), tmp;
 		int[] counts = new int[2];

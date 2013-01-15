@@ -56,9 +56,9 @@ import com.googlecode.clearnlp.util.triple.Triple;
 public class CDEPPassParser extends AbstractStatisticalComponent
 {
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP + NLPLib.ENTRY_CONFIGURATION;
-	protected final String ENTRY_FEATURE		 = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;
-	protected final String ENTRY_LEXICA		 = NLPLib.MODE_DEP + NLPLib.ENTRY_LEXICA;
-	protected final String ENTRY_MODEL		 = NLPLib.MODE_DEP + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;
+	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP + NLPLib.ENTRY_LEXICA;
+	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_PUNCTUATION = 0;
 	
