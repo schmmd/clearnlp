@@ -38,10 +38,22 @@ public class ONPOSTagger extends CPOSTagger
 	
 //	====================================== CONSTRUCTORS ======================================
 	
+	public ONPOSTagger(JointFtrXml[] xmls, Object[] lexica, double alpha, double rho)
+	{
+		f_xmls   = xmls;
+		s_models = new ONStringModel[]{new ONStringModel(alpha, rho)};
+		initLexia(lexica);
+		initOnline();
+	}
+	
 	public ONPOSTagger(ZipInputStream zin, double alpha, double rho)
 	{
 		loadModels(zin, alpha, rho);
-		
+		initOnline();
+	}
+	
+	private void initOnline()
+	{
 		i_flag  = FLAG_DECODE;
 		o_model = (ONStringModel)s_models[0];
 	}
@@ -102,27 +114,48 @@ public class ONPOSTagger extends CPOSTagger
 		i_flag = flag;
 	}
 	
-	public void train(List<DEPTree> trees)
+	public void train(List<DEPTree> trees, int bIdx, int eIdx)
 	{
-		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(), tmp;
-		int[] counts = new int[2];
+		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>();
 		byte flag = i_flag;
+		int i;
 		
-		i_flag = FLAG_BOOTSTRAP;
+		i_flag = FLAG_TRAIN;
 		
-		for (DEPTree tree : trees)
+		for (i=bIdx; i<eIdx; i++)
 		{
-			init(tree);
-			Arrays.fill(counts, 0);
-			
-			tmp = tag();
-			countAccuracy(counts);
-			
-			if (counts[0] != counts[1])
-				insts.addAll(tmp);
+			init(trees.get(i));
+			insts.addAll(tag());
 		}
 
 		o_model.updateWeights(insts);
 		i_flag = flag;		
+	}
+	
+	public void train(DEPTree tree)
+	{
+		byte flag = i_flag;
+		
+		i_flag = FLAG_BOOTSTRAP;
+		init(tree);
+		
+		o_model.updateWeights(tag());
+		i_flag = flag;		
+	}
+	
+	public void develop(DEPTree tree)
+	{
+		byte flag = i_flag;
+		
+		i_flag = FLAG_DEVELOP;
+		process(tree);
+		
+		i_flag = flag;
+	}
+	
+	public void resetGold()
+	{
+		int i; for (i=1; i<t_size; i++)
+			d_tree.get(i).pos = g_tags[i];
 	}
 }

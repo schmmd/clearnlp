@@ -16,6 +16,7 @@
 package com.googlecode.clearnlp.nlp;
 
 import java.io.FileInputStream;
+import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -35,6 +36,7 @@ import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
+import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.UTXml;
 import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
 
@@ -45,9 +47,13 @@ import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
 public class NLPDevelop extends NLPTrain
 {
 	@Option(name="-d", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
-	private String s_devDir;
+	protected String s_devDir;
 	@Option(name="-r", usage="the random seed", required=false, metaVar="<directory>")
-	private int i_rand = 0;
+	protected int i_rand = 0;
+	@Option(name="-g", usage="if set, generate files", required=false, metaVar="<boolean>")
+	protected boolean b_generate = false;
+	
+	public NLPDevelop() {}
 	
 	public NLPDevelop(String[] args)
 	{
@@ -69,21 +75,21 @@ public class NLPDevelop extends NLPTrain
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		
 		if      (mode.equals(NLPLib.MODE_POS))
-			developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode);
+			developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPPassParser(xmls), mode);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPPassParser(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_PRED))
-			decode(reader, getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, -1), devFiles, mode);
+			decode(reader, getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, -1), devFiles, mode, "cnlp");
 		else if (mode.equals(NLPLib.MODE_ROLE))
-			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, -1), devFiles, mode);
+			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, -1), devFiles, mode, "cnlp");
 		else if (mode.equals(NLPLib.MODE_SRL))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CSRLabeler(xmls), mode);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CSRLabeler(xmls), mode, -1);
 	}
 	
-	protected double developComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, AbstractStatisticalComponent component, String mode) throws Exception
+	protected double developComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, AbstractStatisticalComponent component, String mode, int devId) throws Exception
 	{
-		Object[] lexica = (component != null) ? getLexica(component, reader, xmls, trainFiles, -1) : null;
-		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, null, lexica, mode, -1);
+		Object[] lexica = (component != null) ? getLexica(component, reader, xmls, trainFiles, devId) : null;
+		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, null, lexica, mode, devId);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		int i, mSize = spaces.length, nUpdate = 1;
 		AbstractStatisticalComponent processor;
@@ -91,6 +97,7 @@ public class NLPDevelop extends NLPTrain
 		StringModel[] models = new StringModel[mSize];
 		double prevScore = -1, currScore = 0;
 		Random rand = new Random(i_rand);
+		int iter = 0;
 		
 		do
 		{
@@ -103,35 +110,38 @@ public class NLPDevelop extends NLPTrain
 			}
 
 			processor = getComponent(xmls, models, lexica, mode);
-			currScore = decode(reader, processor, devFiles, mode);
+			currScore = decode(reader, processor, devFiles, mode, Integer.toString(iter));
+			iter++;
 		}
 		while (prevScore < currScore);
 		
 		return prevScore;
 	}
 	
-	protected void developComponentBoot(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, AbstractStatisticalComponent component, String mode) throws Exception
+	protected void developComponentBoot(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, AbstractStatisticalComponent component, String mode, int devId) throws Exception
 	{
-		Object[] lexica = getLexica(component, reader, xmls, trainFiles, -1);
+		Object[] lexica = getLexica(component, reader, xmls, trainFiles, devId);
 		ObjectDoublePair<StringModel[]> p;
 		double prevScore, currScore = 0;
 		StringModel[] models = null;
+		int boot = 0;
 		
 		do
 		{
 			prevScore = currScore;
-			p = developComponent(eConfig, reader, xmls, trainFiles, devFiles, lexica, models, mode);
+			p = developComponent(eConfig, reader, xmls, trainFiles, devFiles, lexica, models, mode, boot, devId);
 			models = (StringModel[])p.o;
-			currScore = p.d;			
+			currScore = p.d;
+			boot++;
 		}
 		while (prevScore < currScore);
 	}
 	
-	private ObjectDoublePair<StringModel[]> developComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, Object[] lexica, StringModel[] models, String mode) throws Exception
+	private ObjectDoublePair<StringModel[]> developComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, Object[] lexica, StringModel[] models, String mode, int boot, int devId) throws Exception
 	{
-		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, -1);
+		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, devId);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
-		int i, mSize = spaces.length, nUpdate = 1;
+		int i, mSize = spaces.length, nUpdate = 0;
 		AbstractStatisticalComponent component;
 		
 		double prevScore = -1, currScore = 0;
@@ -160,9 +170,9 @@ public class NLPDevelop extends NLPTrain
 				models[i] = (StringModel)spaces[i].getModel();
 			}
 
-			nUpdate++;
 			component = getComponent(xmls, models, lexica, mode);
-			currScore = decode(reader, component, devFiles, mode);
+			currScore = decode(reader, component, devFiles, mode, boot+"-"+nUpdate);
+			nUpdate++;
 		}
 		while (prevScore < currScore);
 		
@@ -172,25 +182,26 @@ public class NLPDevelop extends NLPTrain
 		return new ObjectDoublePair<StringModel[]>(models, prevScore);
 	}
 	
-	protected double decode(JointReader reader, AbstractStatisticalComponent component, String[] devFiles, String mode) throws Exception
+	protected double decode(JointReader reader, AbstractStatisticalComponent component, String[] devFiles, String mode, String ext) throws Exception
 	{
 		int[] counts = getCounts(mode);
+		PrintStream fout = null;
 		DEPTree tree;
 		
 		for (String devFile : devFiles)
 		{
-	//		PrintStream fout = UTOutput.createPrintBufferedFileStream(devFile+".cnlp");
+			if (b_generate) fout = UTOutput.createPrintBufferedFileStream(devFile+"."+ext);
 			reader.open(UTInput.createBufferedFileReader(devFile));
 			
 			while ((tree = reader.next()) != null)
 			{
 				component.process(tree);
 				component.countAccuracy(counts);
-	//			fout.println(tree.toStringPOS()+"\n");
+				if (b_generate)	fout.println(toString(tree, mode)+"\n");
 			}
 			
 			reader.close();
-	//		fout.close();
+			if (b_generate)	fout.close();
 		}
 
 		return getScore(mode, counts);
@@ -220,9 +231,9 @@ public class NLPDevelop extends NLPTrain
 		else if (mode.equals(NLPLib.MODE_DEP))
 		{
 			score = 100d * counts[1] / counts[0];
-			System.out.printf("- LAS: %5.2f (%d/%d)\n", score, counts[1], counts[0]);
-			System.out.printf("- UAS: %5.2f (%d/%d)\n", 100d*counts[2]/counts[0], counts[2], counts[0]);
-			System.out.printf("- LS : %5.2f (%d/%d)\n", 100d*counts[3]/counts[0], counts[3], counts[0]);
+			System.out.printf("LAS: %5.2f (%d/%d) ", score, counts[1], counts[0]);
+			System.out.printf("UAS: %5.2f (%d/%d) ", 100d*counts[2]/counts[0], counts[2], counts[0]);
+			System.out.printf("LS: %5.2f (%d/%d)\n", 100d*counts[3]/counts[0], counts[3], counts[0]);
 		}
 		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_SRL))
 		{
@@ -230,8 +241,8 @@ public class NLPDevelop extends NLPTrain
 			double r = 100d * counts[0] / counts[2];
 			score = SRLEval.getF1(p, r);
 			
-			System.out.printf("P : %5.2f\n", p);
-			System.out.printf("R : %5.2f\n", r);
+			System.out.printf("P: %5.2f ", p);
+			System.out.printf("R: %5.2f ", r);
 			System.out.printf("F1: %5.2f\n", score);
 		}
 		

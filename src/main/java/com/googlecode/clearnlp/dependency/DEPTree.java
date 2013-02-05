@@ -94,6 +94,72 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 	}
 	
+	public DEPNode getLeftMostDependent(int id)
+	{
+		DEPNode node, head = get(id);
+		int i;
+		
+		for (i=1; i<id; i++)
+		{
+			node = get(i);
+			
+			if (node.getHead() == head)
+				return node;
+		}
+		
+		return null;
+	}
+	
+	public DEPNode getRightMostDependent(int id)
+	{
+		DEPNode node, head = get(id);
+		int i;
+		
+		for (i=size()-1; i>id; i--)
+		{
+			node = get(i);
+			
+			if (node.getHead() == head)
+				return node;
+		}
+		
+		return null;
+	}
+	
+	public DEPNode getLeftNearestSibling(int id)
+	{
+		DEPNode node, head = get(id).getHead();
+		if (head == null)	return null;
+		int i, eIdx = (head.id < id) ? head.id : 0;
+		
+		for (i=id-1; i>eIdx; i--)
+		{
+			node = get(i);
+			
+			if (node.getHead() == head)
+				return node;
+		}
+		
+		return null;
+	}
+	
+	public DEPNode getRightNearestSibling(int id)
+	{
+		DEPNode node, head = get(id).getHead();
+		if (head == null)	return null;
+		int i, eIdx = (id < head.id) ? head.id : size();
+		
+		for (i=id+1; i<eIdx; i++)
+		{
+			node = get(i);
+			
+			if (node.getHead() == head)
+				return node;
+		}
+		
+		return null;
+	}
+	
 	public DEPNode getNextPredicate(int prevId)
 	{
 		int i, size = size();

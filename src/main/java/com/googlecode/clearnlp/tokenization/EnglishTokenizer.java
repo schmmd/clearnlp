@@ -87,7 +87,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected Pattern						P_RECOVER_HYPHEN;
 	protected Pattern						P_RECOVER_APOSTROPHY;
 	protected Pattern						P_RECOVER_AMPERSAND;
-
+	
 	public EnglishTokenizer(ZipInputStream zin)
 	{
 		initReplacers();
@@ -122,6 +122,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		replaceProtects(lTokens, R_AMPERSAND);
 		replaceProtects(lTokens, R_WAW);
 		for (Replacer r : R_UNIT) lTokens = tokenizePatterns(lTokens, r);
+		if (b_twit)	protectTwits(lTokens);
 		lTokens = tokenizePatterns(lTokens, R_PUNCTUATION_POST);
 		
 		int i, size = P_RECOVER_D0D.length;
@@ -140,7 +141,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		R_ABBREVIATION = new jregex.Pattern("(^(\\p{Alpha}\\.)+)(\\p{Punct}*$)").replacer(new SubstitutionOnePlus());
 		R_PERIOD_LIKE  = new jregex.Pattern("(\\.|\\?|\\!){2,}").replacer(new SubstitutionOne());
 		R_MARKER       = new jregex.Pattern("\\-{2,}|\\*{2,}|\\={2,}|\\~{2,}|\\,{2,}|\\`{2,}|\\'{2,}").replacer(new SubstitutionOne());
-		R_APOSTROPHY   = new jregex.Pattern("(?i)((\\')(s|d|m|ll|re|ve|nt)|n(\\')t)$").replacer(new SubstitutionOne());
+		R_APOSTROPHY   = new jregex.Pattern("(?i)((\\')(s|d|m|z|ll|re|ve|nt)|n(\\')t)$").replacer(new SubstitutionOne());
 		R_USDOLLAR     = new jregex.Pattern("^US\\$").replacer(new SubstitutionOne());
 		R_AMPERSAND    = getReplacerAmpersand();
 		R_WAW          = getReplacerWAWs();
@@ -324,6 +325,17 @@ public class EnglishTokenizer extends AbstractTokenizer
 			tokens.add(new StringBooleanPair(token, false));
 		
 		return tokens;
+	}
+	
+	protected void protectTwits(List<StringBooleanPair> tokens)
+	{
+		for (StringBooleanPair token : tokens)
+		{
+			char c = token.s.charAt(0);
+			
+			if ((c == '@' || c == '#') && MPLib.isAlnum(token.s.substring(1)))
+				token.b = true;
+		}
 	}
 	
 	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */

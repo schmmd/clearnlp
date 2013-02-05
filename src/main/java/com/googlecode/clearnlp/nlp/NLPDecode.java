@@ -65,6 +65,8 @@ public class NLPDecode extends AbstractNLP
 	private String s_outputExt = "cnlp";
 	@Option(name="-z", usage="mode (pos|morph|dep|srl)", required=true, metaVar="<string>")
 	protected String s_mode;
+	@Option(name="-twit", usage="if set, tokenize for twits", required=false, metaVar="<boolean>")
+	protected boolean b_twit;
 	
 	public NLPDecode() {}
 	
@@ -89,8 +91,8 @@ public class NLPDecode extends AbstractNLP
 		String readerType = reader.getType();
 		PrintStream fout;
 		
-		AbstractSegmenter   segmenter  = readerType.equals(AbstractReader.TYPE_RAW)  ? getSegmenter(eModels) : null;
-		AbstractTokenizer   tokenizer  = readerType.equals(AbstractReader.TYPE_LINE) ? getTokenizer(eModels) : null;
+		AbstractSegmenter   segmenter  = readerType.equals(AbstractReader.TYPE_RAW)  ? getSegmenter(eModels, b_twit) : null;
+		AbstractTokenizer   tokenizer  = readerType.equals(AbstractReader.TYPE_LINE) ? getTokenizer(eModels, b_twit) : null;
 		AbstractComponent[] components = getComponent(eModels, getModes(readerType, mode));
 		
 		System.out.println("Decoding:");
@@ -290,20 +292,23 @@ public class NLPDecode extends AbstractNLP
 		return components;
 	}
 	
-	protected AbstractSegmenter getSegmenter(Element eModels) throws IOException
+	protected AbstractSegmenter getSegmenter(Element eModels, boolean twit) throws IOException
 	{
-		AbstractTokenizer tokenizer = getTokenizer(eModels);
+		AbstractTokenizer tokenizer = getTokenizer(eModels, twit);
 		String language = getLanguage(eModels);
 		
 		return EngineGetter.getSegmenter(language, tokenizer);
 	}
 	
-	protected AbstractTokenizer getTokenizer(Element eModels) throws IOException
+	protected AbstractTokenizer getTokenizer(Element eModels, boolean twit) throws IOException
 	{
 		String language   = getLanguage(eModels);
 		String dictionary = getDictionary(eModels);
 		
-		return EngineGetter.getTokenizer(language, new FileInputStream(dictionary));
+		AbstractTokenizer tokenizer = EngineGetter.getTokenizer(language, new FileInputStream(dictionary));
+		tokenizer.setTwit(twit);
+		
+		return tokenizer;
 	}
 	
 	/** Called by {@link NLPDecode#getComponent(Element, List)}. */

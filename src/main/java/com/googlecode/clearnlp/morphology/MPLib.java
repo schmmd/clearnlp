@@ -60,6 +60,7 @@ public class MPLib
 	static final public Pattern DIGIT_LIKE = Pattern.compile("\\d%|\\$\\d|(^|\\d)\\.\\d|\\d,\\d|\\d:\\d|\\d-\\d|\\d\\/\\d");
 	
 	static final public Pattern ALPHA_CHAR = Pattern.compile("\\p{Alpha}");
+	static final public Pattern ALNUM_CHAR = Pattern.compile("\\p{Alnum}");
 	static final public Pattern WHITE_SPAN = Pattern.compile("\\s+");
 	
 //	static final public jregex.Pattern URL_SPAN = new jregex.Pattern("((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+\\$,\\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\\+\\$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?(?:[.\\!\\/\\\\w]*))?)");
@@ -207,5 +208,10 @@ public class MPLib
 	static public boolean isAlpha(String form)
 	{
 		return ALPHA_CHAR.matcher(form).find();
+	}
+	
+	static public boolean isAlnum(String form)
+	{
+		return ALNUM_CHAR.matcher(form).find();		
 	}
 }

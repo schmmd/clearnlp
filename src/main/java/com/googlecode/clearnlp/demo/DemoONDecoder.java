@@ -49,22 +49,8 @@ public class DemoONDecoder
 				
 		AbstractComponent[] components = {tagger, analyzer, parser, identifier, classifier, labeler};
 		
-		String sentence1, sentence2;
-		DEPTree tree1, tree2;
-		
-		sentence1 = "The ping tests to the router are failing.";
-		tree1 = process(tokenizer, components, sentence1);
-		
-		sentence2 = "Are ping tests failing?";
-		tree2 = process(tokenizer, components, sentence2);
-		
-		tree1.get(3).pos = "NNS";
-		tagger.trainHard(tree1, 10);
-		
-		process(tokenizer, components, sentence1);
-		
-	/*	sentence = "CUTE GIRL AT SAFEWAY JUST SMILED AT ME";
-		tree = process(tokenizer, components, sentence);
+		String sentence = "CUTE GIRL AT SAFEWAY JUST SMILED AT ME";
+		DEPTree tree = process(tokenizer, components, sentence);
 		
 		tree.get(1).pos = "JJ";
 		tree.get(2).pos = "NN";
@@ -83,7 +69,7 @@ public class DemoONDecoder
 		tree.get(6).setHead(tree.get(1), "attr");
 		
 		parser.trainHard(tree, 10);
-		tree = process(tokenizer, components, sentence);*/
+		tree = process(tokenizer, components, sentence);
 	}
 	
 	public DEPTree process(AbstractTokenizer tokenizer, AbstractComponent[] components, String sentence)

@@ -48,6 +48,11 @@ public class DEPLib
 	static public final String FEAT_VN	= "vn";
 	/** The feat-key of word senses. */
 	static public final String FEAT_WS	= "ws";
+	/** The feat-key of 1st pos prediction. */
+	static public final String FEAT_POS1 = "p1";
+	/** The feat-key of 2nd pos prediction. */
+	static public final String FEAT_POS2 = "p2";
+	
 	/** The delimiter between secondary/semantic heads. */
 	static public final String DELIM_HEADS     = ";";
 	/** The delimiter between head ID and label pairs. */

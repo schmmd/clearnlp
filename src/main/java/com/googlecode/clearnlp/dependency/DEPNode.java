@@ -208,6 +208,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return d_head.node;
 	}
 	
+	public void setHead(DEPNode head)
+	{
+		d_head.setNode(head);
+	}
+	
 	/**
 	 * Sets the dependency head and label of this node to the specific node and label.
 	 * If the head already exists, replaces the head with the specific node.
@@ -559,7 +564,8 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		StringBuilder build = new StringBuilder();
 		
 		build.append(form);		build.append(DEPReader.DELIM_COLUMN);
-		build.append(pos);
+		build.append(pos);		build.append(DEPReader.DELIM_COLUMN);
+		build.append(d_feats);
 		
 		return build.toString();
 	}

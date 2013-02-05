@@ -33,6 +33,7 @@ import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
@@ -55,9 +56,9 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
 public class CPOSTagger extends AbstractStatisticalComponent
 {
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
-	protected final String ENTRY_FEATURE		 = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
-	protected final String ENTRY_LEXICA		 = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
-	protected final String ENTRY_MODEL		 = NLPLib.MODE_POS + NLPLib.ENTRY_MODEL;
+	protected final String ENTRY_FEATURE	   = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
+	protected final String ENTRY_LEXICA		   = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
+	protected final String ENTRY_MODEL		   = NLPLib.MODE_POS + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_LOWER_SIMPLIFIED_FORMS = 0;
 	protected final int LEXICA_AMBIGUITY_CLASSES      = 1;
@@ -350,8 +351,17 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	/** Called by {@link CPOSTagger#getLabel()}. */
 	protected String getAutoLabel(StringFeatureVector vector)
 	{
-		StringPrediction p = s_models[0].predictBest(vector);
-		return p.label;
+		Pair<StringPrediction,StringPrediction> ps = s_models[0].predictTwo(vector);
+		StringPrediction fst = ps.o1;
+		StringPrediction snd = ps.o2;
+		
+		if (fst.score - snd.score < 1)
+			d_tree.get(i_input).addFeat(DEPLib.FEAT_POS2, snd.label);
+		
+		return fst.label;
+		
+	//	StringPrediction p = s_models[0].predictBest(vector);
+	//	return p.label;
 	}
 
 //	====================================== FEATURE EXTRACTION ======================================

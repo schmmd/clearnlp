@@ -28,6 +28,8 @@ import com.googlecode.clearnlp.util.pair.StringBooleanPair;
  */
 abstract public class AbstractTokenizer
 {
+	protected boolean b_twit = false;
+	
 	/**
 	 * Returns a list of token in the specific reader.
 	 * @param fin the reader to retrieve tokens from.
@@ -62,6 +64,11 @@ abstract public class AbstractTokenizer
 			tokens.add(token.s);
 		
 		return tokens;
+	}
+	
+	public void setTwit(boolean isTwit)
+	{
+		b_twit = isTwit;
 	}
 	
 	abstract public List<StringBooleanPair> getTokenList(String str);

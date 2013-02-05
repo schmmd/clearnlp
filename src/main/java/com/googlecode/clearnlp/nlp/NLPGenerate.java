@@ -16,31 +16,27 @@
 package com.googlecode.clearnlp.nlp;
 
 import java.io.FileInputStream;
-import java.io.PrintStream;
 
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
-import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.dependency.DEPTree;
+import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
 import com.googlecode.clearnlp.util.UTFile;
-import com.googlecode.clearnlp.util.UTInput;
-import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.UTXml;
 
 /**
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class NLPGenerate extends NLPTrain
+public class NLPGenerate extends NLPDevelop
 {
 	@Option(name="-b", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
-	private int b_dev = -1;
+	private int b_idx = -1;
 	@Option(name="-e", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
-	private int e_dev = -1;
+	private int e_idx = -1;
 	
 	public NLPGenerate(String[] args)
 	{
@@ -48,46 +44,32 @@ public class NLPGenerate extends NLPTrain
 		
 		try
 		{
-			generate(s_configFile, s_featureFiles.split(DELIM_FILES), s_trainDir, s_mode, b_dev, e_dev);
+			generate(s_configFile, s_featureFiles.split(DELIM_FILES), s_trainDir, s_mode, b_idx, e_idx);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void generate(String configFile, String[] featureFiles, String trainDir, String mode, int bDev, int eDev) throws Exception
+	public void generate(String configFile, String[] featureFiles, String trainDir, String mode, int bIdx, int eIdx) throws Exception
 	{
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
 		JointFtrXml[]  xmls = getFeatureTemplates(featureFiles);
-		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true);
+		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true), devFiles;
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
-		int devId, size = trainFiles.length;
+		int i;
 		
-		AbstractStatisticalComponent component;
-		PrintStream fout;
+		b_generate = true;
 		
-		for (devId=bDev; devId<eDev && devId<size; devId++)
+		for (i=bIdx; i<eIdx; i++)
 		{
-			System.out.println("Generate: "+trainFiles[devId]+"."+mode);
-			
-			component = getComponent(eConfig, reader, xmls, trainFiles, devId, mode);
-			fout = UTOutput.createPrintBufferedFileStream(trainFiles[devId]+"."+mode);
-			reader.open(UTInput.createBufferedFileReader(trainFiles[devId]));
-			
-			decode(reader, fout, component, s_mode);
-			reader.close(); fout.close();	
+			devFiles = new String[]{trainFiles[i]};
+
+			if      (mode.equals(NLPLib.MODE_POS))
+				developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, i)), mode, i);
+			else if (mode.equals(NLPLib.MODE_DEP))
+				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPPassParser(xmls), mode, i);
 		}
 	}
-	
-	public void decode(JointReader reader, PrintStream fout, AbstractComponent component, String mode)
-	{
-		DEPTree tree;
 		
-		while ((tree = reader.next()) != null)
-		{
-			component.process(tree);
-			fout.println(toString(tree, mode)+"\n");
-		}
-	}
-	
 	static public void main(String[] args)
 	{
 		new NLPGenerate(args);

@@ -21,43 +21,26 @@
 * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 * POSSIBILITY OF SUCH DAMAGE.
 */
-package com.googlecode.clearnlp.util.list;
+package com.googlecode.clearnlp.util.pair;
 
-import com.carrotsearch.hppc.IntArrayList;
-
-public class SortedIntArrayList extends IntArrayList
+/**
+ * Object double pair.
+ * @since v0.1
+ * @author Jinho D. Choi ({@code choijd@colorado.edu})
+ */
+public class ObjectIntPair<T>
 {
-	boolean b_ascending;
+	public Object o;
+	public int    i;
 	
-	public SortedIntArrayList()
+	public ObjectIntPair(Object o, int i)
 	{
-		b_ascending = true;
+		set(o, i);
 	}
 	
-	public SortedIntArrayList(boolean ascending)
+	public void set(Object o, int i)
 	{
-		b_ascending = ascending;
-	}
-	
-	/* (non-Javadoc)
-	 * @see com.carrotsearch.hppc.IntArrayList#add(int)
-	 */
-	public void add(int e1)
-	{
-		int i, size = size();
-		
-		for (i=0; i<size; i++)
-		{
-			if (b_ascending)
-			{
-				if (get(i) > e1) break;	
-			}
-			else
-			{
-				if (get(i) < e1) break;
-			}
-		}
-		
-		insert(i, e1);
+		this.o = o;
+		this.i = i;
 	}
 }
