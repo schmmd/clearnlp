@@ -50,6 +50,8 @@ public class Tokenizer extends AbstractRun
 	private String i_format = AbstractReader.TYPE_RAW;
 	@Option(name="-of", usage="output format (default: "+AbstractReader.TYPE_LINE+")", required=false, metaVar="<string>")
 	private String o_format = AbstractReader.TYPE_LINE;
+	@Option(name="-twit", usage="if set, tokenize for twits", required=false, metaVar="<boolean>")
+	protected boolean b_twit;
 	
 	public Tokenizer() {}
 	
@@ -61,6 +63,8 @@ public class Tokenizer extends AbstractRun
 		AbstractSegmenter segmenter = i_format.equals(AbstractReader.TYPE_RAW) ? EngineGetter.getSegmenter(s_language, tokenizer) : null;
 		List<String[]>    filenames = getFilenames(s_inputPath, s_inputExt, s_outputExt);
 		boolean outLine = o_format.equals(AbstractReader.TYPE_LINE);
+		
+		tokenizer.setTwit(b_twit);
 		
 		try
 		{
