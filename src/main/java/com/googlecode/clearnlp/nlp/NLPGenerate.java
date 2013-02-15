@@ -37,6 +37,8 @@ public class NLPGenerate extends NLPDevelop
 	private int b_idx = -1;
 	@Option(name="-e", usage="the directory containing development files (required)", required=true, metaVar="<directory>")
 	private int e_idx = -1;
+	@Option(name="-ie", usage="input file extension (default: .*)", required=false, metaVar="<regex>")
+	private String s_inputExt = ".*";
 	
 	public NLPGenerate(String[] args)
 	{
@@ -44,16 +46,16 @@ public class NLPGenerate extends NLPDevelop
 		
 		try
 		{
-			generate(s_configFile, s_featureFiles.split(DELIM_FILES), s_trainDir, s_mode, b_idx, e_idx);
+			generate(s_configFile, s_featureFiles.split(DELIM_FILES), s_trainDir, s_inputExt, s_mode, b_idx, e_idx);
 		}
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	public void generate(String configFile, String[] featureFiles, String trainDir, String mode, int bIdx, int eIdx) throws Exception
+	public void generate(String configFile, String[] featureFiles, String trainDir, String inputExt, String mode, int bIdx, int eIdx) throws Exception
 	{
 		Element     eConfig = UTXml.getDocumentElement(new FileInputStream(configFile));
 		JointFtrXml[]  xmls = getFeatureTemplates(featureFiles);
-		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, ".*", true), devFiles;
+		String[] trainFiles = UTFile.getSortedFileListBySize(trainDir, inputExt, true), devFiles;
 		JointReader  reader = getJointReader(UTXml.getFirstElementByTagName(eConfig, TAG_READER));
 		int i;
 		

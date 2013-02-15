@@ -340,6 +340,34 @@ public class CTTree
 		return build.length() == 0 ? "" : build.substring(delim.length());
 	}
 	
+	public String toCoNLLPOS(boolean includeNulls, String delim)
+	{
+		StringBuilder build = new StringBuilder();
+		
+		if (includeNulls)
+		{
+			for (CTNode node : ls_termainals)
+			{
+				build.append(node.form);
+				build.append(delim);
+				build.append(node.pTag);
+				build.append("\n");
+			}	
+		}
+		else
+		{
+			for (CTNode node : ls_tokens)
+			{
+				build.append(node.form);
+				build.append(delim);
+				build.append(node.pTag);
+				build.append("\n");
+			}
+		}
+		
+		return build.toString();
+	}
+	
 	/**
 	 * Returns {@link CTTree#toString(boolean...)}, where {@code args = {false, false}}.
 	 * @return {@link CTTree#toString(boolean...)}, where {@code args = {false, false}}.

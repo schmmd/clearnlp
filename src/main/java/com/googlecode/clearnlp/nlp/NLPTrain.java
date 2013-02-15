@@ -34,7 +34,9 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
+import com.googlecode.clearnlp.component.dep.CDEPBackParser;
 import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.pos.CPOSBackTagger;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
@@ -67,6 +69,8 @@ public class NLPTrain extends AbstractNLP
 	protected int n_boot = 0;
 	@Option(name="-z", usage="mode (pos|morph|dep|pred|role|srl)", required=true, metaVar="<string>")
 	protected String s_mode;
+	@Option(name="-margin", usage="margin between the 1st and 2nd predictions (default: 0.5)", required=false, metaVar="<double>")
+	protected double d_margin = 0.5;
 	
 	public NLPTrain() {}
 	
@@ -106,22 +110,31 @@ public class NLPTrain extends AbstractNLP
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, devId);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSRLabeler(xmls), mode, devId);
+		else if (mode.equals(NLPLib.MODE_POS_BACK))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
+		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPBackParser(xmls), mode, devId);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
 	
-	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
+	/** @return a component for developing. */
+	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
 	{
 		if      (mode.equals(NLPLib.MODE_POS))
-			return new CPOSTagger(xmls, spaces, lexica);
+			return new CPOSTagger(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
+			return new CDEPPassParser(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_PRED))
-			return new CPredIdentifier(xmls, spaces, lexica);	
+			return new CPredIdentifier(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_ROLE))
-			return new CRolesetClassifier(xmls, spaces, lexica);
+			return new CRolesetClassifier(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_SRL))
-			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
+			return new CSRLabeler(xmls, models, lexica);
+		else if (mode.equals(NLPLib.MODE_POS_BACK))
+			return new CPOSBackTagger(xmls, models, lexica, d_margin);
+		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+			return new CDEPBackParser(xmls, models, lexica, d_margin);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -217,7 +230,7 @@ public class NLPTrain extends AbstractNLP
 	/** Called by {@link NLPTrain#getTrainedJointPD(String, String[], String, String)}. */
 	protected AbstractStatisticalComponent getTrainedComponent(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int boot, int devId)
 	{
-		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, devId);
+		StringTrainSpace[] spaces = getStringTrainSpaces(eConfig, xmls, trainFiles, models, lexica, mode, boot, devId);
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		
 		int i, mSize = spaces.length;
@@ -236,7 +249,7 @@ public class NLPTrain extends AbstractNLP
 		return getComponent(xmls, models, lexica, mode);
 	}
 	
-	protected StringTrainSpace[] getStringTrainSpaces(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int devId)
+	protected StringTrainSpace[] getStringTrainSpaces(Element eConfig, JointFtrXml[] xmls, String[] trainFiles, StringModel[] models, Object[] lexica, String mode, int boot, int devId)
 	{
 		Element eTrain = UTXml.getFirstElementByTagName(eConfig, mode);
 		int i, j, mSize = 1, size = trainFiles.length;
@@ -252,7 +265,7 @@ public class NLPTrain extends AbstractNLP
 		{
 			if (devId != i)
 			{
-				lSpaces.add(spaces = getStringTrainSpaces(xmls, lexica, mode));
+				lSpaces.add(spaces = getStringTrainSpaces(xmls, lexica, mode, boot));
 				executor.execute(new TrainTask(eConfig, trainFiles[i], getComponent(xmls, spaces, models, lexica, mode)));
 			}
 		}
@@ -293,9 +306,29 @@ public class NLPTrain extends AbstractNLP
 		return spaces;
 	}
 	
+	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, String mode)
+	{
+		if      (mode.equals(NLPLib.MODE_POS))
+			return new CPOSTagger(xmls, spaces, lexica);
+		else if (mode.equals(NLPLib.MODE_DEP))
+			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
+		else if (mode.equals(NLPLib.MODE_PRED))
+			return new CPredIdentifier(xmls, spaces, lexica);	
+		else if (mode.equals(NLPLib.MODE_ROLE))
+			return new CRolesetClassifier(xmls, spaces, lexica);
+		else if (mode.equals(NLPLib.MODE_SRL))
+			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
+		else if (mode.equals(NLPLib.MODE_POS_BACK))
+			return (models == null) ? new CPOSBackTagger(xmls, spaces, lexica, d_margin) : new CPOSBackTagger(xmls, spaces, models, lexica, d_margin);
+		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+			return (models == null) ? new CDEPBackParser(xmls, spaces, lexica, d_margin) : new CDEPBackParser(xmls, spaces, models, lexica, d_margin);
+		
+		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
+	}
+	
 	@SuppressWarnings("unchecked")
 	/** Called by {@link COMTrain#getStringTrainSpaces(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
-	protected StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls, Object[] lexica, String mode)
+	protected StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls, Object[] lexica, String mode, int boot)
 	{
 		if      (mode.equals(NLPLib.MODE_ROLE))
 			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());

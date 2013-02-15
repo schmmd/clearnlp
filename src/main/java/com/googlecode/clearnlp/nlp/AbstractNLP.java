@@ -29,17 +29,10 @@ import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.algorithm.AdaGrad;
+import com.googlecode.clearnlp.classification.algorithm.AdaGradLR;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
-import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
-import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.component.dep.CDEPPassParser;
-import com.googlecode.clearnlp.component.pos.CPOSTagger;
-import com.googlecode.clearnlp.component.srl.CPredIdentifier;
-import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.component.srl.CSRLabeler;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.AbstractReader;
@@ -93,30 +86,13 @@ abstract public class AbstractNLP
 	
 	// ============================= genetic: mode =============================
 	
-	/** @return a component for developing. */
-	protected AbstractStatisticalComponent getComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, String mode)
-	{
-		if      (mode.equals(NLPLib.MODE_POS))
-			return new CPOSTagger(xmls, models, lexica);
-		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPPassParser(xmls, models, lexica);
-		else if (mode.equals(NLPLib.MODE_PRED))
-			return new CPredIdentifier(xmls, models, lexica);
-		else if (mode.equals(NLPLib.MODE_ROLE))
-			return new CRolesetClassifier(xmls, models, lexica);
-		else if (mode.equals(NLPLib.MODE_SRL))
-			return new CSRLabeler(xmls, models, lexica);
-		
-		return null;
-	}
-	
 	protected String toString(DEPTree tree, String mode)
 	{
-		if      (mode.equals(NLPLib.MODE_POS))
+		if      (mode.startsWith(NLPLib.MODE_POS))
 			return tree.toStringPOS();
 		else if (mode.equals(NLPLib.MODE_MORPH))
 			return tree.toStringMorph();
-		else if (mode.equals(NLPLib.MODE_DEP) || mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_ROLE))
+		else if (mode.startsWith(NLPLib.MODE_DEP) || mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_ROLE))
 			return tree.toStringDEP();
 		else
 			return tree.toStringSRL();
@@ -300,6 +276,14 @@ abstract public class AbstractNLP
 			
 			updateAdaGradModel(space, rand, numThreads, nUpdate, iter, alpha, rho);
 		}
+		else if (name.equals("adagrad-lr"))
+		{
+			int    iter  = Integer.parseInt   (UTXml.getTrimmedAttribute(eAlgorithm, "iter"));
+			double alpha = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "alpha"));
+			double rho   = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "rho"));
+			
+			updateAdaGradLRModel(space, rand, numThreads, nUpdate, iter, alpha, rho);
+		}
 	}
 	
 	protected void updateAdaGradModel(AbstractTrainSpace space, Random rand, int numThreads, int nUpdate, int iter, double alpha, double rho)
@@ -314,6 +298,21 @@ abstract public class AbstractNLP
 		
 		System.out.printf("%3d: AdaGrad, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho);
 		AdaGrad ag = new AdaGrad(iter, alpha, rho, rand);
+		ag.updateWeight(space);
+	}
+	
+	protected void updateAdaGradLRModel(AbstractTrainSpace space, Random rand, int numThreads, int nUpdate, int iter, double alpha, double rho)
+	{
+		AbstractModel model = space.getModel();
+		
+		if (model.getWeights() == null)
+		{
+			space.build();
+			model.initWeightVector();
+		}
+		
+		System.out.printf("%3d: AdaGrad-LR, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho);
+		AdaGradLR ag = new AdaGradLR(iter, alpha, rho, rand);
 		ag.updateWeight(space);
 	}
 	

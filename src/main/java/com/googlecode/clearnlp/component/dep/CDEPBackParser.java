@@ -21,7 +21,9 @@ import java.io.PrintStream;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
@@ -29,12 +31,14 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
 import com.googlecode.clearnlp.dependency.AbstractDEPParser;
+import com.googlecode.clearnlp.dependency.DEPHead;
 import com.googlecode.clearnlp.dependency.DEPLabel;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
@@ -47,6 +51,7 @@ import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
+import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 import com.googlecode.clearnlp.util.triple.Triple;
@@ -77,13 +82,14 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	protected Set<String>		s_punc;
 	protected StringIntPair[]	g_heads;
 	protected int				i_lambda, i_beta;
-	
-	protected List<List<StringIntPair>> l_2nd;
+
+	protected Map<String,Pair<DEPLabel,DEPLabel>> m_labels;
+	protected List<List<DEPHead>> l_2nd;
+	protected int                 n_trans;
+	protected double              d_score, d_margin;
 	
 //	====================================== CONSTRUCTORS ======================================
 
-	public CDEPBackParser() {}
-	
 	/** Constructs a dependency parser for collecting lexica. */
 	public CDEPBackParser(JointFtrXml[] xmls)
 	{
@@ -92,27 +98,30 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	}
 	
 	/** Constructs a dependency parsing for training. */
-	public CDEPBackParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
+	public CDEPBackParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin)
 	{
 		super(xmls, spaces, lexica);
+		d_margin = margin;
 	}
 	
 	/** Constructs a dependency parsing for developing. */
-	public CDEPBackParser(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
+	public CDEPBackParser(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, double margin)
 	{
 		super(xmls, models, lexica);
+		d_margin = margin;
+	}
+	
+	/** Constructs a dependency parser for bootsrapping. */
+	public CDEPBackParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, double margin)
+	{
+		super(xmls, spaces, models, lexica);
+		d_margin = margin;
 	}
 	
 	/** Constructs a dependency parser for decoding. */
 	public CDEPBackParser(ZipInputStream in)
 	{
 		super(in);
-	}
-	
-	/** Constructs a dependency parser for bootsrapping. */
-	public CDEPBackParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
-	{
-		super(xmls, spaces, models, lexica);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
@@ -195,24 +204,22 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	}
 	
 	@Override
-	public Object[] getGoldTags()
-	{
-		return g_heads;
-	}
-	
-	@Override
 	public void countAccuracy(int[] counts)
 	{
-		int i, las = 0, uas = 0, ls = 0;
+		int i, pos = 0, las = 0, uas = 0, ls = 0;
 		StringIntPair p;
 		DEPNode node;
 		
 		for (i=1; i<t_size; i++)
 		{
 			node = d_tree.get(i);
-			p    = g_heads[i];
 			
-			if (node.isHead(d_tree.get(p.i)))
+			if (node.isPos(node.getFeat(DEPLib.FEAT_POS0)))
+				pos++;
+			
+			p = g_heads[i];
+			
+			if (node.isDependentOf(d_tree.get(p.i)))
 			{
 				uas++;
 				if (node.isLabel(p.s)) las++;
@@ -222,9 +229,10 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		}
 		
 		counts[0] += t_size - 1;
-		counts[1] += las;
-		counts[2] += uas;
-		counts[3] += ls;
+		counts[1] += pos;
+		counts[2] += las;
+		counts[3] += uas;
+		counts[4] += ls;
 	}
 	
 //	================================ PROCESS ================================
@@ -239,22 +247,31 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	/** Called by {@link CDEPBackParser#process(DEPTree)}. */
 	protected void init(DEPTree tree)
 	{
-	 	i_lambda = 0;
-	 	i_beta   = 1;
-	 	d_tree   = tree;
-	 	t_size   = tree.size();
-	 	s_reduce = new IntOpenHashSet();
+	 	d_tree = tree;
+	 	t_size = tree.size();
 	 	
-	 	l_2nd = new ArrayList<List<StringIntPair>>();
+	 	m_labels = new HashMap<String,Pair<DEPLabel,DEPLabel>>();
+	 	l_2nd = new ArrayList<List<DEPHead>>();
 	 	
 	 	int i; for (i=0; i<t_size; i++)
-	 		l_2nd.add(new ArrayList<StringIntPair>());
+	 		l_2nd.add(new ArrayList<DEPHead>());
 	 	
 	 	if (i_flag != FLAG_DECODE)
 	 	{
 	 		g_heads = tree.getHeads();
 	 		tree.clearHeads();	
 	 	}
+	 	
+	 	initAux();
+	}
+	
+	protected void initAux()
+	{
+		i_lambda = 0;
+	 	i_beta   = 1;
+	 	d_score  = 0;
+	 	n_trans  = 0;
+	 	s_reduce = new IntOpenHashSet();
 	}
 	
 	/** Called by {@link CDEPBackParser#process(DEPTree)}. */
@@ -295,19 +312,19 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	/** Called by {@link CDEPBackParser#processAux()}. */
 	protected List<Pair<String,StringFeatureVector>> parse()
 	{
-		Pair<List<Pair<String,StringFeatureVector>>,Deque<DEPState>> p;
-		p = parseTrans();
-		
+		List<Pair<String,StringFeatureVector>> insts = (i_flag == FLAG_TRAIN) ? parseMain().o2 : parseBranches();
+	
 		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 			postProcess();
 		
-		return p.o1;
+		return insts;
 	}
 	
-	protected Pair<List<Pair<String,StringFeatureVector>>,Deque<DEPState>> parseTrans()
+	protected Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,Deque<DEPState>> parseMain()
 	{
 		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>();
 		Deque<DEPState> states = new ArrayDeque<DEPState>();
+		DEPLabel label;
 		
 		while (i_beta < t_size)
 		{
@@ -316,17 +333,21 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 				noShift();
 				continue;
 			}
-			
-			parseAux(insts, states, getLabel(insts));
+		
+			label = getLabel(insts, states);
+			parseAux(label);
 		}
 		
-		return new Pair<List<Pair<String,StringFeatureVector>>,Deque<DEPState>>(insts, states);
+		return new Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,Deque<DEPState>>(d_tree.getHeads(), insts, states);
 	}
 	
-	protected void parseAux(List<Pair<String,StringFeatureVector>> insts, Deque<DEPState> states, DEPLabel label)
+	protected void parseAux(DEPLabel label)
 	{
 		DEPNode lambda = d_tree.get(i_lambda);
 		DEPNode beta   = d_tree.get(i_beta);
+		
+		d_score += label.score;
+		n_trans++;
 		
 		if (label.isArc(LB_LEFT))
 		{
@@ -360,7 +381,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	}
 	
 	/** Called by {@link CDEPBackParser#parse()}. */
-	protected DEPLabel getLabel(List<Pair<String,StringFeatureVector>> insts)
+	protected DEPLabel getLabel(List<Pair<String,StringFeatureVector>> insts, Deque<DEPState> states)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
 		DEPLabel label = null;
@@ -372,11 +393,11 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
-			label = getAutoLabel(vector);
+			label = getAutoLabel(vector, insts, states);
 		}
 		else if (i_flag == FLAG_BOOTSTRAP)
 		{
-			label = getAutoLabel(vector);
+			label = getAutoLabel(vector, insts, states);
 			insts.add(new Pair<String,StringFeatureVector>(getGoldLabel().toString(), vector));
 		}
 
@@ -456,72 +477,50 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	}
 	
 	/** Called by {@link CDEPBackParser#getLabel()}. */
-	private DEPLabel getAutoLabel(StringFeatureVector vector)
+	private DEPLabel getAutoLabel(StringFeatureVector vector, List<Pair<String,StringFeatureVector>> insts, Deque<DEPState> states)
 	{
-		Pair<StringPrediction,StringPrediction> ps = s_models[0].predictTwo(vector);
-		DEPLabel fst = new DEPLabel(ps.o1.label);
-		DEPLabel snd = new DEPLabel(ps.o2.label);
-		List<StringIntPair> p;
+		String key = vector.toString();
+		Pair<DEPLabel,DEPLabel> val = m_labels.get(key);
+		DEPLabel fst, snd;
+		List<DEPHead> p;
 		
-		if (ps.o1.score - ps.o2.score < 1)
+		if (val != null)
+		{
+			fst = val.o1;
+			snd = val.o2;
+		}
+		else
+		{
+			List<StringPrediction> ps = s_models[0].predictAll(vector);
+			AbstractAlgorithm.normalize(ps);
+
+			fst = new DEPLabel(ps.get(0).label, ps.get(0).score);
+			snd = new DEPLabel(ps.get(1).label, ps.get(1).score);
+			
+			m_labels.put(key, new Pair<DEPLabel,DEPLabel>(fst, snd));			
+		}
+		
+		if (fst.score - snd.score < 0.5)
 		{
 			if (fst.isArc(LB_NO))
 			{
 				if (snd.isArc(LB_LEFT))
 				{
 					p = l_2nd.get(i_lambda);
-					p.add(new StringIntPair(snd.deprel, i_beta));
+					p.add(new DEPHead(i_beta, snd.deprel, snd.score));
 				}
 				else if (snd.isArc(LB_RIGHT))
 				{
 					p = l_2nd.get(i_beta);
-					p.add(new StringIntPair(snd.deprel, i_lambda));
+					p.add(new DEPHead(i_lambda, snd.deprel, snd.score));
 				}
 			}
 		}
 		
+		if (fst.score - snd.score < d_margin)
+			states.add(new DEPState(i_lambda, i_beta, n_trans, d_score, snd, d_tree.getHeads(), s_reduce.clone()));
+		
 		return fst;
-	}
-	
-	protected int[] getCosts()
-	{
-		int[] costs = new int[2];
-		
-		costs[0] = getCostReduce();
-		costs[1] = getCostShift();
-		
-		return costs;
-	}
-	
-	private int getCostReduce()
-	{
-		int cost = (g_heads[i_lambda].i > i_beta) ? 1 : 0;
-		int i;
-		
-		for (i=i_beta+1; i<t_size; i++)
-		{
-			if (g_heads[i].i == i_lambda)
-				cost++;
-		}
-		
-		return cost;
-	}
-	
-	private int getCostShift()
-	{
-		int cost = (g_heads[i_beta].i < i_lambda) ? 1 : 0;
-		int i;
-		
-		for (i=i_lambda-1; i>0; i--)
-		{
-			if (s_reduce.contains(i))
-				continue;
-			
-			if (g_heads[i].i == i_beta)
-				cost++;
-		}
-		
-		return cost;
 	}
 	
 	/** Called by {@link CDEPBackParser#depParseAux()}. */
@@ -617,7 +616,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		Triple<DEPNode,String,Double> max = new Triple<DEPNode,String,Double>(null, null, -1d);
 		DEPNode root = d_tree.get(DEPLib.ROOT_ID);
 		int i, size = d_tree.size();
-		List<StringIntPair> list;
+		List<DEPHead> list;
 		DEPNode node, head;
 		
 		for (i=1; i<size; i++)
@@ -628,13 +627,13 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 			{
 				if (!(list = l_2nd.get(node.id)).isEmpty())
 				{
-					for (StringIntPair p : list)
+					for (DEPHead p : list)
 					{
-						head = d_tree.get(p.i);
+						head = d_tree.get(p.headId);
 						
 						if (!head.isDescendentOf(node))
 						{
-							node.setHead(head, p.s);
+							node.setHead(head, p.deprel);
 							break;
 						}
 					}
@@ -647,7 +646,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 					postProcessAux(node, -1, max);
 					postProcessAux(node, +1, max);
 					
-					node.setHead(max.o1, max.o2);					
+					node.setHead(max.o1, max.o2);
 				}
 			}
 		}
@@ -673,7 +672,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 			
 			vector = getFeatureVector(f_xmls[0]);
 			ps = s_models[0].predictAll(vector);
-			s_models[0].normalizeScores(ps);
+			AbstractAlgorithm.normalize(ps);
 			
 			for (StringPrediction p : ps)
 			{
@@ -713,6 +712,19 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		else if (token.isField(JointFtrXml.F_DEPREL))
 		{
 			return node.getLabel();
+		}
+		else if (token.isField(JointFtrXml.F_DISTANCE))
+		{
+			int dist = i_beta - i_lambda;
+			return (dist > 6) ? "6" : Integer.toString(dist);
+		}
+		else if (token.isField(JointFtrXml.F_LEFT_VALENCY))
+		{
+			return Integer.toString(getLeftValency(node));
+		}
+		else if (token.isField(JointFtrXml.F_RIGHT_VALENCY))
+		{
+			return Integer.toString(getRightValency(node));
 		}
 		else if (token.isField(JointFtrXml.F_LNPL))
 		{
@@ -755,6 +767,32 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	protected String[] getFields(FtrToken token)
 	{
 		return null;
+	}
+	
+	private int getLeftValency(DEPNode node)
+	{
+		int i, c = 0;
+		
+		for (i=node.id-1; i>0; i--)
+		{
+			if (d_tree.get(i).getHead() == node)
+				c++;
+		}
+		
+		return c;
+	}
+	
+	private int getRightValency(DEPNode node)
+	{
+		int i, c = 0;
+		
+		for (i=node.id+1; i<t_size; i++)
+		{
+			if (d_tree.get(i).getHead() == node)
+				c++;
+		}
+		
+		return c;
 	}
 	
 	/** Called by {@link CDEPBackParser#getField(FtrToken)}. */
@@ -810,8 +848,11 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		if (token.relation != null)
 		{
 			     if (token.isRelation(JointFtrXml.R_H))		node = node.getHead();
+			else if (token.isRelation(JointFtrXml.R_H2))	node = node.getGrandHead();
 			else if (token.isRelation(JointFtrXml.R_LMD))	node = d_tree.getLeftMostDependent  (node.id);
 			else if (token.isRelation(JointFtrXml.R_RMD))	node = d_tree.getRightMostDependent (node.id);
+			else if (token.isRelation(JointFtrXml.R_LMD2))	node = d_tree.getLeftMostDependent  (node.id, 1);
+			else if (token.isRelation(JointFtrXml.R_RMD2))	node = d_tree.getRightMostDependent (node.id, 1);
 			else if (token.isRelation(JointFtrXml.R_LNS))	node = d_tree.getLeftNearestSibling (node.id);
 			else if (token.isRelation(JointFtrXml.R_RNS))	node = d_tree.getRightNearestSibling(node.id);
 		}
@@ -863,5 +904,99 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 			return d_tree.get(cIndex);
 		
 		return null;
+	}
+	
+//	================================ BACKTRACK ================================
+	
+	@SuppressWarnings("unchecked")
+	public List<Pair<String,StringFeatureVector>> parseBranches()
+	{
+		List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list;
+		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,Deque<DEPState>> t0 = parseMain(), tm;
+		double s0 = d_score / n_trans; 
+		
+		list = new ArrayList<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>>();
+		list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0));
+		backTrackDEP(list, t0.o3);
+		
+		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
+		{
+			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,Deque<DEPState>>)getMax(list).o;
+			d_tree.resetHeads(tm.o1);
+			return null;
+		}
+		else
+		{
+			List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(t0.o2);
+			setGoldScores(list);
+			
+			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,Deque<DEPState>>)getMax(list).o;
+			insts.addAll(tm.o2);
+			
+			return insts;			
+		}
+	}
+	
+	private void backTrackDEP(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list, Deque<DEPState> states)
+	{
+		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,Deque<DEPState>> t1;
+		double s1;
+		
+		for (DEPState state : states)
+		{
+			resetState(state);
+			t1 = parseMain();
+			s1 = d_score / n_trans;
+			list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t1, s1));
+		}
+	}
+	
+	private void resetState(DEPState state)
+	{
+		i_lambda = state.lambda;
+		i_beta   = state.beta;
+		n_trans  = state.trans;
+		d_score  = state.score;
+		s_reduce = state.reduce;
+		d_tree.resetHeads(state.heads);
+		parseAux(state.label);
+	}
+	
+	private ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> getMax(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> dList) 
+	{
+		ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> max = dList.get(0), t;
+		int i, size = dList.size();
+		
+		for (i=1; i<size; i++)
+		{
+			t = dList.get(i);
+			if (max.d < t.d) max = t;
+		}
+		
+		return max;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void setGoldScores(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list)
+	{
+		StringIntPair gHead, sHead;
+		StringIntPair[] sHeads;
+		int i, c;
+		
+		for (ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> p : list)
+		{
+			sHeads = ((Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)p.o).o1;
+			
+			for (i=1,c=0; i<t_size; i++)
+			{
+				gHead = g_heads[i];
+				sHead =  sHeads[i];
+				
+				if (gHead.i == sHead.i && gHead.s.equals(sHead.s))
+					c++;
+			}
+			
+			p.d = c;
+		}
 	}
 }

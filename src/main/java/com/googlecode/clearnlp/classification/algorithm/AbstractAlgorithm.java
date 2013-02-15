@@ -23,6 +23,9 @@
 */
 package com.googlecode.clearnlp.classification.algorithm;
 
+import java.util.List;
+
+import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 
 /**
@@ -59,5 +62,39 @@ abstract public class AbstractAlgorithm
 	protected int getWeightIndex(int L, int label, int index)
 	{
 		return index * L + label;
+	}
+	
+	static public void normalize(double[] scores)
+	{
+		int i, size = scores.length;
+		double d, sum = 0;
+		
+		for (i=0; i<size; i++)
+		{
+			d = Math.exp(scores[i]);
+			scores[i] = d;
+			sum += d;
+		}
+		
+		for (i=0; i<size; i++)
+			scores[i] /= sum;
+	}
+	
+	static public void normalize(List<StringPrediction> ps)
+	{
+		int i, size = ps.size();
+		StringPrediction p;
+		double d, sum = 0;
+		
+		for (i=0; i<size; i++)
+		{
+			p = ps.get(i);
+			d = Math.exp(p.score);
+			p.score = d;
+			sum += d;
+		}
+		
+		for (i=0; i<size; i++)
+			ps.get(i).score /= sum; 
 	}
 }

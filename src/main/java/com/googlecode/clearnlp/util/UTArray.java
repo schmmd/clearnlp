@@ -52,6 +52,19 @@ public class UTArray
 		return builder.substring(delim.length());
 	}
 	
+	static public String join(double[] arr, String delim)
+	{
+		StringBuilder builder = new StringBuilder();
+		
+		for (double item : arr)
+		{
+			builder.append(delim);
+			builder.append(item);
+		}
+		
+		return builder.substring(delim.length());
+	}
+	
 	static public String join(List<String> list, String delim)
 	{
 		StringBuilder builder = new StringBuilder();

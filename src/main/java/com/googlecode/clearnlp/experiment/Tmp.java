@@ -104,6 +104,15 @@ public class Tmp
 	//	evalSubPOS(args[0]);
 	//	countLR(args[0]);
 	//	measureTime();
+		
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[1]);
+		CTTree tree;
+		
+		while ((tree = reader.nextTree()) != null)
+			fout.println(tree.toCoNLLPOS(false, "\t"));
+
+		fout.close();
 	}
 	
 	void countLR(String inputFile)

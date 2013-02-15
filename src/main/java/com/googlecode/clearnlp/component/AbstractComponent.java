@@ -23,6 +23,14 @@ import com.googlecode.clearnlp.dependency.DEPTree;
  */
 abstract public class AbstractComponent
 {
+	protected final byte FLAG_LEXICA	= 0;
+	protected final byte FLAG_TRAIN		= 1;
+	protected final byte FLAG_DECODE	= 2;
+	protected final byte FLAG_BOOTSTRAP	= 3;
+	protected final byte FLAG_DEVELOP	= 4;
+	
+	protected byte i_flag;
+	
 	/** Process this joint-component. */
 	abstract public void process(DEPTree tree);
 }

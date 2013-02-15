@@ -64,6 +64,17 @@ public class StringFeatureVector extends AbstractFeatureVector
 		s_values = new ArrayList<String>();
 	}
 	
+	public StringFeatureVector clone()
+	{
+		StringFeatureVector copy = new StringFeatureVector(b_weight);
+		
+		copy.s_types  = new ArrayList<String>(s_types);
+		copy.s_values = new ArrayList<String>(s_values);
+		if (b_weight) copy.d_weights = d_weights.clone();
+		
+		return copy;
+	}
+	
 	/**
 	 * Adds a feature.
 	 * @param type  the feature type.

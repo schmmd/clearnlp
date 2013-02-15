@@ -30,6 +30,7 @@ import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.component.AbstractComponent;
+import com.googlecode.clearnlp.component.dep.CDEPBackParser;
 import com.googlecode.clearnlp.component.dep.CDEPPassParser;
 import com.googlecode.clearnlp.component.morph.CDefaultMPAnalyzer;
 import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
@@ -193,6 +194,8 @@ public class NLPDecode extends AbstractNLP
 			return new CRolesetClassifier(zin);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(zin);
+		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+			return new CDEPBackParser(zin);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -263,6 +266,20 @@ public class NLPDecode extends AbstractNLP
 			modes.add(NLPLib.MODE_PRED);
 			modes.add(NLPLib.MODE_ROLE);
 			modes.add(NLPLib.MODE_SRL);
+		}
+		else if (mode.equals(NLPLib.MODE_DEP_BACK))
+		{
+			if (readerType.equals(AbstractReader.TYPE_RAW) || readerType.equals(AbstractReader.TYPE_LINE) || readerType.equals(AbstractReader.TYPE_TOK))
+			{
+				modes.add(NLPLib.MODE_POS);
+				modes.add(NLPLib.MODE_MORPH);
+			}
+			else if (readerType.equals(AbstractReader.TYPE_POS))
+			{
+				modes.add(NLPLib.MODE_MORPH);
+			}
+			
+			modes.add(NLPLib.MODE_DEP_BACK);
 		}
 		
 		return modes;

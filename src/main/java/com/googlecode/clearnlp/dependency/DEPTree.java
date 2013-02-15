@@ -25,7 +25,10 @@ package com.googlecode.clearnlp.dependency;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
@@ -110,6 +113,25 @@ public class DEPTree extends ArrayList<DEPNode>
 		return null;
 	}
 	
+	public DEPNode getLeftMostDependent(int id, int order)
+	{
+		DEPNode node, head = get(id);
+		int i;
+		
+		for (i=1; i<id; i++)
+		{
+			node = get(i);
+			
+			if (node.getHead() == head)
+			{
+				if (order == 0)	return node;
+				order--;
+			}
+		}
+		
+		return null;
+	}
+	
 	public DEPNode getRightMostDependent(int id)
 	{
 		DEPNode node, head = get(id);
@@ -121,6 +143,25 @@ public class DEPTree extends ArrayList<DEPNode>
 			
 			if (node.getHead() == head)
 				return node;
+		}
+		
+		return null;
+	}
+	
+	public DEPNode getRightMostDependent(int id, int order)
+	{
+		DEPNode node, head = get(id);
+		int i;
+		
+		for (i=size()-1; i>id; i--)
+		{
+			node = get(i);
+			
+			if (node.getHead() == head)
+			{
+				if (order == 0)	return node;
+				order--;
+			}
 		}
 		
 		return null;
@@ -204,7 +245,9 @@ public class DEPTree extends ArrayList<DEPNode>
 		{
 			node = get(i);
 			head = node.getHead();
-			head.addDependent(node, node.getLabel());
+			
+			if (head != null)
+				head.addDependent(node, node.getLabel());
 		}
 	}
 	
@@ -261,6 +304,93 @@ public class DEPTree extends ArrayList<DEPNode>
 		l_mentions = mentions;
 	}
 	
+	// --------------------------------- merge ---------------------------------
+	
+	public void merge(List<StringIntPair[]> lHeads)
+	{
+		int i, size = size();
+			
+		StringIntPair[]   H = new StringIntPair[size];
+		List<DEPCountArc> F = new ArrayList<DEPCountArc>(); 
+		IntOpenHashSet    T = new IntOpenHashSet();
+		DEPCountArc a;
+		
+		StringIntPair[] t = lHeads.get(0);
+			
+		for (i=1; i<size; i++)
+			H[i] = new StringIntPair(t[i].s, t[i].i);
+			
+		T.add(DEPLib.ROOT_ID);
+		F.addAll(getArcs(lHeads, T));
+			
+		while (!F.isEmpty())
+		{
+			Collections.sort(F);
+			a = F.get(0);
+			
+			H[a.depId].i = a.headId;
+			H[a.depId].s = a.deprel;
+		
+			T.add(a.depId);
+			removeArcs(F, a.depId);
+			
+			F.addAll(getArcs(lHeads, T));			
+		}
+			
+		resetHeads(H);
+	}
+		
+	private List<DEPCountArc> getArcs(List<StringIntPair[]> lHeads, IntOpenHashSet T)
+	{
+		Map<String,DEPCountArc> map = new HashMap<String,DEPCountArc>();
+		int i, depId, len = size(), size = lHeads.size();
+		DEPCountArc val;
+		StringIntPair[] heads;
+		StringIntPair head;
+		String key;
+		
+		for (i=0; i<size; i++)
+		{
+			heads = lHeads.get(i);
+			
+			for (depId=1; depId<len; depId++)
+			{
+				head = heads[depId];
+				
+				if (head != null && T.contains(head.i) && !T.contains(depId))
+				{
+					key = depId+"_"+head.i+"_"+head.s;
+					val = map.get(key);
+						
+					if (val == null)
+					{
+						val = new DEPCountArc(1, i, depId, head.i, head.s);
+						map.put(key, val);
+					}
+					else
+						val.count++;
+					
+					heads[depId] = null;	
+				}
+			}
+		}
+		
+		return new ArrayList<DEPCountArc>(map.values());
+	}
+	
+	private void removeArcs(List<DEPCountArc> F, int depId)
+	{
+		List<DEPCountArc> remove = new ArrayList<DEPCountArc>();
+			
+		for (DEPCountArc p : F)
+		{
+			if (p.depId == depId)
+				remove.add(p);
+		}
+		
+		F.removeAll(remove);
+	}
+	
 	// --------------------------------- projectivize ---------------------------------
 	
 	public void projectivize()
@@ -303,10 +433,11 @@ public class DEPTree extends ArrayList<DEPNode>
 		return nonProj;
 	}
 	
-	/** @return 0 if w_k is projective. */
+	/** @return > 0 if w_k is non-projective. */
 	public int isNonProjective(DEPNode wk)
 	{
 		DEPNode wi = wk.getHead();
+		if (wi == null) return 0;
 		DEPNode wj;
 		
 		int bId, eId, j;
@@ -365,6 +496,71 @@ public class DEPTree extends ArrayList<DEPNode>
 			node.removeFeat(DEPLib.FEAT_PB);
 	}
 	
+	// --------------------------------- reset ---------------------------------
+	
+	public void resetPOSTags(String[] tags)
+	{
+		int i, size = size();
+		
+		for (i=1; i<size; i++)
+			get(i).pos = tags[i];
+	}
+	
+	public void resetHeads(StringIntPair[] heads)
+	{
+		int i, size = size();
+		StringIntPair head;
+		DEPNode node;
+		
+		for (i=1; i<size; i++)
+		{
+			node = get(i);
+			head = heads[i];
+			
+			if (head.i == DEPLib.NULL_ID)
+				node.clearHead();
+			else
+				node.setHead(get(head.i), head.s);
+		}
+	}
+	
+	public StringIntPair[] getDiff(StringIntPair[] heads)
+	{
+		int i, size = size();
+		DEPNode node, head;
+		
+		StringIntPair[] diff = new StringIntPair[size];
+		StringIntPair p;
+		
+		for (i=1; i<size; i++)
+		{
+			node = get(i);
+			head = node.getHead();
+			p    = heads[i];
+			
+			if (head != null && head.id != p.i && !node.isLabel(p.s))
+				diff[i] = new StringIntPair(node.getLabel(), head.id);
+			else
+				diff[i] = new StringIntPair(null, DEPLib.NULL_ID);
+		}
+		
+		return diff;
+	}
+	
+	public void appendHeads(StringIntPair[] heads)
+	{
+		int i, size = size();
+		StringIntPair p;
+		
+		for (i=1; i<size; i++)
+		{
+			p = heads[i];
+			
+			if (p.i != DEPLib.NULL_ID)
+				get(i).setHead(get(p.i), p.s);
+		}
+	}
+	
 	// --------------------------------- getGoldTags ---------------------------------
 	
 	public String[] getPOSTags()
@@ -389,7 +585,7 @@ public class DEPTree extends ArrayList<DEPNode>
 		for (i=1; i<size; i++)
 		{
 			head = get(i).d_head;
-			heads[i] = new StringIntPair(head.label, head.getNode().id);
+			heads[i] = (head.node != null) ? new StringIntPair(head.label, head.getNode().id) : new StringIntPair(null, DEPLib.NULL_ID);
 		}
 		
 		return heads;

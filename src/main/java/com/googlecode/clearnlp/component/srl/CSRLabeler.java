@@ -206,12 +206,6 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	}
 	
 	@Override
-	public Object[] getGoldTags()
-	{
-		return g_heads;
-	}
-	
-	@Override
 	public void countAccuracy(int[] counts)
 	{
 		int i, pTotal = 0, rTotal = 0, correct = 0;

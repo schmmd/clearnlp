@@ -19,6 +19,10 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -36,6 +40,7 @@ import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
+import com.googlecode.clearnlp.util.pair.Pair;
 
 /**
  * @since 1.3.0
@@ -43,17 +48,10 @@ import com.googlecode.clearnlp.util.UTOutput;
  */
 abstract public class AbstractStatisticalComponent extends AbstractComponent
 {
-	protected final byte FLAG_LEXICA	= 0;
-	protected final byte FLAG_TRAIN		= 1;
-	protected final byte FLAG_DECODE	= 2;
-	protected final byte FLAG_BOOTSTRAP	= 3;
-	protected final byte FLAG_DEVELOP	= 4;
-	
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
 	protected JointFtrXml[]			f_xmls;
 	protected DEPTree				d_tree;
-	protected byte 					i_flag;
 	protected int 					t_size;		// size of d_tree
 	
 //	====================================== CONSTRUCTORS ======================================
@@ -225,9 +223,6 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	/** @return all objects containing lexica. */
 	abstract public Object[] getLexica();
 	
-	/** @return gold-standard tags. */
-	abstract public Object[] getGoldTags();
-	
 //	====================================== PROCESS ======================================
 
 	/** Counts the number of correctly classified labels. */
@@ -305,5 +300,25 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 		}
 		else
 			vector.addFeature(type, prev);
+	}
+	
+	protected List<Pair<String,StringFeatureVector>> getTrimmedInstances(List<Pair<String,StringFeatureVector>> insts)
+	{
+		List<Pair<String,StringFeatureVector>> nInsts = new ArrayList<Pair<String,StringFeatureVector>>();
+		Set<String> set = new HashSet<String>();
+		String key;
+		
+		for (Pair<String,StringFeatureVector> p : insts)
+		{
+			key = p.o1+" "+p.o2.toString();
+			
+			if (!set.contains(key))
+			{
+				nInsts.add(p);
+				set.add(key);
+			}
+		}
+		
+		return nInsts;
 	}
 }

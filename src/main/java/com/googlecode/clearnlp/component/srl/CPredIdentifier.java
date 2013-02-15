@@ -128,12 +128,6 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 	{
 		return null;
 	}
-	
-	@Override
-	public Object[] getGoldTags()
-	{
-		return g_preds;
-	}
 
 //	====================================== PROCESS ======================================
 	

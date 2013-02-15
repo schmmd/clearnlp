@@ -187,6 +187,11 @@ abstract public class AbstractModel
 		d_weights = isBinaryLabel() ? new double[n_features] : new double[n_features * n_labels];
 	}
 	
+	public void initWeightVector(int nLabels)
+	{
+		d_weights = new double[n_features * nLabels];
+	}
+	
 	/**
 	 * Copies a weight vector for binary classification.
 	 * @param vector the weight vector to be copied. 

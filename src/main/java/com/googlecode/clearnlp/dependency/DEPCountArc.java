@@ -2,11 +2,10 @@ package com.googlecode.clearnlp.dependency;
 
 public class DEPCountArc implements Comparable<DEPCountArc>
 {
-	public int order, depId, headId;
-	public double count;
+	public int count, order, depId, headId;
 	public String deprel;
 	
-	public DEPCountArc(double count, int order, int depId, int headId, String deprel)
+	public DEPCountArc(int count, int order, int depId, int headId, String deprel)
 	{
 		this.count  = count;
 		this.order  = order;
@@ -18,10 +17,7 @@ public class DEPCountArc implements Comparable<DEPCountArc>
 	@Override
 	public int compareTo(DEPCountArc p)
 	{
-		double n = p.count - count;
-		
-		if      (n > 0)	return  1;
-		else if (n < 0)	return -1;
-		else			return order - p.order;
+		int n = p.count - count;
+		return (n == 0) ? order - p.order : n;
 	}
 }

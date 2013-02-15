@@ -210,12 +210,6 @@ public class CRolesetClassifier extends AbstractStatisticalComponent
 	}
 	
 	@Override
-	public Object[] getGoldTags()
-	{
-		return g_rolesets;
-	}
-	
-	@Override
 	public void countAccuracy(int[] counts)
 	{
 		int i, correct = 0, total = 0;

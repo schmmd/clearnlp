@@ -27,14 +27,17 @@ public class DEPLabel
 	public String arc;
 	public String list;
 	public String deprel;
+	public double score;
 
+	public DEPLabel(String label, double score)
+	{
+		set(label);
+		this.score = score;
+	}
+	
 	public DEPLabel(String label)
 	{
-		int idx = label.indexOf(DELIM);
-		
-		arc    = label.substring(0, idx);
-		list   = label.substring(idx+1, idx = label.lastIndexOf(DELIM));
-		deprel = label.substring(idx+1);
+		set(label);
 	}
 	
 	public DEPLabel(String arc, String deprel)
@@ -42,6 +45,15 @@ public class DEPLabel
 		this.arc    = arc;
 		this.list   = "";
 		this.deprel = deprel;
+	}
+	
+	public void set(String label)
+	{
+		int idx = label.indexOf(DELIM);
+		
+		arc    = label.substring(0, idx);
+		list   = label.substring(idx+1, idx = label.lastIndexOf(DELIM));
+		deprel = label.substring(idx+1);
 	}
 	
 	public boolean isArc(String label)
@@ -52,6 +64,16 @@ public class DEPLabel
 	public boolean isList(String label)
 	{
 		return list.equals(label);
+	}
+	
+	public boolean isDeprel(String label)
+	{
+		return deprel.equals(label);
+	}
+	
+	public boolean isSame(DEPLabel label)
+	{
+		return isArc(label.arc) && isList(label.list) && isDeprel(label.deprel);
 	}
 	
 	public String toString()

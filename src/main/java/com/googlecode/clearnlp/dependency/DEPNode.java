@@ -193,11 +193,6 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return d_head.label != null && d_head.isLabel(label);
 	}
 	
-	public boolean isHead(DEPNode head)
-	{
-		return d_head.node == head;
-	}
-	
 	/**
 	 * Returns the dependency head of this node.
 	 * If the head does not exists, returns {@code null}.
@@ -231,6 +226,17 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	public boolean hasHead()
 	{
 		return d_head.node != null;
+	}
+	
+	public void clearHead()
+	{
+		d_head.clear();
+	}
+	
+	public DEPNode getGrandHead()
+	{
+		DEPNode head = getHead();
+		return (head == null) ? null : head.getHead();
 	}
 	
 	/**

@@ -194,12 +194,6 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	}
 	
 	@Override
-	public Object[] getGoldTags()
-	{
-		return g_heads;
-	}
-	
-	@Override
 	public void countAccuracy(int[] counts)
 	{
 		int i, las = 0, uas = 0, ls = 0;
@@ -211,7 +205,7 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 			node = d_tree.get(i);
 			p    = g_heads[i];
 			
-			if (node.isHead(d_tree.get(p.i)))
+			if (node.isDependentOf(d_tree.get(p.i)))
 			{
 				uas++;
 				if (node.isLabel(p.s)) las++;
