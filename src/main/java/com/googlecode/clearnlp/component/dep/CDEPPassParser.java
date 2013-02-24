@@ -707,6 +707,19 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		{
 			return node.getLabel();
 		}
+		else if (token.isField(JointFtrXml.F_DISTANCE))
+		{
+			int dist = i_beta - i_lambda;
+			return (dist > 6) ? "6" : Integer.toString(dist);
+		}
+		else if (token.isField(JointFtrXml.F_LEFT_VALENCY))
+		{
+			return Integer.toString(d_tree.getLeftValency(node.id));
+		}
+		else if (token.isField(JointFtrXml.F_RIGHT_VALENCY))
+		{
+			return Integer.toString(d_tree.getRightValency(node.id));
+		}
 		else if (token.isField(JointFtrXml.F_LNPL))
 		{
 			return getLeftNearestPunctuation (0, i_lambda);

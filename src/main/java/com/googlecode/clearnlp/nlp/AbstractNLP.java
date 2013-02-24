@@ -228,6 +228,18 @@ abstract public class AbstractNLP
 			return getAdaGradModel(space, numThreads, iter, rand, alpha, rho);
 		}
 		
+		else if (name.equals("adagrad-lr"))
+		{
+			String[] tmp = UTXml.getTrimmedAttribute(eAlgorithm, "iter").split(",");
+			
+			int    iter  = Integer.parseInt   (tmp[boot]);
+			int    rand  = Integer.parseInt   (UTXml.getTrimmedAttribute(eAlgorithm, "rand"));
+			double alpha = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "alpha"));
+			double rho   = Double .parseDouble(UTXml.getTrimmedAttribute(eAlgorithm, "rho"));
+			
+			return getAdaGradLRModel(space, numThreads, iter, rand, alpha, rho);
+		}
+		
 		return null;
 	}
 	
@@ -249,6 +261,22 @@ abstract public class AbstractNLP
 
 		System.out.println("Training:");
 		AdaGrad ag = new AdaGrad(iter, alpha, rho, new Random(rand));
+		
+		AbstractModel model = space.getModel();
+		model.setWeights(ag.getWeight(space, numThreads));
+		
+		return model;
+	}
+	
+	/** Called by {@link AbstractNLP#getModel(Element, AbstractTrainSpace, int, int)}. */
+	protected AbstractModel getAdaGradLRModel(AbstractTrainSpace space, int numThreads, int iter, int rand, double alpha, double rho)
+	{
+		space.build();
+		System.out.println("AdaGrad-LR:");
+		System.out.printf("- iter=%d, rand=%d, alpha=%f, rho=%f\n", iter, rand, alpha, rho);
+
+		System.out.println("Training:");
+		AdaGradLR ag = new AdaGradLR(iter, alpha, rho, new Random(rand));
 		
 		AbstractModel model = space.getModel();
 		model.setWeights(ag.getWeight(space, numThreads));

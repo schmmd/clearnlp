@@ -137,27 +137,12 @@ public class NLPDevelop extends NLPTrain
 		StringModel[] models = null;
 		int boot = 0;
 		
-	/*	if (mode.equals(NLPLib.MODE_DEP_BACK))
-		{
-			models = new StringModel[1];
-			models[0] = new StringModel(UTInput.createBufferedFileReader("dep-back.mod"));
-			boot = 1;	
-		}*/
-		
 		do
 		{
 			prevScore = currScore;
 			p = developComponent(eConfig, reader, xmls, trainFiles, devFiles, lexica, models, mode, boot, devId);
 			models = (StringModel[])p.o;
 			currScore = p.d;
-			
-	/*		if (boot == 0 && mode.equals(NLPLib.MODE_POS_BACK))
-			{
-				PrintStream fout = UTOutput.createPrintBufferedFileStream("pos-back.mod");
-				models[0].save(fout);
-				fout.close();
-			}*/
-			
 			boot++;
 		}
 		while (-0.01 < currScore - prevScore);
@@ -214,9 +199,9 @@ public class NLPDevelop extends NLPTrain
 				updateModel(eTrain, spaces[i], rands[i], nUpdate, i);
 				models[i] = (StringModel)spaces[i].getModel();
 			}
-
+			
 			component = getComponent(xmls, models, lexica, mode);
-			currScore = decode(reader, component, devFiles, mode, Integer.toString(100*boot+nUpdate));
+			currScore = decode(reader, component, devFiles, mode, boot+"."+nUpdate+"."+i_rand);
 			nUpdate++;
 		}
 		while (prevScore < currScore);
@@ -346,7 +331,7 @@ public class NLPDevelop extends NLPTrain
 			String[] labels = {"T","POS","LAS","UAS","LS"};
 			printScores(labels, counts);
 
-			score = 100d * counts[3] / counts[0];
+			score = 100d * counts[2] / counts[0];
 		}
 		
 		return score;

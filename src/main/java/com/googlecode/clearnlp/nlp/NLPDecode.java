@@ -68,6 +68,8 @@ public class NLPDecode extends AbstractNLP
 	protected String s_mode;
 	@Option(name="-twit", usage="if set, tokenize for twits", required=false, metaVar="<boolean>")
 	protected boolean b_twit;
+	@Option(name="-beams", usage="beam size (default: 1)", required=false, metaVar="<boolean>")
+	protected int n_beams = 1;
 	
 	public NLPDecode() {}
 	
@@ -163,6 +165,8 @@ public class NLPDecode extends AbstractNLP
 			
 			fout.println(toString(tree, mode)+"\n");
 		}
+
+	//	CDEPBackParser p = (CDEPBackParser)components[0];
 	}
 	
 	public DEPTree toDEPTree(List<String> tokens)

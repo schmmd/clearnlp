@@ -29,6 +29,8 @@ public class DEPLabel
 	public String deprel;
 	public double score;
 
+	public DEPLabel() {}
+	
 	public DEPLabel(String label, double score)
 	{
 		set(label);

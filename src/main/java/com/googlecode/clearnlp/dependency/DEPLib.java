@@ -45,6 +45,7 @@ public class DEPLib
 	static public final String FEAT_SYN	= "syn";
 	/** The feat-key of propbank rolesets. */
 	static public final String FEAT_PB	= "pb";
+	/** The feat-key of verbnet classes. */
 	static public final String FEAT_VN	= "vn";
 	/** The feat-key of word senses. */
 	static public final String FEAT_WS	= "ws";

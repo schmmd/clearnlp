@@ -3,7 +3,7 @@ package com.googlecode.clearnlp.dependency;
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
-public class DEPState
+public class DEPState implements Comparable<DEPState>
 {
 	public int             lambda;	// index of lambfad
 	public int             beta;	// index of beta
@@ -22,5 +22,15 @@ public class DEPState
 		this.label  = label;
 		this.heads  = heads;
 		this.reduce = reduces;
+	}
+	
+	@Override
+	public int compareTo(DEPState p)
+	{
+		double diff = label.score - p.label.score;
+		
+		if      (diff > 0)	return -1;
+		else if (diff < 0)	return  1;
+		else				return  0;
 	}
 }

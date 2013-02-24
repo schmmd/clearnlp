@@ -467,7 +467,11 @@ abstract public class AbstractModel
 	 */
 	public Pair<StringPrediction,StringPrediction> predictTwo(SparseFeatureVector x)
 	{
-		List<StringPrediction> list = getPredictions(x);
+		return predictTwo(getPredictions(x));
+	}
+	
+	public Pair<StringPrediction,StringPrediction> predictTwo(List<StringPrediction> list)
+	{
 		StringPrediction fst = list.get(0), snd = list.get(1), p;
 		int i, size = list.size();
 		

@@ -58,6 +58,7 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final String F_POS_SET				= "ps";
 	static public final String F_AMBIGUITY_CLASS		= "a";
 	static public final String F_LEMMA					= "m";
+	static public final String F_NAMENT					= "nt";
 	static public final String F_DEPREL					= "d";
 	static public final String F_DIRECTION				= "dir";
 	static public final String F_DISTANCE				= "n";
@@ -79,7 +80,7 @@ public class JointFtrXml extends AbstractFtrXml
 	static public final Pattern P_ARGN 	 	= Pattern.compile("^argn(\\d+)$");
 
 	static protected final Pattern P_REL	= UTRegex.getORPattern(R_H, R_H2, R_LMD, R_RMD, R_LMD2, R_RMD2, R_LND, R_RND, R_LNS, R_RNS); 
-	static protected final Pattern P_FIELD	= UTRegex.getORPattern(F_FORM, F_SIMPLIFIED_FORM, F_LOWER_SIMPLIFIED_FORM, F_LEMMA, F_POS, F_POS_SET, F_AMBIGUITY_CLASS, F_DEPREL, F_DIRECTION, F_DISTANCE, F_DEPREL_SET, F_LEFT_VALENCY, F_RIGHT_VALENCY, F_LNPL, F_RNPL, F_LNPB, F_RNPB);
+	static protected final Pattern P_FIELD	= UTRegex.getORPattern(F_FORM, F_SIMPLIFIED_FORM, F_LOWER_SIMPLIFIED_FORM, F_LEMMA, F_POS, F_POS_SET, F_AMBIGUITY_CLASS, F_NAMENT, F_DEPREL, F_DIRECTION, F_DISTANCE, F_DEPREL_SET, F_LEFT_VALENCY, F_RIGHT_VALENCY, F_LNPL, F_RNPL, F_LNPB, F_RNPB);
 	
 	final String CUTOFF_AMBIGUITY			= "ambiguity";	// part-of-speech tagging
 	final String CUTOFF_DOCUMENT_FREQUENCY	= "df";			// part-of-speech tagging

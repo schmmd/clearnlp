@@ -105,14 +105,49 @@ public class Tmp
 	//	countLR(args[0]);
 	//	measureTime();
 		
-		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		DEPReader reader = new DEPReader(0, 1, 2, 4, 5, 6, 7);
+		reader.open(UTInput.createBufferedFileReader(args[0]));
+		DEPTree tree;
+		int c = 0;
+		
+		while ((tree = reader.next()) != null)
+			c += 2 * (tree.size() - 1) - 1;
+
+		int[] n = {1,2,4,8,16,32,64,80};
+		
+		for (int i : n)
+			System.out.println(c*i);
+		
+	/*	String inputFile = args[0];
+		String modelFile = args[1];
+		int[] beams = {16,32,64,80};
+		
+		CDEPBackParser parser = new CDEPBackParser(new ZipInputStream(new FileInputStream(modelFile)));
+		DEPReader reader = new DEPReader(0, 1, 2, 4, 5, 6, 7);
+		int[] counts = new int[5];
+		DEPTree tree;
+		double margin;
+		
+		reader.open(UTInput.createBufferedFileReader(inputFile));
+		parser.setBeams(beams);
+		Arrays.fill(counts, 0);
+		
+		while ((tree = reader.next()) != null)
+		{
+			parser.process(tree);
+			parser.countAccuracy(counts);
+		}
+		
+		System.out.printf("%2d %4.2f %5.2f %5.2f\n", beams, margin, 100d*counts[2]/counts[0], 100d*counts[3]/counts[0]);*/
+	
+	/*	CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[1]);
 		CTTree tree;
 		
 		while ((tree = reader.nextTree()) != null)
 			fout.println(tree.toCoNLLPOS(false, "\t"));
 
-		fout.close();
+		fout.close();*/
 	}
 	
 	void countLR(String inputFile)

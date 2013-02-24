@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.kohsuke.args4j.Option;
 
@@ -71,6 +72,8 @@ public class C2DConvertMulti extends AbstractRun
 	private String s_propExt = "prop";
 	@Option(name="-es", usage="sense-file extension (default: sense)", required=false, metaVar="<extension>")
 	private String s_senseExt = "sense";
+	@Option(name="-ev", usage="vclass-file extension (default: sl)", required=false, metaVar="<extension>")
+	private String s_vclassExt = "sl";
 	@Option(name="-en", usage="name-file extension (default: name)", required=false, metaVar="<extension>")
 	private String s_nameExt = "name";
 	@Option(name="-ed", usage="output-file extension (default: dep)", required=false, metaVar="<extension>")
@@ -82,41 +85,47 @@ public class C2DConvertMulti extends AbstractRun
 	@Option(name="-v", usage="if set, add only verb predicates in PropBank", required=false, metaVar="<boolean>")
 	private boolean b_verbs_only = false;
 	
+	final Pattern P_SPACE  = Pattern.compile(" ");
+	final Pattern P_HYPHEN = Pattern.compile("-");
+	final Pattern P_COLON  = Pattern.compile(":");
+	
 	public C2DConvertMulti(String[] args)
 	{
 		initArgs(args);
-		convert(s_headruleFile, s_dictFile, s_language, s_mergeLabels, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_nameExt, s_outputExt);
+		convert(s_headruleFile, s_dictFile, s_language, s_mergeLabels, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_vclassExt, s_nameExt, s_outputExt);
 	}
 	
-	public void convert(String headruleFile, String dictFile, String language, String mergeLabels, String inputPath, String parseExt, String propExt, String senseExt, String nameExt, String outputExt)
+	public void convert(String headruleFile, String dictFile, String language, String mergeLabels, String inputPath, String parseExt, String propExt, String senseExt, String vclassExt, String nameExt, String outputExt)
 	{
 		AbstractMPAnalyzer morph = EngineGetter.getMPAnalyzer(s_language, s_dictFile);
 		AbstractC2DConverter c2d = EngineGetter.getC2DConverter(s_language, s_headruleFile, s_mergeLabels);
 		
-		convertRec(c2d, morph, language, inputPath, parseExt, propExt, senseExt, nameExt, outputExt);
+		convertRec(c2d, morph, language, inputPath, parseExt, propExt, senseExt, vclassExt, nameExt, outputExt);
 	}
 	
-	private void convertRec(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputPath, String parseExt, String propExt, String senseExt, String nameExt, String outputExt)
+	private void convertRec(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputPath, String parseExt, String propExt, String senseExt, String vclassExt, String nameExt, String outputExt)
 	{
 		File file = new File(inputPath);
 		
 		if (file.isDirectory())
 		{
 			for (String filePath : file.list())
-				convertRec(c2d, morph, language, inputPath+File.separator+filePath, parseExt, propExt, senseExt, nameExt, outputExt);
+				convertRec(c2d, morph, language, inputPath+File.separator+filePath, parseExt, propExt, senseExt, vclassExt, nameExt, outputExt);
 		}
 		else if (inputPath.endsWith(parseExt))
 		{
 			System.out.println(inputPath);
-			IntObjectOpenHashMap<List<PBInstance>>    mProp  = null;
-			IntObjectOpenHashMap<List<StringIntPair>> mSense = null;
-			IntObjectOpenHashMap<List<String>>        mName  = null;
+			IntObjectOpenHashMap<List<PBInstance>>    mProp   = null;
+			IntObjectOpenHashMap<List<StringIntPair>> mSense  = null;
+			IntObjectOpenHashMap<List<StringIntPair>> mVclass = null;
+			IntObjectOpenHashMap<List<String>>        mName   = null;
 			
 			try
 			{
-				mProp  = getPBInstances(UTFile.replaceExtension(inputPath, propExt));
-				mSense = getWordSenses (UTFile.replaceExtension(inputPath, senseExt));
-				mName  = getNames      (UTFile.replaceExtension(inputPath, nameExt));
+				mProp   = getPBInstances(UTFile.replaceExtension(inputPath, propExt));
+				mSense  = getWordSenses (UTFile.replaceExtension(inputPath, senseExt));
+				mVclass = getVerbClasses(UTFile.replaceExtension(inputPath, vclassExt));
+				mName   = getNames      (UTFile.replaceExtension(inputPath, nameExt));
 			}
 			catch (Exception e) {e.printStackTrace();}
 			
@@ -144,10 +153,11 @@ public class C2DConvertMulti extends AbstractRun
 				}
 				else
 				{
-					if (morph != null)	morph.lemmatize(dTree);
-					addRolesets(cTree, dTree, instances);
-					if (mSense != null)	addWordSenses(cTree, dTree, mSense.get(n));
-					if (mName  != null)	addNames(cTree, dTree, mName.get(n));
+					if (morph   != null)	morph.lemmatize(dTree);
+					if (mProp   != null)	addRolesets(cTree, dTree, instances);
+					if (mSense  != null)	addWordSenses(cTree, dTree, mSense.get(n), DEPLibEn.FEAT_WS);
+					if (mVclass != null)	addWordSenses(cTree, dTree, mVclass.get(n), DEPLibEn.FEAT_VN);
+					if (mName   != null)	addNames(cTree, dTree, mName.get(n));
 				
 					dTree = getDEPTreeWithoutEdited(cTree, dTree);
 					fout.println(dTree+"\n");					
@@ -304,7 +314,7 @@ public class C2DConvertMulti extends AbstractRun
 		
 		while ((line = fin.readLine()) != null)
 		{
-			tmp    = line.split(" ");
+			tmp    = P_SPACE.split(line);
 			treeId = Integer.parseInt(tmp[1]);
 			wordId = Integer.parseInt(tmp[2]);
 			sense  = tmp[3].substring(0, tmp[3].length()-2)+"."+tmp[4];
@@ -324,6 +334,38 @@ public class C2DConvertMulti extends AbstractRun
 		return map;
 	}
 	
+	private IntObjectOpenHashMap<List<StringIntPair>> getVerbClasses(String vclassFile) throws Exception
+	{
+		if (!new File(vclassFile).isFile())	return null;
+		IntObjectOpenHashMap<List<StringIntPair>> map = new IntObjectOpenHashMap<List<StringIntPair>>();
+		BufferedReader fin = UTInput.createBufferedFileReader(vclassFile);
+		List<StringIntPair> list;
+		String line, vclass;
+		int treeId, wordId;
+		String[] tmp;
+		
+		while ((line = fin.readLine()) != null)
+		{
+			tmp    = P_SPACE.split(line);
+			treeId = Integer.parseInt(tmp[1]);
+			wordId = Integer.parseInt(tmp[2]);
+			vclass = tmp[5];
+			
+			if (map.containsKey(treeId))
+				list = map.get(treeId);
+			else
+			{
+				list = new ArrayList<StringIntPair>();
+				map.put(treeId, list);
+			}
+			
+			list.add(new StringIntPair(vclass, wordId));
+		}
+		
+		fin.close();
+		return map;
+	}
+	
 	private IntObjectOpenHashMap<List<String>> getNames(String nameFile) throws Exception
 	{
 		if (!new File(nameFile).isFile())	return null;
@@ -336,7 +378,7 @@ public class C2DConvertMulti extends AbstractRun
 		
 		while ((line = fin.readLine()) != null)
 		{
-			tmp    = line.split(" ");
+			tmp    = P_SPACE.split(line);
 			treeId = Integer.parseInt(tmp[1]);
 			list   = new ArrayList<String>();
 			
@@ -366,15 +408,15 @@ public class C2DConvertMulti extends AbstractRun
 		}
 	}
 	
-	private void addWordSenses(CTTree cTree, DEPTree dTree, List<StringIntPair> senses)
+	private void addWordSenses(CTTree cTree, DEPTree dTree, List<StringIntPair> p, String key)
 	{
-		if (senses == null)	return;
+		if (p == null)	return;
 		DEPNode node;
 		
-		for (StringIntPair sense : senses)
+		for (StringIntPair sense : p)
 		{
 			node = dTree.get(cTree.getTerminal(sense.i).getTokenId()+1);
-			node.addFeat(DEPLibEn.FEAT_WS, sense.s);
+			node.addFeat(key, sense.s);
 		}
 	}
 	
@@ -391,8 +433,8 @@ public class C2DConvertMulti extends AbstractRun
 		
 		for (String name : names)
 		{
-			t0   = name.split("-");
-			t1   = t0[0].split(":");
+			t0   = P_HYPHEN.split(name);
+			t1   = P_COLON.split(t0[0]);
 			ent  = t0[1];
 			bIdx = Integer.parseInt(t1[0]);
 			eIdx = Integer.parseInt(t1[1]);

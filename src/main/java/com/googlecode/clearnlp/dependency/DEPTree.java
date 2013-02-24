@@ -97,6 +97,34 @@ public class DEPTree extends ArrayList<DEPNode>
 		}
 	}
 	
+	public int getLeftValency(int id)
+	{
+		DEPNode node = get(id);
+		int i, c = 0;
+		
+		for (i=node.id-1; i>0; i--)
+		{
+			if (get(i).getHead() == node)
+				c++;
+		}
+		
+		return c;
+	}
+	
+	public int getRightValency(int id)
+	{
+		int i, c = 0, size = size();
+		DEPNode node = get(id);
+		
+		for (i=node.id+1; i<size; i++)
+		{
+			if (get(i).getHead() == node)
+				c++;
+		}
+		
+		return c;
+	}
+	
 	public DEPNode getLeftMostDependent(int id)
 	{
 		DEPNode node, head = get(id);

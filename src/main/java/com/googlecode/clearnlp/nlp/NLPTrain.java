@@ -71,6 +71,8 @@ public class NLPTrain extends AbstractNLP
 	protected String s_mode;
 	@Option(name="-margin", usage="margin between the 1st and 2nd predictions (default: 0.5)", required=false, metaVar="<double>")
 	protected double d_margin = 0.5;
+	@Option(name="-beams", usage="the size of beam (default: 0)", required=false, metaVar="<double>")
+	protected int n_beams = 0;
 	
 	public NLPTrain() {}
 	
@@ -134,7 +136,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
 			return new CPOSBackTagger(xmls, models, lexica, d_margin);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			return new CDEPBackParser(xmls, models, lexica, d_margin);
+			return new CDEPBackParser(xmls, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -321,7 +323,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
 			return (models == null) ? new CPOSBackTagger(xmls, spaces, lexica, d_margin) : new CPOSBackTagger(xmls, spaces, models, lexica, d_margin);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			return (models == null) ? new CDEPBackParser(xmls, spaces, lexica, d_margin) : new CDEPBackParser(xmls, spaces, models, lexica, d_margin);
+			return (models == null) ? new CDEPBackParser(xmls, spaces, lexica, d_margin, n_beams) : new CDEPBackParser(xmls, spaces, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -334,6 +336,8 @@ public class NLPTrain extends AbstractNLP
 			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getStringTrainSpaces(xmls[0], 2);
+		else if (boot > 0 && mode.equals(NLPLib.MODE_DEP_BACK))
+			return getStringTrainSpaces(xmls, 1);
 		else
 			return getStringTrainSpaces(xmls);
 	}
@@ -341,11 +345,16 @@ public class NLPTrain extends AbstractNLP
 	/** Called by {@link NLPTrain#getStringTrainSpaces(JointFtrXml[], Object[], String)}. */
 	private StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls)
 	{
+		return getStringTrainSpaces(xmls, 0);
+	}
+	
+	private StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls, int cIndex)
+	{
 		int i, size = xmls.length;
 		StringTrainSpace[] spaces = new StringTrainSpace[size];
 		
 		for (i=0; i<size; i++)
-			spaces[i] = new StringTrainSpace(false, xmls[i].getLabelCutoff(0), xmls[i].getFeatureCutoff(0));
+			spaces[i] = new StringTrainSpace(false, xmls[i].getLabelCutoff(cIndex), xmls[i].getFeatureCutoff(cIndex));
 		
 		return spaces;
 	}
