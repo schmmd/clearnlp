@@ -38,6 +38,7 @@ import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
+import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineGetter;
@@ -196,6 +197,8 @@ public class NLPDecode extends AbstractNLP
 			return new CPredIdentifier(zin);
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(zin);
+		else if (mode.startsWith(NLPLib.MODE_SENSE))
+			return new CSenseClassifier(zin, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(zin);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
@@ -241,13 +244,9 @@ public class NLPDecode extends AbstractNLP
 			
 			modes.add(NLPLib.MODE_DEP);
 		}
-		else if (mode.equals(NLPLib.MODE_PRED))
+		else if (mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 		{
-			modes.add(NLPLib.MODE_PRED);
-		}
-		else if (mode.equals(NLPLib.MODE_ROLE))
-		{
-			modes.add(NLPLib.MODE_ROLE);
+			modes.add(mode);
 		}
 		else if (mode.equals(NLPLib.MODE_SRL))
 		{

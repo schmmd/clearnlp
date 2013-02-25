@@ -630,6 +630,17 @@ public class DEPTree extends ArrayList<DEPNode>
 		return rolesets;
 	}
 	
+	public String[] getSenses(String key)
+	{
+		int i, size = size();
+		String[] senses = new String[size];
+		
+		for (i=1; i<size; i++)
+			senses[i] = get(i).getFeat(key);
+		
+		return senses;
+	}
+	
 	public String[] getRolesetIDs()
 	{
 		int i, size = size();

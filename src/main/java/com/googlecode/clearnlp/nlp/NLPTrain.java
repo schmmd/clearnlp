@@ -41,6 +41,7 @@ import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
+import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
@@ -110,6 +111,8 @@ public class NLPTrain extends AbstractNLP
 			return getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, devId);
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, devId);
+		else if (mode.startsWith(NLPLib.MODE_SENSE))
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSRLabeler(xmls), mode, devId);
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
@@ -131,6 +134,8 @@ public class NLPTrain extends AbstractNLP
 			return new CPredIdentifier(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(xmls, models, lexica);
+		else if (mode.startsWith(NLPLib.MODE_SENSE))
+			return new CSenseClassifier(xmls, models, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
@@ -240,7 +245,7 @@ public class NLPTrain extends AbstractNLP
 		
 		for (i=0; i<mSize; i++)
 		{
-			if (mode.equals(NLPLib.MODE_ROLE))
+			if (mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 				models[i] = (StringModel)getModel(eTrain, spaces[i], 0, boot);
 			else
 				models[i] = (StringModel)getModel(eTrain, spaces[i], i, boot);
@@ -318,6 +323,8 @@ public class NLPTrain extends AbstractNLP
 			return new CPredIdentifier(xmls, spaces, lexica);	
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			return new CRolesetClassifier(xmls, spaces, lexica);
+		else if (mode.startsWith(NLPLib.MODE_SENSE))
+			return new CSenseClassifier(xmls, spaces, lexica, mode.substring(mode.lastIndexOf("_")+1));
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
@@ -332,7 +339,7 @@ public class NLPTrain extends AbstractNLP
 	/** Called by {@link COMTrain#getStringTrainSpaces(Element, JointFtrXml[], String[], StringModel[], Object[], String, int)}. */
 	protected StringTrainSpace[] getStringTrainSpaces(JointFtrXml[] xmls, Object[] lexica, String mode, int boot)
 	{
-		if      (mode.equals(NLPLib.MODE_ROLE))
+		if      (mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 			return getStringTrainSpaces(xmls[0], ((ObjectIntOpenHashMap<String>)lexica[1]).size());
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return getStringTrainSpaces(xmls[0], 2);

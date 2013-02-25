@@ -92,7 +92,7 @@ abstract public class AbstractNLP
 			return tree.toStringPOS();
 		else if (mode.equals(NLPLib.MODE_MORPH))
 			return tree.toStringMorph();
-		else if (mode.startsWith(NLPLib.MODE_DEP) || mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_ROLE))
+		else if (mode.startsWith(NLPLib.MODE_DEP) || mode.equals(NLPLib.MODE_PRED) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 			return tree.toStringDEP();
 		else
 			return tree.toStringSRL();

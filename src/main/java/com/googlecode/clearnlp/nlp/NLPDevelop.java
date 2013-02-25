@@ -32,6 +32,7 @@ import com.googlecode.clearnlp.component.pos.CPOSBackTagger;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
+import com.googlecode.clearnlp.component.srl.CSenseClassifier;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
@@ -84,6 +85,8 @@ public class NLPDevelop extends NLPTrain
 			decode(reader, getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_ROLE))
 			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CRolesetClassifier(xmls), mode, -1), devFiles, mode, mode);
+		else if (mode.startsWith(NLPLib.MODE_SENSE))
+			decode(reader, getTrainedComponent(eConfig, reader, xmls, trainFiles, new CSenseClassifier(xmls, mode.substring(mode.lastIndexOf("_")+1)), mode, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_SRL))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CSRLabeler(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
@@ -288,7 +291,7 @@ public class NLPDevelop extends NLPTrain
 	
 	protected int[] getCounts(String mode)
 	{
-		if      (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE))
+		if      (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 			return new int[2];
 		else if (mode.equals(NLPLib.MODE_DEP))
 			return new int[4];
@@ -304,7 +307,7 @@ public class NLPDevelop extends NLPTrain
 	{
 		double score = 0;
 		
-		if (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE))
+		if (mode.startsWith(NLPLib.MODE_POS) || mode.equals(NLPLib.MODE_ROLE) || mode.startsWith(NLPLib.MODE_SENSE))
 		{
 			score = 100d * counts[1] / counts[0];
 			System.out.printf("- ACC: %5.2f (%d/%d)\n", score, counts[1], counts[0]);

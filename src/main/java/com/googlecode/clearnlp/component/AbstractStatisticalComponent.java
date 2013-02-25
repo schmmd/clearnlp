@@ -122,12 +122,15 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	}
 
 	/** Called by {@link AbstractStatisticalComponent#loadModels(ZipInputStream)}}. */
-	protected void loadFeatureTemplates(ZipInputStream zin, int index) throws Exception
+	protected ByteArrayInputStream loadFeatureTemplates(ZipInputStream zin, int index) throws Exception
 	{
-		BufferedReader fin = UTInput.createBufferedReader(zin);
-		
 		System.out.println("Loading feature templates.");
-		f_xmls[index] = new JointFtrXml(getFeatureTemplates(fin));
+
+		BufferedReader fin = UTInput.createBufferedReader(zin);
+		ByteArrayInputStream template = getFeatureTemplates(fin);
+		
+		f_xmls[index] = new JointFtrXml(template);
+		return template;
 	}
 	
 	protected ByteArrayInputStream getFeatureTemplates(BufferedReader fin) throws IOException

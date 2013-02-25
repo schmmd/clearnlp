@@ -359,6 +359,44 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 		return l_dependents;
 	}
 	
+	public List<DEPNode> getLeftDependents()
+	{
+		List<DEPNode> list = new ArrayList<DEPNode>();
+		int i, size = l_dependents.size();
+		DEPArc arc;
+		
+		for (i=0; i<size; i++)
+		{
+			arc = l_dependents.get(i);
+			
+			if (arc.getNode().id > id)
+				break;
+			
+			list.add(arc.getNode());
+		}
+		
+		return list;
+	}
+	
+	public List<DEPNode> getRightDependents()
+	{
+		List<DEPNode> list = new ArrayList<DEPNode>();
+		int i;
+		DEPArc arc;
+		
+		for (i=l_dependents.size()-1; i>=0; i--)
+		{
+			arc = l_dependents.get(i);
+			
+			if (arc.getNode().id < id)
+				break;
+			
+			list.add(arc.getNode());
+		}
+		
+		return list;
+	}
+	
 	public List<DEPArc> getGrandDependents()
 	{
 		List<DEPArc> list = new ArrayList<DEPArc>();
