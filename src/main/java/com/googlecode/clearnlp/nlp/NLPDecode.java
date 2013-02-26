@@ -65,7 +65,7 @@ public class NLPDecode extends AbstractNLP
 	private String s_inputExt = ".*";
 	@Option(name="-oe", usage="output file extension (default: cnlp)", required=false, metaVar="<string>")
 	private String s_outputExt = "cnlp";
-	@Option(name="-z", usage="mode (pos|morph|dep|srl)", required=true, metaVar="<string>")
+	@Option(name="-z", usage="mode (pos|morph|dep|srl|sense_vn)", required=true, metaVar="<string>")
 	protected String s_mode;
 	@Option(name="-twit", usage="if set, tokenize for twits", required=false, metaVar="<boolean>")
 	protected boolean b_twit;

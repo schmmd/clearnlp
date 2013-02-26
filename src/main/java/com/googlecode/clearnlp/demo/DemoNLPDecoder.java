@@ -89,12 +89,12 @@ public class DemoNLPDecoder
 
 	public static void main(String[] args)
 	{
-		String dictFile      = args[0];	// e.g., dictionary-1.2.0.zip
+		String dictFile      = args[0];	// e.g., dictionary-1.3.1.zip
 		String posModelFile  = args[1];	// e.g., ontonotes-en-pos-1.3.0.jar
 		String depModelFile  = args[2];	// e.g., ontonotes-en-dep-1.3.0.jar
 		String predModelFile = args[3];	// e.g., ontonotes-en-pred-1.3.0.jar
 		String roleModelFile = args[4];	// e.g., ontonotes-en-role-1.3.0.jar
-		String vnModelFile   = args[5];	// e.g., ontonotes-en-vn-1.3.1.jar
+		String vnModelFile   = args[5];	// e.g., ontonotes-en-sense-vn-1.3.1.jar
 		String srlModelFile  = args[6];	// e.g., ontonotes-en-srl-1.3.0.jar
 		String inputFile     = args[7];
 		String outputFile    = args[8];
