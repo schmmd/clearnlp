@@ -23,12 +23,20 @@
 */
 package com.googlecode.clearnlp.conversion;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import com.googlecode.clearnlp.constituent.CTLib;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTTree;
+import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.headrule.HeadRule;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
+import com.googlecode.clearnlp.headrule.HeadTagSet;
+import com.googlecode.clearnlp.morphology.MPLib;
+import com.googlecode.clearnlp.reader.AbstractColumnReader;
 
 /**
  * Abstract constituent to dependency converter.
@@ -86,6 +94,84 @@ abstract public class AbstractC2DConverter
 	}
 	
 	/**
+	 * Returns the head of the specific node list according to the specific headrule.
+	 * Every other node in the list becomes the dependent of the head node.
+	 * @param rule the headrule to be consulted.
+	 * @param nodes the list of nodes.
+	 * @param flagSize the number of head flags.
+	 * @return the head of the specific node list according to the specific headrule.
+	 */
+	protected CTNode getHead(HeadRule rule, List<CTNode> nodes, int flagSize)
+	{
+		nodes = new ArrayList<CTNode>(nodes);
+		if (rule.isRightToLeft())	Collections.reverse(nodes);
+		
+		int i, size = nodes.size(), flag;
+		int[] flags = new int[size];
+		
+		for (i=0; i<size; i++)
+			flags[i] = getHeadFlag(nodes.get(i));
+		
+		CTNode head = null, child;
+		
+		outer: for (flag=0; flag<flagSize; flag++)
+		{
+			for (HeadTagSet tagset : rule.getHeadTags())
+			{
+				for (i=0; i<size; i++)
+				{
+					child = nodes.get(i);
+					
+					if (flags[i] == flag && tagset.matches(child))
+					{
+						head = child;
+						break outer;
+					}
+				}
+			}
+		}
+
+		if (head == null)
+		{
+			System.err.println("Error: head not found.");
+			System.exit(1);
+		}
+		
+		CTNode parent = head.getParent();
+		
+		for (CTNode node : nodes)
+		{
+			if (node != head && !node.c2d.hasHead())
+				node.c2d.setHead(head, getDEPLabel(node, parent, head));
+		}
+		
+		return head;
+	}
+	
+	/** @return the dependency tree converted from the specific constituent tree without head information. */
+	protected DEPTree initDEPTree(CTTree cTree)
+	{
+		DEPTree dTree = new DEPTree();
+		String form, lemma, pos;
+		DEPNode dNode;
+		int id;
+		
+		for (CTNode node : cTree.getTokens())
+		{
+			id    = node.getTokenId() + 1;
+			form  = MPLib.revertBracket(node.form);
+			lemma = AbstractColumnReader.BLANK_COLUMN;
+			pos   = node.pTag;
+			
+			dNode = new DEPNode(id, form, lemma, pos, node.c2d.d_feats);
+			dTree.add(dNode);
+		}
+		
+		dTree.initXHeads();
+		return dTree;
+	}
+	
+	/**
 	 * Sets the head of the specific phrase node.
 	 * This is a helper method of {@link AbstractC2DConverter#setHeads(CTNode)}.
 	 * @param rule the headrule to the specific node.
@@ -94,9 +180,26 @@ abstract public class AbstractC2DConverter
 	abstract protected void setHeadsAux(HeadRule rule, CTNode curr);
 	
 	/**
-	 * Returns the dependency tree converted by the specific constituent tree. 
-	 * @param cTree the constituent tree to be converted.
-	 * @return the dependency tree converted by the specific constituent tree.
+	 * Returns the head flag of the specific constituent node.
+	 * @param child the constituent node.
+	 * @return the head flag of the specific constituent node.
+	 */
+	abstract protected int getHeadFlag(CTNode child);
+	
+	/**
+	 * Returns a dependency label given the specific phrase structure.
+	 * @param C the current node.
+	 * @param P the parent of {@code C}.
+	 * @param p the head of {@code P}.
+	 * @return a dependency label given the specific phrase structure.
+	 */
+	abstract protected String getDEPLabel(CTNode C, CTNode P, CTNode p);
+	
+	/**
+	 * Returns the dependency tree converted from the specific constituent tree.
+	 * If the constituent tree contains only empty categories, returns {@code null}.
+	 * @param cTree the constituent tree to convert.
+	 * @return the dependency tree converted from the specific constituent tree.
 	 */
 	abstract public DEPTree toDEPTree(CTTree cTree);
 }

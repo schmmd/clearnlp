@@ -65,6 +65,8 @@ import com.carrotsearch.hppc.IntDeque;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
 import com.googlecode.clearnlp.constituent.CTTree;
+import com.googlecode.clearnlp.conversion.AbstractC2DConverter;
+import com.googlecode.clearnlp.conversion.KaistC2DConverter;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
@@ -73,13 +75,16 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.dependency.srl.SRLEval;
 import com.googlecode.clearnlp.dependency.srl.SRLabeler;
 import com.googlecode.clearnlp.engine.EngineProcess;
+import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.DEPReader;
 import com.googlecode.clearnlp.reader.POSReader;
 import com.googlecode.clearnlp.reader.SRLReader;
+import com.googlecode.clearnlp.reader.TOKReader;
 import com.googlecode.clearnlp.util.UTArray;
+import com.googlecode.clearnlp.util.UTFile;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
@@ -93,61 +98,147 @@ public class Tmp
 {
 	public Tmp(String[] args) throws Exception
 	{
-	//	mapPropBankToDependency(args[0], args[1]);
-	//	countSRL(args);
-	//	traverse(args[0]);
-	//	getTokens(args[0], args[1]);
-	//	converNonASC(args);
-	//	printTreesForCKY(args);
-	//	wc(args[0]);
-	//	projectivize(args[0], args[1]);
-	//	evalSubPOS(args[0]);
-	//	countLR(args[0]);
-	//	measureTime();
-		
-		DEPReader reader = new DEPReader(0, 1, 2, 4, 5, 6, 7);
-		reader.open(UTInput.createBufferedFileReader(args[0]));
-		DEPTree tree;
-		int c = 0;
-		
-		while ((tree = reader.next()) != null)
-			c += 2 * (tree.size() - 1) - 1;
-
-		int[] n = {1,2,4,8,16,32,64,80};
-		
-		for (int i : n)
-			System.out.println(c*i);
-		
-	/*	String inputFile = args[0];
-		String modelFile = args[1];
-		int[] beams = {16,32,64,80};
-		
-		CDEPBackParser parser = new CDEPBackParser(new ZipInputStream(new FileInputStream(modelFile)));
-		DEPReader reader = new DEPReader(0, 1, 2, 4, 5, 6, 7);
-		int[] counts = new int[5];
-		DEPTree tree;
-		double margin;
-		
-		reader.open(UTInput.createBufferedFileReader(inputFile));
-		parser.setBeams(beams);
-		Arrays.fill(counts, 0);
-		
-		while ((tree = reader.next()) != null)
-		{
-			parser.process(tree);
-			parser.countAccuracy(counts);
-		}
-		
-		System.out.printf("%2d %4.2f %5.2f %5.2f\n", beams, margin, 100d*counts[2]/counts[0], 100d*counts[3]/counts[0]);*/
+		cleanSejong(args);
+	}
 	
-	/*	CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+	void cleanSejong(String[] args)
+	{
+		String[] parseFiles = UTFile.getSortedFileList(args[0], "parse");
+		String[] rawFiles   = UTFile.getSortedFileList(args[1], "raw");
+		
+		CTReader  pin = new CTReader();
+		TOKReader tin = new TOKReader(0);
+		
+		int i, size = parseFiles.length;
+		List<String> tokens;
+		CTTree tree;
+		
+		for (i=0; i<size; i++)
+		{
+			pin.open(UTInput.createBufferedFileReader(parseFiles[i]));
+			tin.open(UTInput.createBufferedFileReader(rawFiles[i]));
+			System.out.println(rawFiles[i]);
+			
+			while ((tree = pin.nextTree()) != null)
+			{
+				tokens = tin.next();
+				
+				if (tree.getTokens().size() != tokens.size())
+					System.out.println(UTArray.join(tokens, " "));
+			}
+		}
+	}
+	
+	void printTreebank(String[] args)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(args[1]);
 		CTTree tree;
 		
 		while ((tree = reader.nextTree()) != null)
-			fout.println(tree.toCoNLLPOS(false, "\t"));
+			fout.println(tree.toString()+"\n");
+		
+		reader.close();
+		fout.close();
+	}
+	
+	void convertKaist(String[] args)
+	{
+		AbstractC2DConverter converter = new KaistC2DConverter(new HeadRuleMap(UTInput.createBufferedFileReader(args[0])));
+		String[] inputFiles = UTFile.getSortedFileList(args[1], "ptb");
+		String outputFile;
+		PrintStream fout;
+		CTReader reader;
+		DEPTree dTree;
+		CTTree cTree;
+		
+		for (String inputFile : inputFiles)
+		{
+			outputFile = UTFile.replaceExtension(inputFile, "dep");
+			reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
+			fout = UTOutput.createPrintBufferedFileStream(outputFile);
+			System.out.println(outputFile);
+			
+			while ((cTree = reader.nextTree()) != null)
+			{
+				dTree = converter.toDEPTree(cTree);
+				fout.println(dTree.toStringDEP()+"\n");
+			}
+			
+			reader.close();
+			fout.close();
+		}
+	}
+	
+	void extractDEP(String[] args)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		Set<String> set = new HashSet<String>();
+		Pattern delim = Pattern.compile("\\+");
+		CTTree tree;
+		
+		while ((tree = reader.nextTree()) != null)
+		{
+			extractDEPAux(tree.getRoot(), set, delim);
+		}
 
-		fout.close();*/
+		List<String> list = new ArrayList<String>(set);
+		Collections.sort(list);
+		System.out.println(list);
+	}
+	
+	void extractDEPAux(CTNode node, Set<String> set, Pattern delim)
+	{
+		Set<String> s = new HashSet<String>();
+		boolean skip = false;
+		char c;
+		
+		for (CTNode child : node.getChildren())
+		{
+			if (node.isPTag("NP"))
+			{
+				for (String pos : delim.split(child.pTag))
+				{
+					c = pos.charAt(0);
+					
+					if (c == 'n' || pos.equals("etn") || c == 'f')// || c == 'p')
+						skip = true;
+					else if (c != 's')
+					{
+						s.add(pos);
+					}
+				}
+			}
+			
+			extractDEPAux(child, set, delim);
+		}
+		
+		if (!skip)
+		{
+			set.addAll(s);
+			if (s.contains("paa"))	System.out.println(node.toString());
+		}
+	}
+	
+	void extractPos(String[] args)
+	{
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(args[0]));
+		Set<String> set = new HashSet<String>();
+		Pattern delim = Pattern.compile("\\+");
+		CTTree tree;
+		
+		while ((tree = reader.nextTree()) != null)
+		{
+			for (CTNode node : tree.getTokens())
+				for (String pos : delim.split(node.pTag))
+					set.add(pos);
+		}
+		
+		List<String> l = new ArrayList<String>(set);
+		Collections.sort(l);
+		
+		for (String pos : l)
+			System.out.println(pos);
 	}
 	
 	void countLR(String inputFile)

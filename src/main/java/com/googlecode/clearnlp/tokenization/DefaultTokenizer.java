@@ -40,7 +40,7 @@ import com.googlecode.clearnlp.util.pair.StringBooleanPair;
  * @since 1.1.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class EnglishTokenizer extends AbstractTokenizer
+public class DefaultTokenizer extends AbstractTokenizer
 {
 	protected final String F_DIR			= "tokenize/";
 	protected final String F_EMOTICONS		= F_DIR+"emoticons.txt";
@@ -82,14 +82,13 @@ public class EnglishTokenizer extends AbstractTokenizer
 	protected ObjectIntOpenHashMap<String>	M_D0D;
 	protected ObjectIntOpenHashMap<String>	M_COMPOUNDS;
 	protected List<IntIntPair[]>			L_COMPOUNDS;
-	protected Pattern[]						P_MICROSOFT;
 	protected Pattern[]						P_RECOVER_D0D;
 	protected Pattern						P_RECOVER_DOT;
 	protected Pattern						P_RECOVER_HYPHEN;
 	protected Pattern						P_RECOVER_APOSTROPHY;
 	protected Pattern						P_RECOVER_AMPERSAND;
 	
-	public EnglishTokenizer(ZipInputStream zin)
+	public DefaultTokenizer(ZipInputStream zin)
 	{
 		initReplacers();
 		initMapsD0D();
@@ -135,7 +134,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		return lTokens;
 	}
 	
-	/** Called by {@link EnglishTokenizer#EnglishTokenizer(ZipInputStream)}. */
+	/** Called by {@link DefaultTokenizer#EnglishTokenizer(ZipInputStream)}. */
 	private void initReplacers()
 	{
 		R_URL          = MPLib.URL_SPAN.replacer(new SubstitutionOne());
@@ -167,7 +166,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		});
 	}
 	
-	/** Called by {@link EnglishTokenizer#initReplacers()}. */
+	/** Called by {@link DefaultTokenizer#initReplacers()}. */
 	private Replacer getReplacerWAWs()
 	{
 		return new jregex.Pattern("(\\w)(\\')(\\w)").replacer(new Substitution()
@@ -182,7 +181,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		});
 	}
 	
-	/** Called by {@link EnglishTokenizer#initReplacers()}. */
+	/** Called by {@link DefaultTokenizer#initReplacers()}. */
 	private void initReplacersD0Ds()
 	{
 		String[] regex = {"(^|\\p{Alnum})(\\.)(\\d)", "(\\d)(,|:|-|\\/)(\\d)", "(^)(\\')(\\d)", "(\\d)(\\')(s)"};
@@ -194,7 +193,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 			R_D0D[i] = new jregex.Pattern(regex[i]).replacer(new SubstitutionD0D());
 	}
 	
-	/** Called by {@link EnglishTokenizer#EnglishTokenizer(ZipInputStream)}. */
+	/** Called by {@link DefaultTokenizer#EnglishTokenizer(ZipInputStream)}. */
 	private void initMapsD0D()
 	{
 		M_D0D = new ObjectIntOpenHashMap<String>();
@@ -217,7 +216,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		P_RECOVER_AMPERSAND  = Pattern.compile(S_AMPERSAND);
 	}
 	
-	/** Called by {@link EnglishTokenizer#EnglishTokenizer(ZipInputStream)}. */
+	/** Called by {@link DefaultTokenizer#EnglishTokenizer(ZipInputStream)}. */
 	private void initDictionaries(ZipInputStream zin) throws Exception
 	{
 		ZipEntry zEntry;
@@ -242,7 +241,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		zin.close();
 	}
 	
-	/** Called by {@link EnglishTokenizer#initDictionaries(ZipInputStream)}. */
+	/** Called by {@link DefaultTokenizer#initDictionaries(ZipInputStream)}. */
 	private Set<String> getSet(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
@@ -255,7 +254,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		return set;
 	}
 	
-	/** Called by {@link EnglishTokenizer#initDictionaries(ZipInputStream)}. */
+	/** Called by {@link DefaultTokenizer#initDictionaries(ZipInputStream)}. */
 	private Pattern getHyphenPatterns(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
@@ -271,7 +270,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		return Pattern.compile(build.substring(1));
 	}
 	
-	/** Called by {@link EnglishTokenizer#initDictionaries(ZipInputStream)}. */
+	/** Called by {@link DefaultTokenizer#initDictionaries(ZipInputStream)}. */
 	private void initDictionariesComounds(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
@@ -301,7 +300,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		}
 	}
 	
-	/** Called by {@link EnglishTokenizer#initDictionaries(ZipInputStream)}. */
+	/** Called by {@link DefaultTokenizer#initDictionaries(ZipInputStream)}. */
 	private void initDictionariesUnits(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
@@ -317,7 +316,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		R_UNIT[3] = new jregex.Pattern("(?i)(\\d)("+units+"\\p{Punct}*)$").replacer(new SubstitutionTwo());
 	}
 	
-	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
+	/** Called by {@link DefaultTokenizer#getTokenList(String)}. */
 	protected List<StringBooleanPair> tokenizeWhiteSpaces(String str)
 	{
 		List<StringBooleanPair> tokens = new ArrayList<StringBooleanPair>();
@@ -339,7 +338,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		}
 	}
 	
-	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
+	/** Called by {@link DefaultTokenizer#getTokenList(String)}. */
 	protected void protectEmoticons(List<StringBooleanPair> tokens)
 	{
 		for (StringBooleanPair token : tokens)
@@ -349,7 +348,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		}
 	}
 	
-	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
+	/** Called by {@link DefaultTokenizer#getTokenList(String)}. */
 	protected void protectAbbreviations(List<StringBooleanPair> tokens)
 	{
 		String lower;
@@ -363,7 +362,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		}
 	}
 	
-	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
+	/** Called by {@link DefaultTokenizer#getTokenList(String)}. */
 	protected void protectFilenames(List<StringBooleanPair> tokens)
 	{
 		String lower;
@@ -420,7 +419,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		return nTokens;
 	}
 	
-	/** Called by {@link EnglishTokenizer#getTokenList(String)}. */
+	/** Called by {@link DefaultTokenizer#getTokenList(String)}. */
 	protected List<StringBooleanPair> tokenizePatterns(List<StringBooleanPair> oTokens, Replacer rep)
 	{
 		List<StringBooleanPair> nTokens = new ArrayList<StringBooleanPair>();
@@ -434,7 +433,7 @@ public class EnglishTokenizer extends AbstractTokenizer
 		return nTokens;
 	}
 	
-	/** Called by {@link EnglishTokenizer#tokenizePatterns(List, Replacer)}. */
+	/** Called by {@link DefaultTokenizer#tokenizePatterns(List, Replacer)}. */
 	private void tokenizePatternsAux(List<StringBooleanPair> tokens, Replacer rep, String str)
 	{
 		for (String token : P_DELIM.split(rep.replace(str).trim()))

@@ -120,6 +120,11 @@ public class DEPNode extends NERNode implements Comparable<DEPNode>
 	//	l_dependents = new ArrayList<DEPArc>();
 	}
 	
+	public void initSHeads()
+	{
+		s_heads = new ArrayList<DEPArc>();
+	}
+	
 	/**
 	 * Returns {@code true} if this node is an artificial root.
 	 * @return {@code true} if this node is an artificial root.

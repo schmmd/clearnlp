@@ -166,8 +166,6 @@ public class NLPDecode extends AbstractNLP
 			
 			fout.println(toString(tree, mode)+"\n");
 		}
-
-	//	CDEPBackParser p = (CDEPBackParser)components[0];
 	}
 	
 	public DEPTree toDEPTree(List<String> tokens)

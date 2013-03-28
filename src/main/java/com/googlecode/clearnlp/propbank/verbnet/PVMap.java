@@ -30,7 +30,9 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -122,6 +124,12 @@ public class PVMap extends HashMap<String,PVVerb>
 		PVVerb pvVerb = get(lemma);
 		
 		return (pvVerb != null)	? pvVerb.get(rolesetId) : null;
+	}
+	
+	public Set<String> getVNSet(String rolesetId)
+	{
+		PVRoleset pvRoleset = getRoleset(rolesetId);
+		return (pvRoleset != null) ? pvRoleset.keySet() : new HashSet<String>();
 	}
 	
 	public void print(PrintStream out)

@@ -46,10 +46,7 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.headrule.HeadRule;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
-import com.googlecode.clearnlp.headrule.HeadTagSet;
-import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.morphology.MPLibEn;
-import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
@@ -63,7 +60,7 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
 public class EnglishC2DConverter extends AbstractC2DConverter
 {
 	static final public byte TYPE_STANFORD = 0;
-	static final public byte TYPE_CONLL    = 1;
+	private final int SIZE_HEAD_FLAGS = 4;
 	
 	private final String[] a_semTags = {CTLibEn.FTAG_BNF, CTLibEn.FTAG_DIR, CTLibEn.FTAG_EXT, CTLibEn.FTAG_LOC, CTLibEn.FTAG_MNR, CTLibEn.FTAG_PRP, CTLibEn.FTAG_TMP, CTLibEn.FTAG_VOC};
 	private final String[] a_synTags = {CTLibEn.FTAG_ADV, CTLibEn.FTAG_CLF, CTLibEn.FTAG_CLR, CTLibEn.FTAG_DTV, CTLibEn.FTAG_NOM, CTLibEn.FTAG_PUT, CTLibEn.FTAG_PRD, CTLibEn.FTAG_TPC};
@@ -141,14 +138,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 			}
 		}
 	}
-	
 
-	/**
-	 * Returns the dependency tree converted from the specific constituent tree.
-	 * If the constituent tree contains only empty categories, returns {@code null}.
-	 * @param cTree the constituent tree to convert.
-	 * @return the dependency tree converted from the specific constituent tree.
-	 */
+	@Override
 	public DEPTree toDEPTree(CTTree cTree)
 	{
 		clearMaps();
@@ -390,9 +381,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	
 	// ============================= Find heads =============================
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.conversion.C2DConverter#findHeads(edu.colorado.clear.headrule.HeadRule, edu.colorado.clear.constituent.CTNode)
-	 */
+	@Override
 	protected void setHeadsAux(HeadRule rule, CTNode curr)
 	{
 		if (findHeadsCoordination(rule, curr))	return;
@@ -401,7 +390,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		findHeadsApposition(curr);
 		findHeadsSmallClause(curr);
 
-		CTNode head = getHead(rule, curr.getChildren());
+		CTNode head = getHead(rule, curr.getChildren(), SIZE_HEAD_FLAGS);
 		curr.c2d = new C2DInfo(head);
 	}
 	
@@ -431,8 +420,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		// find conjuncts
 		Pattern rTags = getConjunctPattern(curr, sId, size);
 		CTNode prevHead = null, mainHead = null;
-		int bId = 0, eId = sId;
 		boolean isFound = false;
+		int bId = 0, eId = sId;
 		
 		for (; eId<size; eId++)
 		{
@@ -481,8 +470,9 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		if (rTags != null)
 		{
 			boolean b = false;
+			int i;
 			
-			for (int i=sId; i<size; i++)
+			for (i=sId; i<size; i++)
 			{
 				if (rTags.matcher(curr.getChild(i).pTag).find())
 				{
@@ -527,7 +517,7 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	/** Called by {@link EnglishC2DConverter#findHeadsCoordination(HeadRule, CTNode)}. */
 	private CTNode findHeadsCoordinationAux(HeadRule rule, CTNode curr, int bId, int eId, CTNode lastHead)
 	{
-		CTNode currHead = (eId - bId == 1) ? curr.getChild(bId) : getHead(rule, curr.getChildren(bId, eId));
+		CTNode currHead = (eId - bId == 1) ? curr.getChild(bId) : getHead(rule, curr.getChildren(bId, eId), SIZE_HEAD_FLAGS);
 		
 		if (lastHead != null)
 		{
@@ -641,62 +631,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 		return false;
 	}
 	
-	/**
-	 * Returns the head of the specific node list according to the specific headrule.
-	 * Every other node in the list becomes the dependent of the head node.
-	 * @param rule the headrule to be consulted.
-	 * @param nodes the list of nodes.
-	 * @return the head of the specific node list according to the specific headrule.
-	 */
-	private CTNode getHead(HeadRule rule, List<CTNode> nodes)
-	{
-		nodes = new ArrayList<CTNode>(nodes);
-		if (rule.isRightToLeft())	Collections.reverse(nodes);
-		
-		int i, size = nodes.size(), flag;
-		int[] flags = new int[size];
-		
-		for (i=0; i<size; i++)
-			flags[i] = getHeadFlag(nodes.get(i));
-		
-		CTNode head = null, child;
-		
-		outer: for (flag=0; flag<4; flag++)
-		{
-			for (HeadTagSet tagset : rule.getHeadTags())
-			{
-				for (i=0; i<size; i++)
-				{
-					child = nodes.get(i);
-					
-					if (flags[i] == flag && tagset.matches(child))
-					{
-						head = child;
-						break outer;
-					}
-				}
-			}
-		}
-
-		if (head == null)
-		{
-			System.err.println("Error: head not found.");
-			System.exit(1);
-		}
-		
-		CTNode parent = head.getParent();
-		
-		for (CTNode node : nodes)
-		{
-			if (node != head && !node.c2d.hasHead())
-				node.c2d.setHead(head, getDEPLabel(node, parent, head));
-		}
-		
-		return head;
-	}
-	
-	/** Called by {@link EnglishC2DConverter#getHead(HeadRule, String, List)}. */
-	private int getHeadFlag(CTNode child)
+	@Override
+	protected int getHeadFlag(CTNode child)
 	{
 		if (child.c2d.hasHead())
 			return -1;
@@ -715,12 +651,8 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 	
 	// ============================= Get Stanford labels ============================= 
 	
-	/**
-	 * @param C the current node.
-	 * @param P the parent of {@code C}.
-	 * @param p the head of {@code P}.
-	 */
-	public String getDEPLabel(CTNode C, CTNode P, CTNode p)
+	@Override
+	protected String getDEPLabel(CTNode C, CTNode P, CTNode p)
 	{
 		CTNode c = C.c2d.getPhraseHead();
 		CTNode d = C.c2d.getDependencyHead();
@@ -1154,29 +1086,6 @@ public class EnglishC2DConverter extends AbstractC2DConverter
 					node.setLabel(p.o1);
 			}
 		}
-	}
-	
-	/** @return the dependency tree converted from the specific constituent tree without head information. */
-	private DEPTree initDEPTree(CTTree cTree)
-	{
-		DEPTree dTree = new DEPTree();
-		String form, lemma, pos;
-		DEPNode dNode;
-		int id;
-		
-		for (CTNode node : cTree.getTokens())
-		{
-			id    = node.getTokenId() + 1;
-			form  = MPLib.revertBracket(node.form);
-			lemma = AbstractColumnReader.BLANK_COLUMN;
-			pos   = node.pTag;
-			
-			dNode = new DEPNode(id, form, lemma, pos, node.c2d.d_feats);
-			dTree.add(dNode);
-		}
-		
-		dTree.initXHeads();
-		return dTree;
 	}
 	
 	/** Adds dependency heads. */

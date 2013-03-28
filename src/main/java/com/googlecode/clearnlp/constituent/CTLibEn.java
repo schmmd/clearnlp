@@ -559,15 +559,15 @@ public class CTLibEn extends CTLib
 	 */
 	static public boolean containsCoordination(CTNode parent, List<CTNode> siblings)
 	{
-		if (parent.isPTag(CTLibEn.PTAG_UCP))
+		if (parent.isPTag(PTAG_UCP))
 			return true;
 		
-		if (parent.isPTagAny(CTLibEn.PTAG_NML, CTLibEn.PTAG_NP) && containsEtc(siblings))
+		if (parent.isPTagAny(PTAG_NML, PTAG_NP) && containsEtc(siblings))
 			return true;
 		
 		for (CTNode child : siblings)
 		{
-			if (child.isPTagAny(CTLibEn.POS_CC, CTLibEn.PTAG_CONJP))
+			if (isConjunction(child))
 				return true;
 		}
 
@@ -599,7 +599,7 @@ public class CTLibEn extends CTLib
 	 */
 	static public boolean isEtc(CTNode node)
 	{
-		if (node.hasFTag(CTLibEn.FTAG_ETC))
+		if (node.hasFTag(FTAG_ETC))
 			return true;
 		
 		return node.getSubTerminals().get(0).form.equalsIgnoreCase("etc.");
@@ -725,7 +725,7 @@ public class CTLibEn extends CTLib
 	 */
 	static public boolean isNounPhrase(CTNode node)
 	{
-		return node.isPTagAny(CTLibEn.PTAG_NP, CTLibEn.PTAG_NML, CTLibEn.PTAG_NX, CTLibEn.PTAG_NAC);
+		return node.isPTagAny(PTAG_NP, PTAG_NML, PTAG_NX, PTAG_NAC);
 	}
 	
 	/**
@@ -767,9 +767,9 @@ public class CTLibEn extends CTLib
 	/** Called by {@link CTLibEn#fixFunctionTags(CTTree)}. */
 	static private void fixFunctionTagsAux(CTNode node)
 	{
-		CTLibEn.fixSBJ(node);
-		CTLibEn.fixLGS(node);
-		CTLibEn.fixCLF(node);
+		fixSBJ(node);
+		fixLGS(node);
+		fixCLF(node);
 		
 		for (CTNode child : node.getChildren())
 			fixFunctionTagsAux(child);
@@ -785,7 +785,7 @@ public class CTLibEn extends CTLib
 		{
 			CTNode parent = node.getParent();
 			
-			if (parent.getChildrenSize() == 1 && !parent.isPTagAny(CTLibEn.PTAG_EDITED, CTLibEn.PTAG_EMBED) && parent.getFTags().isEmpty())
+			if (parent.getChildrenSize() == 1 && !parent.isPTagAny(PTAG_EDITED, PTAG_EMBED) && parent.getFTags().isEmpty())
 			{
 				node.removeFTag(FTAG_SBJ);
 				parent.addFTag(FTAG_SBJ);

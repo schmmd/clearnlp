@@ -77,7 +77,7 @@ public class DEPTree extends ArrayList<DEPNode>
 		int i, size = size();
 		
 		for (i=0; i<size; i++)
-			get(i).s_heads = new ArrayList<DEPArc>();
+			get(i).initSHeads();
 	}
 	
 	/**

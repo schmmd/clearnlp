@@ -465,6 +465,19 @@ public class CTNode implements Comparable<CTNode>
 		return getFirstTerminalAux(children.get(0));
 	}
 	
+	public CTNode getLastTerminal()
+	{
+		return getLastTerminalAux(this);
+	}
+	
+	private CTNode getLastTerminalAux(CTNode node)
+	{
+		List<CTNode> children = node.getChildren();
+		if (children.isEmpty())	return node;
+		
+		return getLastTerminalAux(children.get(children.size()-1));
+	}
+	
 	public int getChildrenSize()
 	{
 		return ls_children.size();
@@ -827,7 +840,7 @@ public class CTNode implements Comparable<CTNode>
 		return build.toString();
 	}
 	
-	private void toStringAux(CTNode curr, ArrayList<String> lTree, String sTags, boolean includeAntePointers)
+	private void toStringAux(CTNode curr, List<String> lTree, String sTags, boolean includeAntePointers)
 	{
 		if (curr.isPhrase())
 		{

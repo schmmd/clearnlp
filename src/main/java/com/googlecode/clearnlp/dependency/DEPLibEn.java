@@ -37,8 +37,6 @@ public class DEPLibEn extends DEPLib
 	
 	/** The dependency label for adjectival complements. */
 	static public final String DEP_ACOMP		= "acomp";
-	/** The dependency label for all adverbial modifiers. */
-	static public final String DEP_ADV			= "adv";
 	/** The dependency label for adverbial clause modifiers. */
 	static public final String DEP_ADVCL		= "advcl";
 	/** The dependency label for adverbial modifiers. */
