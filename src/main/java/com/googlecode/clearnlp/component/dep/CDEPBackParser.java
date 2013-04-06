@@ -233,16 +233,13 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	@Override
 	public void countAccuracy(int[] counts)
 	{
-		int i, pos = 0, las = 0, uas = 0, ls = 0;
+		int i, las = 0, uas = 0, ls = 0;
 		StringIntPair p;
 		DEPNode node;
 		
 		for (i=1; i<t_size; i++)
 		{
 			node = d_tree.get(i);
-			
-			if (node.isPos(node.getFeat(DEPLib.FEAT_POS0)))
-				pos++;
 			
 			p = g_heads[i];
 			
@@ -256,10 +253,9 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		}
 		
 		counts[0] += t_size - 1;
-		counts[1] += pos;
-		counts[2] += las;
-		counts[3] += uas;
-		counts[4] += ls;
+		counts[1] += las;
+		counts[2] += uas;
+		counts[3] += ls;
 	}
 	
 	public void setMargin(double margin)

@@ -27,6 +27,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.clearnlp.util.UTArray;
 
 
@@ -37,6 +39,8 @@ import com.googlecode.clearnlp.util.UTArray;
  */
 public class SparseModel extends AbstractModel
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	/** Constructs a sparse model for training. */
 	public SparseModel()
 	{
@@ -57,7 +61,7 @@ public class SparseModel extends AbstractModel
 	 */
 	public void load(BufferedReader reader)
 	{
-		System.out.println("Loading model:");
+		LOG.info("Loading model:\n");
 		
 		try
 		{
@@ -67,8 +71,6 @@ public class SparseModel extends AbstractModel
 			loadWeightVector(reader);			
 		}
 		catch (Exception e) {e.printStackTrace();}
-		
-		System.out.println();
 	}
 	
 	/* (non-Javadoc)
@@ -76,7 +78,7 @@ public class SparseModel extends AbstractModel
 	 */
 	public void save(PrintStream fout)
 	{
-		System.out.println("Saving model:");
+		LOG.info("Saving model:\n");
 		
 		try
 		{
@@ -86,8 +88,6 @@ public class SparseModel extends AbstractModel
 			saveWeightVector(fout);
 		}
 		catch (Exception e) {e.printStackTrace();}
-		
-		System.out.println();
 	}
 	
 	private void loadFeatures(BufferedReader fin) throws IOException

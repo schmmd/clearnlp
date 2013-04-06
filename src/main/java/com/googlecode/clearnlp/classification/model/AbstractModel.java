@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.googlecode.clearnlp.classification.prediction.IntPrediction;
@@ -40,7 +42,6 @@ import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.util.UTArray;
 import com.googlecode.clearnlp.util.pair.Pair;
 
-
 /**
  * Abstract model.
  * @since 1.0.0
@@ -48,6 +49,8 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 abstract public class AbstractModel
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	static public String LABEL_TRUE  = "T";
 	static public String LABEL_FALSE = "F";
 	
@@ -61,6 +64,7 @@ abstract public class AbstractModel
 	protected String[] a_labels;
 	/** The map between labels and their indices. */
 	protected ObjectIntOpenHashMap<String> m_labels;
+	/** The type of a solver algorithm. */
 	protected byte i_solver;
 	
 	/** Constructs an abstract model for training. */
@@ -366,9 +370,10 @@ abstract public class AbstractModel
 			}
 
 			d_weights[i] = Double.parseDouble((new String(buffer, 0, b)));
-			if (i%n_features == 0)	System.out.print(".");
+			if (i%n_features == 0)	LOG.debug(".");
 		}
 		
+		LOG.debug("\n");
 		fin.readLine();
 	}
 
@@ -387,7 +392,7 @@ abstract public class AbstractModel
 		{
 			if (i%n_features == 0)
 			{
-				System.out.print(".");
+				LOG.debug(".");
 				
 				if (build != null)	fout.print(build.toString());
 				build = new StringBuilder();
@@ -397,6 +402,7 @@ abstract public class AbstractModel
 			build.append(' ');
 		}
 		
+		LOG.debug("\n");
 		fout.println(build.toString());
 	}
 	

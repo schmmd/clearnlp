@@ -21,30 +21,21 @@ import java.util.Random;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
-import com.googlecode.clearnlp.util.UTArray;
 
 /**
- * AdaGrad algorithm.
+ * AdaGrad algorithm using logistic regression.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class AdaGradLR extends AbstractAlgorithm
+public class AdaGradLR extends AbstractAdaGrad
 {
-	protected int    n_iter;
-	protected Random r_rand;
-	protected double d_alpha;
-	protected double d_rho;
-	
 	/**
 	 * @param alpha the learning rate.
 	 * @param rho the smoothing denominator.
 	 */
 	public AdaGradLR(int iter, double alpha, double rho, Random rand)
 	{
-		n_iter  = iter;
-		r_rand  = rand;
-		d_alpha = alpha;
-		d_rho   = rho;
+		super(iter, alpha, rho, rand);
 	}
 	
 	@Override
@@ -97,23 +88,6 @@ public class AdaGradLR extends AbstractAlgorithm
 		}
 	}
 	
-	protected int[] getShuffledIndices(int N)
-	{
-		int[] indices = new int[N];
-		int i, j;
-		
-		for (i=0; i<N; i++)
-			indices[i] = i;
-		
-		for (i=0; i<N; i++)
-		{
-			j = i + r_rand.nextInt(N - i);
-			UTArray.swap(indices, i, j);
-		}
-		
-		return indices;
-	}
-	
 	protected double[] getGradients(int L, int y, int[] x, double[] v, double[] weights)
 	{
 		double[] scores = getScores(L, x, v, weights);
@@ -121,27 +95,6 @@ public class AdaGradLR extends AbstractAlgorithm
 
 		int i; for (i=0; i<L; i++) scores[i] *= -1;
 		scores[y] += 1;
-		
-		return scores;
-	}
-	
-	private double[] getScores(int L, int[] x, double[] v, double[] weights)
-	{
-		double[] scores = new double[L];
-		int i, label, len = x.length;
-		
-		if (v != null)
-		{
-			for (i=0; i<len; i++)
-				for (label=0; label<L; label++)
-					scores[label] += weights[getWeightIndex(L, label, x[i])] * v[i];
-		}
-		else
-		{
-			for (i=0; i<len; i++)
-				for (label=0; label<L; label++)
-					scores[label] += weights[getWeightIndex(L, label, x[i])];
-		}
 		
 		return scores;
 	}
@@ -189,11 +142,6 @@ public class AdaGradLR extends AbstractAlgorithm
 				for (label=0; label<L; label++)
 					weights[getWeightIndex(L, label, x[i])] += getUpdate(L, gs, label, x[i]) * grad[label];
 		}
-	}
-	
-	protected double getUpdate(int L, double[] gs, int y, int x)
-	{
-		return d_alpha / (d_rho + Math.sqrt(gs[getWeightIndex(L, y, x)]));
 	}
 }
 	

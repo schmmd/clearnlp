@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
@@ -46,6 +48,8 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class StringModel extends AbstractModel
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	/** The map between features and their indices. */
 	protected Map<String,ObjectIntOpenHashMap<String>> m_features;
 	
@@ -70,7 +74,7 @@ public class StringModel extends AbstractModel
 	 */
 	public void load(BufferedReader reader)
 	{
-		System.out.println("Loading model:");
+		LOG.info("Loading model:\n");
 		
 		try
 		{
@@ -80,8 +84,6 @@ public class StringModel extends AbstractModel
 			loadWeightVector(reader);			
 		}
 		catch (Exception e) {e.printStackTrace();}
-		
-		System.out.println();
 	}
 	
 	/* (non-Javadoc)
@@ -89,7 +91,7 @@ public class StringModel extends AbstractModel
 	 */
 	public void save(PrintStream fout)
 	{
-		System.out.println("Saving model:");
+		LOG.info("Saving model:\n");
 		
 		try
 		{
@@ -99,8 +101,6 @@ public class StringModel extends AbstractModel
 			saveWeightVector(fout);
 		}
 		catch (Exception e) {e.printStackTrace();}
-		
-		System.out.println();
 	}
 
 	protected void loadFeatures(BufferedReader fin) throws IOException

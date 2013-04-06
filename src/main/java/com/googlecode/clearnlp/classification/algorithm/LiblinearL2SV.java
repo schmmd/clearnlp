@@ -26,22 +26,21 @@ package com.googlecode.clearnlp.classification.algorithm;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.IntArrayList;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.util.UTArray;
-
 
 /**
  * Liblinear L2-regularized support vector classification algorithm.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class LiblinearL2SV extends AbstractAlgorithm
+public class LiblinearL2SV extends AbstractLiblinear
 {
-	protected byte   i_lossType;
-	protected double d_cost;
-	protected double d_eps;
-	protected double d_bias;
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	private byte i_lossType;
 	
 	/**
 	 * Constructs the liblinear L2-regularized support vector classification algorithm.
@@ -52,15 +51,11 @@ public class LiblinearL2SV extends AbstractAlgorithm
 	 */
 	public LiblinearL2SV(byte lossType, double cost, double eps, double bias)
 	{
+		super(cost, eps, bias);
 		i_lossType = lossType;
-		d_cost     = cost;
-		d_eps      = eps;
-		d_bias     = bias;
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.classification.algorithm.IAlgorithm#getWeight(edu.colorado.clear.classification.train.AbstractTrainSpace, int)
-	 */
+	@Override
 	public double[] getWeight(AbstractTrainSpace space, int currLabel)
 	{
 		Random rand = new Random(5);
@@ -228,12 +223,22 @@ public class LiblinearL2SV extends AbstractAlgorithm
 			if (PGmin_old >= 0) PGmin_old = Double.NEGATIVE_INFINITY;
 		}
 		
+		if (bBias)	weight[0] *= d_bias;
+		
 		int nSV = 0;
 		
 		for (i = 0; i < N; i++)
 			if (alpha[i] > 0) ++nSV;
 		
-		System.out.printf("- label = %3d: iter = %4d, nSV = %5d\n", currLabel, iter, nSV);
+		StringBuilder build = new StringBuilder();
+		
+		build.append("- label = ");		build.append(currLabel);
+		build.append(": iter = ");		build.append(iter);
+		build.append(", nSV = ");		build.append(nSV);
+		build.append("\n");
+
+		LOG.info(build.toString());
+		
 		return weight;
 	}
 }

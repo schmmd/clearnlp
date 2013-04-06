@@ -28,7 +28,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
-import com.googlecode.clearnlp.classification.algorithm.AdaGrad;
+import com.googlecode.clearnlp.classification.algorithm.AdaGradHinge;
 import com.googlecode.clearnlp.classification.algorithm.AdaGradLR;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
@@ -260,7 +260,7 @@ abstract public class AbstractNLP
 		System.out.printf("- iter=%d, rand=%d, alpha=%f, rho=%f\n", iter, rand, alpha, rho);
 
 		System.out.println("Training:");
-		AdaGrad ag = new AdaGrad(iter, alpha, rho, new Random(rand));
+		AdaGradHinge ag = new AdaGradHinge(iter, alpha, rho, new Random(rand));
 		
 		AbstractModel model = space.getModel();
 		model.setWeights(ag.getWeight(space, numThreads));
@@ -325,7 +325,7 @@ abstract public class AbstractNLP
 		}
 		
 		System.out.printf("%3d: AdaGrad, iter=%d, alpha=%f, rho=%f\n", nUpdate, iter, alpha, rho);
-		AdaGrad ag = new AdaGrad(iter, alpha, rho, rand);
+		AdaGradHinge ag = new AdaGradHinge(iter, alpha, rho, rand);
 		ag.updateWeight(space);
 	}
 	

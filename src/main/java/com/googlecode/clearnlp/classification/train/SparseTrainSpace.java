@@ -26,6 +26,8 @@ package com.googlecode.clearnlp.classification.train;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.clearnlp.classification.model.SparseModel;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
 import com.googlecode.clearnlp.util.pair.Pair;
@@ -38,6 +40,8 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class SparseTrainSpace extends AbstractTrainSpace
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	/** Casted from {@likn AbstractTrainSpace#m_model}. */
 	private SparseModel s_model;
 	/** The list of all labels. */
@@ -84,15 +88,15 @@ public class SparseTrainSpace extends AbstractTrainSpace
 	@Override
 	public void build(boolean clearInstances)
 	{
-		System.out.println("Building:");
+		LOG.info("Building:\n");
 		s_model.initLabelArray();
 		
 		for (String label : s_ys)
 			a_ys.add(s_model.getLabelIndex(label));
 		
-		System.out.println("- # of labels   : "+s_model.getLabelSize());
-		System.out.println("- # of features : "+s_model.getFeatureSize());
-		System.out.println("- # of instances: "+a_ys.size());
+		LOG.info("- # of labels   : "+s_model.getLabelSize()+"\n");
+		LOG.info("- # of features : "+s_model.getFeatureSize()+"\n");
+		LOG.info("- # of instances: "+a_ys.size()+"\n");
 		
 		if (clearInstances)	s_ys.clear();
 	}

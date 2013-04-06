@@ -27,6 +27,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 
@@ -38,6 +40,8 @@ import com.googlecode.clearnlp.classification.model.AbstractModel;
  */
 public class Trainer
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	private AbstractTrainSpace     t_space;
 	private AbstractAlgorithm      a_algorithm;
 	volatile private AbstractModel m_model;
@@ -48,7 +52,7 @@ public class Trainer
 		a_algorithm = algorithm;
 		m_model     = space.getModel();
 		
-		System.out.println("Training:");
+		LOG.info("Training:\n");
 		m_model.initWeightVector();
 		
 		if (space.isBinaryLabel())

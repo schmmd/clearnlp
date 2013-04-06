@@ -22,31 +22,21 @@ import java.util.Random;
 import com.carrotsearch.hppc.IntArrayList;
 import com.googlecode.clearnlp.classification.prediction.IntPrediction;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
-import com.googlecode.clearnlp.util.UTArray;
-import com.googlecode.clearnlp.util.triple.Triple;
 
 /**
- * AdaGrad algorithm.
+ * AdaGrad algorithm using hinge loss.
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class AdaGrad extends AbstractAlgorithm
+public class AdaGradHinge extends AbstractAdaGrad
 {
-	protected int    n_iter;
-	protected Random r_rand;
-	protected double d_alpha;
-	protected double d_rho;
-	
 	/**
 	 * @param alpha the learning rate.
 	 * @param rho the smoothing denominator.
 	 */
-	public AdaGrad(int iter, double alpha, double rho, Random rand)
+	public AdaGradHinge(int iter, double alpha, double rho, Random rand)
 	{
-		n_iter  = iter;
-		r_rand  = rand;
-		d_alpha = alpha;
-		d_rho   = rho;
+		super(iter, alpha, rho, rand);
 	}
 	
 	@Override
@@ -74,11 +64,9 @@ public class AdaGrad extends AbstractAlgorithm
 		ArrayList<int[]>    xs = space.getXs();
 		ArrayList<double[]> vs = space.getVs();
 		
-		Triple<IntPrediction,IntPrediction,IntPrediction> ps;
-		IntPrediction fst, snd;
-		int i, j, sum;
+		IntPrediction max;
 		int[] indices;
-		double acc;
+		int i, j;
 		
 		int      yi;
 		int[]    xi;
@@ -88,7 +76,6 @@ public class AdaGrad extends AbstractAlgorithm
 		{
 			indices = getShuffledIndices(N);
 			Arrays.fill(gs, 0);
-			sum = 0;
 			
 			for (j=0; j<N; j++)
 			{
@@ -96,124 +83,32 @@ public class AdaGrad extends AbstractAlgorithm
 				xi = xs.get(indices[j]);
 				if (space.hasWeight())	vi = vs.get(indices[j]);
 				
-				ps  = getPredictions(L, yi, xi, vi, weights);
-				fst = ps.o1;
-				snd = ps.o2;
+				max = getPrediction(L, yi, xi, vi, weights);
 				
-				if (fst.label == yi)
+				if (max.label != yi)
 				{
-					if (fst.score - snd.score < 1)
-					{
-						updateCounts (L, gs, yi, snd.label, xi, vi);
-						updateWeights(L, gs, yi, snd.label, xi, vi, weights);
-					}
-					else
-						sum++;
-				}
-				else
-				{
-					updateCounts (L, gs, yi, fst.label, xi, vi);
-					updateWeights(L, gs, yi, fst.label, xi, vi, weights);
+					updateCounts (L, gs, yi, max.label, xi, vi);
+					updateWeights(L, gs, yi, max.label, xi, vi, weights);
 				}
 			}
-			
-			acc = 100d * sum / N;
-			System.out.printf("- %3d: acc = %7.4f\n", i+1, acc);
 		}
-	}
-	
-	private int[] getShuffledIndices(int N)
-	{
-		int[] indices = new int[N];
-		int i, j;
-		
-		for (i=0; i<N; i++)
-			indices[i] = i;
-		
-		for (i=0; i<N; i++)
-		{
-			j = i + r_rand.nextInt(N - i);
-			UTArray.swap(indices, i, j);
-		}
-		
-		return indices;
 	}
 	
 	protected IntPrediction getPrediction(int L, int y, int[] x, double[] v, double[] weights)
 	{
-		double[] scores = new double[L];
-		int i, label, size = x.length;
-		
-		Arrays.fill(scores, 1);
-		scores[y] = 0;
-		
-		if (v != null)
-		{
-			for (i=0; i<size; i++)
-				for (label=0; label<L; label++)
-					scores[label] += weights[getWeightIndex(L, label, x[i])] * v[i];
-		}
-		else
-		{
-			for (i=0; i<size; i++)
-				for (label=0; label<L; label++)
-					scores[label] += weights[getWeightIndex(L, label, x[i])];
-		}
+		double[] scores = getScores(L, x, v, weights);
+		scores[y] -= 1;
 		
 		IntPrediction max = new IntPrediction(0, scores[0]);
+		int label;
 		
 		for (label=1; label<L; label++)
 		{
 			if (max.score < scores[label])
 				max.set(label, scores[label]);
 		}
-		
-		return max;
-	}
 	
-	protected Triple<IntPrediction,IntPrediction,IntPrediction> getPredictions(int L, int y, int[] x, double[] v, double[] weights)
-	{
-		double[] scores = new double[L];
-		int i, label, size = x.length;
-		
-		if (v != null)
-		{
-			for (i=0; i<size; i++)
-				for (label=0; label<L; label++)
-					scores[label] += weights[getWeightIndex(L, label, x[i])] * v[i];
-		}
-		else
-		{
-			for (i=0; i<size; i++)
-				for (label=0; label<L; label++)
-					scores[label] += weights[getWeightIndex(L, label, x[i])];
-		}
-		
-		IntPrediction fst, snd;
-		
-		if (scores[0] > scores[1])
-		{
-			fst = new IntPrediction(0, scores[0]);
-			snd = new IntPrediction(1, scores[1]);
-		}
-		else
-		{
-			fst = new IntPrediction(1, scores[1]);
-			snd = new IntPrediction(0, scores[0]);
-		}
-		
-		for (label=2; label<L; label++)
-		{
-			if (fst.score < scores[label])
-			{
-				snd.set(fst.label, fst.score);
-				fst.set(label, scores[label]);
-			}
-			else if (snd.score < scores[label])
-				snd.set(label, scores[label]);
-		}
-		
-		return new Triple<IntPrediction,IntPrediction,IntPrediction>(fst, snd, new IntPrediction(y, scores[y]));
+		return max;
 	}
 	
 	protected void updateCounts(int L, double[] gs, int yp, int yn, int[] x, double[] v)
@@ -265,11 +160,6 @@ public class AdaGrad extends AbstractAlgorithm
 				weights[getWeightIndex(L, yn, xi)] -= getUpdate(L, gs, yn, xi);
 			}
 		}
-	}
-	
-	protected double getUpdate(int L, double[] gs, int y, int x)
-	{
-		return d_alpha / (d_rho + Math.sqrt(gs[getWeightIndex(L, y, x)]));
 	}
 }
 	

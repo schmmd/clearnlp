@@ -103,19 +103,19 @@ public class Tmp
 	
 	void cleanSejong(String[] args)
 	{
-		String[] parseFiles = UTFile.getSortedFileList(args[0], "parse");
-		String[] rawFiles   = UTFile.getSortedFileList(args[1], "raw");
+		String[] ptbFiles = UTFile.getSortedFileList(args[0], "ptb");
+		String[] rawFiles = UTFile.getSortedFileList(args[1], "raw");
 		
 		CTReader  pin = new CTReader();
 		TOKReader tin = new TOKReader(0);
 		
-		int i, size = parseFiles.length;
+		int i, size = ptbFiles.length;
 		List<String> tokens;
 		CTTree tree;
 		
 		for (i=0; i<size; i++)
 		{
-			pin.open(UTInput.createBufferedFileReader(parseFiles[i]));
+			pin.open(UTInput.createBufferedFileReader(ptbFiles[i]));
 			tin.open(UTInput.createBufferedFileReader(rawFiles[i]));
 			System.out.println(rawFiles[i]);
 			

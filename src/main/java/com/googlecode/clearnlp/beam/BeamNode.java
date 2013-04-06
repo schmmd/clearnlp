@@ -20,7 +20,6 @@ import java.util.List;
 
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 
-
 /**
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})

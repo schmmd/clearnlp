@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
@@ -41,6 +43,8 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class ONStringModel extends StringModel
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	/** The weight vector for all labels. */
 	protected List<DoubleArrayList> d_weights;
 	/** The list of all labels. */
@@ -77,7 +81,7 @@ public class ONStringModel extends StringModel
 		a_labels   = new ArrayList<String>();
 		m_labels   = new ObjectIntOpenHashMap<String>();
 		m_features = new HashMap<String,ObjectIntOpenHashMap<String>>();
-		i_solver   = AbstractAlgorithm.SOLVER_ADAGRAD;
+		i_solver   = AbstractAlgorithm.SOLVER_ADAGRAD_HINGE;
 		
 		d_weights.add(getBlankDoubleArrayList(n_labels));
 	}
@@ -109,7 +113,7 @@ public class ONStringModel extends StringModel
 	@Override
 	public void load(BufferedReader reader)
 	{
-		System.out.println("Loading model:");
+		LOG.info("Loading model:");
 		
 		try
 		{
@@ -119,8 +123,6 @@ public class ONStringModel extends StringModel
 			loadWeightVector(reader);			
 		}
 		catch (Exception e) {e.printStackTrace();}
-		
-		System.out.println();
 	}
 	
 	@Override
@@ -179,7 +181,7 @@ public class ONStringModel extends StringModel
 		
 		for (i=0; i<n_features; i++)
 		{
-			if (i%100000 == 0)	System.out.print(".");
+			if (i%100000 == 0)	LOG.debug(".");
 			weight = new DoubleArrayList(n_labels);
 			
 			for (j=0; j<n_labels; j++)
@@ -199,7 +201,8 @@ public class ONStringModel extends StringModel
 			
 			d_weights.add(weight);
 		}
-		
+	
+		LOG.debug("\n");
 		fin.readLine();
 	}
 	
@@ -208,7 +211,7 @@ public class ONStringModel extends StringModel
 	@Override
 	public void save(PrintStream fout)
 	{
-		System.out.println("Saving model:");
+		LOG.info("Saving model:");
 		
 		try
 		{
@@ -218,8 +221,6 @@ public class ONStringModel extends StringModel
 			saveWeightVector(fout);
 		}
 		catch (Exception e) {e.printStackTrace();}
-		
-		System.out.println();
 	}
 	
 	@Override
@@ -270,7 +271,7 @@ public class ONStringModel extends StringModel
 		
 		for (i=0; i<n_features; i++)
 		{
-			if (i%100000 == 0)	System.out.print(".");
+			if (i%100000 == 0)	LOG.debug(".");
 			weight = d_weights.get(i);
 			build  = new StringBuilder();
 			
@@ -283,6 +284,7 @@ public class ONStringModel extends StringModel
 			fout.print(build.toString());
 		}
 		
+		LOG.debug("\n");
 		fout.println();
 	}
 	

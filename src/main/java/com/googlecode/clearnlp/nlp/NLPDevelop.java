@@ -312,7 +312,7 @@ public class NLPDevelop extends NLPTrain
 			score = 100d * counts[1] / counts[0];
 			System.out.printf("- ACC: %5.2f (%d/%d)\n", score, counts[1], counts[0]);
 		}
-		else if (mode.equals(NLPLib.MODE_DEP))
+		else if (mode.startsWith(NLPLib.MODE_DEP))
 		{
 			String[] labels = {"T","LAS","UAS","LS"};
 			printScores(labels, counts);
@@ -328,13 +328,6 @@ public class NLPDevelop extends NLPTrain
 			System.out.printf("P: %5.2f ", p);
 			System.out.printf("R: %5.2f ", r);
 			System.out.printf("F1: %5.2f\n", score);
-		}
-		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-		{
-			String[] labels = {"T","POS","LAS","UAS","LS"};
-			printScores(labels, counts);
-
-			score = 100d * counts[2] / counts[0];
 		}
 		
 		return score;

@@ -41,8 +41,10 @@ abstract public class AbstractAlgorithm
 	static public final byte SOLVER_LIBLINEAR_LR2_L2_SV = 1;
 	/** The flag to indicate L2-regularized logistic regression (dual). */
 	static public final byte SOLVER_LIBLINEAR_LR2_LR = 2;
-	/** The flag to indicate adaptive gradient method. */
-	static public final byte SOLVER_ADAGRAD = 3;
+	/** The flag to indicate adaptive gradient method using hinge loss. */
+	static public final byte SOLVER_ADAGRAD_HINGE = 3;
+	/** The flag to indicate adaptive gradient method using logistic regression. */
+	static public final byte SOLVER_ADAGRAD_LR = 4;
 	
 	/**
 	 * Returns the weight vector for the specific label given the training space.
@@ -52,19 +54,13 @@ abstract public class AbstractAlgorithm
 	 */
 	abstract public double[] getWeight(AbstractTrainSpace space, int currLabel);
 	
-	/** Used for liblinear algorithms. */
-	protected int GETI(byte[] y, int i)
-	{
-		return y[i] + 1;
-	}
-	
 	/** @param L the number of labels. */
 	protected int getWeightIndex(int L, int label, int index)
 	{
 		return index * L + label;
 	}
 	
-	static public void normalize(double[] scores)
+	protected void normalize(double[] scores)
 	{
 		int i, size = scores.length;
 		double d, sum = 0;

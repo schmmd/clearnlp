@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.googlecode.clearnlp.classification.model.StringModel;
@@ -45,6 +47,8 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class StringTrainSpace extends AbstractTrainSpace
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	/** Casted from {@likn AbstractTrainSpace#m_model}. */
 	private StringModel s_model;
 	/** The label count cutoff (exclusive). */
@@ -214,7 +218,7 @@ public class StringTrainSpace extends AbstractTrainSpace
 	@Override
 	public void build(boolean clearInstances)
 	{
-		System.out.println("Building:");
+		LOG.info("Building:\n");
 		initModelMaps();
 		
 		Pair<String,StringFeatureVector> instance;
@@ -233,18 +237,15 @@ public class StringTrainSpace extends AbstractTrainSpace
 			a_ys.add(y);
 			a_xs.add(x.getIndices());
 			if (b_weight)	a_vs.add(x.getWeights());
-			
-			if (i%100000 == 0)	System.out.print(".");
 		}
 		
 		a_ys.trimToSize();
 		a_xs.trimToSize();
 		if (b_weight)	a_vs.trimToSize();
 		
-		System.out.println();
-		System.out.println("- # of labels   : "+s_model.getLabelSize());
-		System.out.println("- # of features : "+s_model.getFeatureSize());
-		System.out.println("- # of instances: "+a_ys.size());
+		LOG.info("- # of labels   : "+s_model.getLabelSize()+"\n");
+		LOG.info("- # of features : "+s_model.getFeatureSize()+"\n");
+		LOG.info("- # of instances: "+a_ys.size()+"\n");
 		
 		if (clearInstances)	s_instances.clear();
 	}

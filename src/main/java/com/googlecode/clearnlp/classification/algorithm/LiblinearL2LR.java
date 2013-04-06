@@ -26,21 +26,20 @@ package com.googlecode.clearnlp.classification.algorithm;
 import java.util.ArrayList;
 import java.util.Random;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.IntArrayList;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.util.UTArray;
-
 
 /**
  * Liblinear L2-regularized logistic regression algorithm.
  * @since 1.0.0
  * @author Jinho D. Choi ({@code choijd@colorado.edu})
  */
-public class LiblinearL2LR extends AbstractAlgorithm
+public class LiblinearL2LR extends AbstractLiblinear
 {
-	private double d_cost;
-	private double d_eps;
-	private double d_bias;
+	private final Logger LOG = Logger.getLogger(this.getClass());
 	
 	/**
 	 * Constructs the liblinear L2-regularized logistic regression algorithm.
@@ -50,14 +49,10 @@ public class LiblinearL2LR extends AbstractAlgorithm
 	 */
 	public LiblinearL2LR(double cost, double eps, double bias)
 	{
-		d_cost = cost;
-		d_eps  = eps;
-		d_bias = bias;
+		super(cost, eps, bias);
 	}
 	
-	/* (non-Javadoc)
-	 * @see edu.colorado.clear.classification.algorithm.IAlgorithm#getWeight(edu.colorado.clear.classification.train.AbstractTrainSpace, int)
-	 */
+	@Override
 	public double[] getWeight(AbstractTrainSpace space, int currLabel)
 	{
 		Random rand = new Random(1);
@@ -86,6 +81,7 @@ public class LiblinearL2LR extends AbstractAlgorithm
 		byte     yi;
 		int[]    xi;
 		double[] vi = null;
+		boolean  bBias = d_bias > 0;
 		
 		double   Gmax;
 		double   innereps = 1e-2;
@@ -103,7 +99,7 @@ public class LiblinearL2LR extends AbstractAlgorithm
 			xi = xs.get(i);
 			if (space.hasWeight())	vi = vs.get(i);
 			
-			if (d_bias > 0)
+			if (bBias)
 			{
 				xTx[i]    += d_bias * d_bias;
 				weight[0] += d      * d_bias;
@@ -142,7 +138,7 @@ public class LiblinearL2LR extends AbstractAlgorithm
 				xi   = xs.get(i);
 				xisq = xTx[i];
 				C    = upper_bound[GETI(aY, i)];
-				ywTx = (d_bias > 0) ? weight[0] * d_bias : 0;
+				ywTx = (bBias) ? weight[0] * d_bias : 0;
 								
 				if (space.hasWeight())
 				{
@@ -203,7 +199,7 @@ public class LiblinearL2LR extends AbstractAlgorithm
  					alpha[ind2] = C-z;
  					d = sign * (z-alpha_old) * yi;
 
- 					if (d_bias > 0)	weight[0] += d * d_bias;
+ 					if (bBias)	weight[0] += d * d_bias;
 					
 					for (j=0; j<xi.length; j++)
 					{
@@ -222,6 +218,8 @@ public class LiblinearL2LR extends AbstractAlgorithm
 				innereps = Math.max(innereps_min, 0.1*innereps);
 		}
 		
+		if (bBias)	weight[0] *= d_bias;
+		
 		double v = 0;
 		
 		for (i=0; i<D; i++)
@@ -234,14 +232,12 @@ public class LiblinearL2LR extends AbstractAlgorithm
 		
 		StringBuilder build = new StringBuilder();
 		
-		build.append("- label = ");
-		build.append(currLabel);
-		build.append(": iter = ");
-		build.append(iter);
-		build.append(", obj-value = ");
-		build.append(v);
+		build.append("- label = ");		build.append(currLabel);
+		build.append(": iter = ");		build.append(iter);
+		build.append(", obj-value = ");	build.append(v);
+		build.append("\n");
 
-		System.out.println(build.toString());
+		LOG.info(build.toString());
 		
 		return weight;
 	}
