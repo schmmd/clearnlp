@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@ import org.w3c.dom.Element;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.component.dep.CDEPBackParser;
-import com.googlecode.clearnlp.component.dep.CDEPPassParser;
-import com.googlecode.clearnlp.component.pos.CPOSBackTagger;
+import com.googlecode.clearnlp.component.dep.CDEPParserSB;
+import com.googlecode.clearnlp.component.dep.CDEPParser;
+import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
 import com.googlecode.clearnlp.component.srl.CSRLabeler;
@@ -80,7 +80,7 @@ public class NLPDevelop extends NLPTrain
 		if      (mode.equals(NLPLib.MODE_POS))
 			developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPPassParser(xmls), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			decode(reader, getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, -1), devFiles, mode, mode);
 		else if (mode.equals(NLPLib.MODE_ROLE))
@@ -90,9 +90,9 @@ public class NLPDevelop extends NLPTrain
 		else if (mode.equals(NLPLib.MODE_SRL))
 			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CSRLabeler(xmls), mode, -1);
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSBackTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTaggerSB(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, -1)), mode, -1);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPBackParser(xmls), mode, -1);
+			developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParserSB(xmls), mode, -1);
 	}
 	
 	protected double developComponent(Element eConfig, JointReader reader, JointFtrXml[] xmls, String[] trainFiles, String[] devFiles, Object[] lexica, String mode, int devId) throws Exception

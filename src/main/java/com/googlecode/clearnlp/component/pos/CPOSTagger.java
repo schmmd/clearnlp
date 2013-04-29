@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -55,6 +57,8 @@ import com.googlecode.clearnlp.util.pair.StringDoublePair;
  */
 public class CPOSTagger extends AbstractStatisticalComponent
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
 	protected final String ENTRY_LEXICA		   = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
@@ -140,7 +144,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	protected void loadLexica(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = UTInput.createBufferedReader(zin);
-		System.out.println("Loading lexica.");
+		LOG.info("Loading lexica.\n");
 		
 		s_lsfs = UTInput.getStringSet(fin);
 		m_ambi = UTInput.getStringMap(fin, " ");
@@ -164,7 +168,7 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	{
 		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
 		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		System.out.println("Saving lexica.");
+		LOG.info("Saving lexica.\n");
 		
 		UTOutput.printSet(fout, s_lsfs);		fout.flush();
 		UTOutput.printMap(fout, m_ambi, " ");	fout.flush();

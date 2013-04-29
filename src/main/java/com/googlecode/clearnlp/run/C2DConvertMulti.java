@@ -25,6 +25,7 @@ package com.googlecode.clearnlp.run;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.kohsuke.args4j.Option;
 
 import com.carrotsearch.hppc.IntObjectOpenHashMap;
 import com.carrotsearch.hppc.IntOpenHashSet;
+import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTReader;
@@ -46,7 +48,7 @@ import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineGetter;
-import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.propbank.PBArg;
 import com.googlecode.clearnlp.propbank.PBInstance;
 import com.googlecode.clearnlp.propbank.PBLib;
@@ -89,21 +91,21 @@ public class C2DConvertMulti extends AbstractRun
 	final Pattern P_HYPHEN = Pattern.compile("-");
 	final Pattern P_COLON  = Pattern.compile(":");
 	
-	public C2DConvertMulti(String[] args)
+	public C2DConvertMulti(String[] args) throws Exception
 	{
 		initArgs(args);
 		convert(s_headruleFile, s_dictFile, s_language, s_mergeLabels, s_inputPath, s_parseExt, s_propExt, s_senseExt, s_vclassExt, s_nameExt, s_outputExt);
 	}
 	
-	public void convert(String headruleFile, String dictFile, String language, String mergeLabels, String inputPath, String parseExt, String propExt, String senseExt, String vclassExt, String nameExt, String outputExt)
+	public void convert(String headruleFile, String dictFile, String language, String mergeLabels, String inputPath, String parseExt, String propExt, String senseExt, String vclassExt, String nameExt, String outputExt) throws Exception
 	{
-		AbstractMPAnalyzer morph = EngineGetter.getMPAnalyzer(s_language, s_dictFile);
+		AbstractComponent morph = EngineGetter.getComponent(new FileInputStream(s_dictFile), s_language, NLPLib.MODE_MORPH);
 		AbstractC2DConverter c2d = EngineGetter.getC2DConverter(s_language, s_headruleFile, s_mergeLabels);
 		
 		convertRec(c2d, morph, language, inputPath, parseExt, propExt, senseExt, vclassExt, nameExt, outputExt);
 	}
 	
-	private void convertRec(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputPath, String parseExt, String propExt, String senseExt, String vclassExt, String nameExt, String outputExt)
+	private void convertRec(AbstractC2DConverter c2d, AbstractComponent morph, String language, String inputPath, String parseExt, String propExt, String senseExt, String vclassExt, String nameExt, String outputExt)
 	{
 		File file = new File(inputPath);
 		
@@ -153,7 +155,7 @@ public class C2DConvertMulti extends AbstractRun
 				}
 				else
 				{
-					if (morph   != null)	morph.lemmatize(dTree);
+					if (morph   != null)	morph.process(dTree);
 					if (mProp   != null)	addRolesets(cTree, dTree, instances);
 					if (mSense  != null)	addWordSenses(cTree, dTree, mSense.get(n), DEPLibEn.FEAT_WS);
 					if (mVclass != null)	addWordSenses(cTree, dTree, mVclass.get(n), DEPLibEn.FEAT_VN);
@@ -477,6 +479,10 @@ public class C2DConvertMulti extends AbstractRun
 
 	public static void main(String[] args)
 	{
-		new C2DConvertMulti(args);
+		try
+		{
+			new C2DConvertMulti(args);
+		}
+		catch (Exception e) {e.printStackTrace();}
 	}
 }

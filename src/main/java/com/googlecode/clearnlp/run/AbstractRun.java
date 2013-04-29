@@ -24,7 +24,6 @@
 package com.googlecode.clearnlp.run;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -38,12 +37,8 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.AbstractModel;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
-import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.engine.EngineGetter;
 import com.googlecode.clearnlp.io.FileExtFilter;
-import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
-import com.googlecode.clearnlp.pos.POSTagger;
-import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.reader.DAGReader;
@@ -130,54 +125,6 @@ abstract public class AbstractRun
 		String dictFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_DICTIONARY));
 
 		return EngineGetter.getTokenizer(language, dictFile);
-	}
-	
-	protected AbstractMPAnalyzer getMPAnalyzer(Element eConfig)
-	{
-		String language = getLanguage(eConfig);
-		String dictFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_DICTIONARY));
-
-		return EngineGetter.getMPAnalyzer(language, dictFile);
-	}
-	
-	protected Pair<POSTagger[],Double> getPOSTaggers(Element eConfig)
-	{
-		try
-		{
-			String modelFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_POS_MODEL));
-			return EngineGetter.getPOSTaggers(modelFile);
-		}
-		catch (Exception e) {e.printStackTrace();}
-		
-		return null;
-	}
-	
-	protected AbstractDEPParser getDEPParser(Element eConfig)
-	{
-		String modelFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_DEP_MODEL));
-		AbstractDEPParser parser = null;
-		
-		try
-		{
-			parser = EngineGetter.getDEPParser(modelFile);
-		}
-		catch (IOException e) {e.printStackTrace();}
-		
-		return parser;
-	}
-	
-	protected AbstractPredIdentifier getPredIdentifier(Element eConfig)
-	{
-		String modelFile = UTXml.getTrimmedTextContent(UTXml.getFirstElementByTagName(eConfig, TAG_PRED_MODEL));
-		AbstractPredIdentifier identifier = null;
-		
-		try
-		{
-			identifier = EngineGetter.getPredIdentifier(modelFile);
-		}
-		catch (IOException e) {e.printStackTrace();}
-		
-		return identifier;
 	}
 	
 	// ============================= getter: readers =============================

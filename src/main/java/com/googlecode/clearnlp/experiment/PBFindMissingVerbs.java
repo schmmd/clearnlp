@@ -33,17 +33,17 @@ import org.kohsuke.args4j.Option;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTNode;
 import com.googlecode.clearnlp.constituent.CTTree;
-import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
-import com.googlecode.clearnlp.morphology.EnglishMPAnalyzer;
 import com.googlecode.clearnlp.morphology.MPLibEn;
 import com.googlecode.clearnlp.propbank.PBArg;
 import com.googlecode.clearnlp.propbank.PBInstance;
 import com.googlecode.clearnlp.propbank.PBLib;
 import com.googlecode.clearnlp.propbank.PBLoc;
 import com.googlecode.clearnlp.run.AbstractRun;
+import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 
 
@@ -58,12 +58,12 @@ public class PBFindMissingVerbs extends AbstractRun
 	@Option(name="-o", usage="the output file (output; required)", required=true, metaVar="<filename>")
 	String s_outFile;
 	
-	public PBFindMissingVerbs(String[] args)
+	public PBFindMissingVerbs(String[] args) throws Exception
 	{
 		initArgs(args);
 		
 		Map<String,List<PBInstance>> map = PBLib.getPBInstanceMap(s_propFile, s_treeDir, false);
-		AbstractMPAnalyzer morph = new EnglishMPAnalyzer(s_dictFile);
+		CEnglishMPAnalyzer morph = new CEnglishMPAnalyzer(UTInput.createZipFileInputStream(s_dictFile));
 		List<List<PBInstance>> lists = new ArrayList<List<PBInstance>>();
 		IntOpenHashSet[] sets = new IntOpenHashSet[4];
 		int i, size = sets.length;
@@ -201,7 +201,7 @@ public class PBFindMissingVerbs extends AbstractRun
 		}
 	}
 	
-	private void addMissingPredicates(CTTree tree, AbstractMPAnalyzer morph, PBInstance fst, IntOpenHashSet set, List<PBInstance> list)
+	private void addMissingPredicates(CTTree tree, CEnglishMPAnalyzer morph, PBInstance fst, IntOpenHashSet set, List<PBInstance> list)
 	{
 		PBInstance inst;
 		String lemma;
@@ -248,6 +248,10 @@ public class PBFindMissingVerbs extends AbstractRun
 	
 	static public void main(String[] args)
 	{
-		new PBFindMissingVerbs(args);
+		try
+		{
+			new PBFindMissingVerbs(args);
+		}
+		catch (Exception e) {e.printStackTrace();}
 	}
 }

@@ -72,15 +72,10 @@ import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.dependency.srl.SRLEval;
-import com.googlecode.clearnlp.dependency.srl.SRLabeler;
-import com.googlecode.clearnlp.engine.EngineProcess;
 import com.googlecode.clearnlp.headrule.HeadRuleMap;
 import com.googlecode.clearnlp.io.FileExtFilter;
 import com.googlecode.clearnlp.morphology.MPLib;
-import com.googlecode.clearnlp.pos.POSNode;
 import com.googlecode.clearnlp.reader.DEPReader;
-import com.googlecode.clearnlp.reader.POSReader;
 import com.googlecode.clearnlp.reader.SRLReader;
 import com.googlecode.clearnlp.reader.TOKReader;
 import com.googlecode.clearnlp.util.UTArray;
@@ -89,7 +84,6 @@ import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
 import com.googlecode.clearnlp.util.map.Prob2DMap;
-import com.googlecode.clearnlp.util.pair.IntIntPair;
 import com.googlecode.clearnlp.util.pair.StringDoublePair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 
@@ -510,34 +504,6 @@ public class Tmp
 		return true;
 	}
 	
-	void countSRL(String[] args)
-	{
-	//	SRLReader reader = new SRLReader(0, 1, 2, 4, 6, 7, 9, 12);
-		SRLReader reader = new SRLReader(0, 1, 3, 5, 6, 8, 10, 12);
-		reader.open(UTInput.createBufferedFileReader(args[0]));
-				
-		PrintStream fout  = UTOutput.createPrintBufferedFileStream(args[1]);
-		SRLabeler parser = new SRLabeler(fout);
-		DEPTree tree;
-		StringIntPair[][] gHeads;
-		SRLEval eval = new SRLEval();
-		IntIntPair p = new IntIntPair(0, 0);
-				
-		while ((tree = reader.next()) != null)
-		{
-			gHeads = tree.getSHeads();
-			parser.label(tree);
-			eval.evaluate(gHeads, tree.getSHeads());
-			p.i1 += parser.getNumTransitions().i1;
-			p.i2 += parser.getNumTransitions().i2;
-		}
-				
-		fout.close();
-		eval.print();
-				
-		System.out.println(p.i1+" "+p.i2);
-	}
-	
 	void traverse(String inputFile)
 	{
 		CTReader reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
@@ -554,56 +520,6 @@ public class Tmp
 		
 		for (CTNode child : node.getChildren())
 			traverseAux(child);
-	}
-	
-	void getTokens(String inputFile, String outputDir)
-	{
-		POSReader reader = new POSReader(1, 3);
-		POSNode[] nodes;
-		
-		final String[] NAMES = {"containsOnlyPunctuation.txt", "endsWithPeriod.txt", "containsPeriod.txt", "startsWithPrime.txt", "containsPrime.txt", "containsHyphen.txt", "containsAnyPunctuation.txt"};
-		int i, size = NAMES.length;
-		
-		Prob1DMap[] maps = new Prob1DMap[size];
-		String lemma;
-		
-		for (i=0; i<size; i++)
-			maps[i] = new Prob1DMap();
-		
-		reader.open(UTInput.createBufferedFileReader(inputFile));
-		
-		while ((nodes = reader.next()) != null)
-		{
-			EngineProcess.normalizeForms(nodes);
-			
-			for (POSNode node : nodes)
-			{
-				lemma = MPLib.revertBracket(node.form);
-				lemma = MPLib.normalizeDigits(lemma);
-				lemma = lemma.toLowerCase();
-				
-				if (MPLib.containsOnlyPunctuation(lemma))
-					maps[0].add(lemma);
-				else if (lemma.endsWith("."))
-				{
-					if (lemma.length() > 2)
-						maps[1].add(lemma);
-				}
-				else if (MPLib.containsAnySpecificPunctuation(lemma, '.'))
-					maps[2].add(lemma);
-				else if (lemma.startsWith("'") || lemma.startsWith("`"))
-					maps[3].add(lemma);
-				else if (MPLib.containsAnySpecificPunctuation(lemma, '\'', '`'))
-					maps[4].add(lemma);
-				else if (MPLib.containsAnySpecificPunctuation(lemma, '-'))
-					maps[5].add(lemma);
-				else if (MPLib.containsAnyPunctuation(lemma))
-					maps[6].add(lemma);
-			}
-		}
-		
-		for (i=0; i<size; i++)
-			print(outputDir+File.separator+NAMES[i], maps[i]);
 	}
 	
 	void print(String outputFile, Prob1DMap map)

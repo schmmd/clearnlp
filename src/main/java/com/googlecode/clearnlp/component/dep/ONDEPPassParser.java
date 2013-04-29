@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class ONDEPPassParser extends CDEPPassParser
+public class ONDEPPassParser extends CDEPParser
 {
 	private ONStringModel o_model;
 	

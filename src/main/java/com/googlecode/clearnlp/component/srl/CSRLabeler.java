@@ -35,6 +35,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
@@ -59,6 +61,8 @@ import com.googlecode.clearnlp.util.pair.StringIntPair;
  */
 public class CSRLabeler extends AbstractStatisticalComponent
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	private final String ENTRY_CONFIGURATION = NLPLib.MODE_SRL + NLPLib.ENTRY_CONFIGURATION;
 	private final String ENTRY_FEATURE		 = NLPLib.MODE_SRL + NLPLib.ENTRY_FEATURE;
 	private final String ENTRY_LEXICA		 = NLPLib.MODE_SRL + NLPLib.ENTRY_LEXICA;
@@ -160,7 +164,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	private void loadLexica(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
-		System.out.println("Loading lexica.");
+		LOG.info("Loading lexica.\n");
 
 		s_down = UTInput.getStringSet(fin);
 		s_up   = UTInput.getStringSet(fin);
@@ -184,7 +188,7 @@ public class CSRLabeler extends AbstractStatisticalComponent
 	{
 		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
 		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		System.out.println("Saving lexica.");
+		LOG.info("Saving lexica.\n");
 		
 		UTOutput.printSet(fout, s_down);	fout.flush();
 		UTOutput.printSet(fout, s_up);		fout.flush();

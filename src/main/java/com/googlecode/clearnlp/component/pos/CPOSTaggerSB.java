@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.log4j.Logger;
+
 import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
@@ -58,8 +60,10 @@ import com.googlecode.clearnlp.util.triple.Triple;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CPOSBackTagger extends AbstractStatisticalComponent
+public class CPOSTaggerSB extends AbstractStatisticalComponent
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_POS + NLPLib.ENTRY_CONFIGURATION;
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_POS + NLPLib.ENTRY_FEATURE;
 	protected final String ENTRY_LEXICA		   = NLPLib.MODE_POS + NLPLib.ENTRY_LEXICA;
@@ -77,10 +81,10 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 	
 //	====================================== CONSTRUCTORS ======================================
 
-	public CPOSBackTagger() {}
+	public CPOSTaggerSB() {}
 	
 	/** Constructs a part-of-speech tagger for collecting lexica. */
-	public CPOSBackTagger(JointFtrXml[] xmls, Set<String> sLsfs)
+	public CPOSTaggerSB(JointFtrXml[] xmls, Set<String> sLsfs)
 	{
 		super(xmls);
 
@@ -89,28 +93,28 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 	}
 	
 	/** Constructs a part-of-speech tagger for training. */
-	public CPOSBackTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin)
+	public CPOSTaggerSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin)
 	{
 		super(xmls, spaces, lexica);
 		d_margin = margin;
 	}
 	
 	/** Constructs a part-of-speech tagger for developing. */
-	public CPOSBackTagger(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, double margin)
+	public CPOSTaggerSB(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, double margin)
 	{
 		super(xmls, models, lexica);
 		d_margin = margin;
 	}
 	
 	/** Constructs a part-of-speech tagger for bootsrapping. */
-	public CPOSBackTagger(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, double margin)
+	public CPOSTaggerSB(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, double margin)
 	{
 		super(xmls, spaces, models, lexica);
 		d_margin = margin;
 	}
 	
 	/** Constructs a part-of-speech tagger for decoding. */
-	public CPOSBackTagger(ZipInputStream in)
+	public CPOSTaggerSB(ZipInputStream in)
 	{
 		super(in);
 	}
@@ -155,7 +159,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 	protected void loadLexica(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = UTInput.createBufferedReader(zin);
-		System.out.println("Loading lexica.");
+		LOG.info("Loading lexica.\n");
 		
 		s_lsfs = UTInput.getStringSet(fin);
 		m_ambi = UTInput.getStringMap(fin, " ");
@@ -179,7 +183,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 	{
 		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
 		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		System.out.println("Saving lexica.");
+		LOG.info("Saving lexica.\n");
 		
 		UTOutput.printSet(fout, s_lsfs);		fout.flush();
 		UTOutput.printMap(fout, m_ambi, " ");	fout.flush();
@@ -212,7 +216,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 		s_lsfs.clear();
 	}
 	
-	/** Called by {@link CPOSBackTagger#getLexica()}. */
+	/** Called by {@link CPOSTaggerSB#getLexica()}. */
 	private Map<String,String> getAmbiguityClasses()
 	{
 		double threshold = f_xmls[0].getAmbiguityClassThreshold();
@@ -265,7 +269,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 		processAux();
 	}
 	
-	/** Called by {@link CPOSBackTagger#process(DEPTree)}. */
+	/** Called by {@link CPOSTaggerSB#process(DEPTree)}. */
 	protected void init(DEPTree tree)
 	{
 	 	d_tree  = tree;
@@ -282,7 +286,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 	 	EngineProcess.normalizeForms(tree);
 	}
 	
-	/** Called by {@link CPOSBackTagger#process(DEPTree)}. */
+	/** Called by {@link CPOSTaggerSB#process(DEPTree)}. */
 	protected void processAux()
 	{
 		if (i_flag == FLAG_LEXICA)
@@ -299,7 +303,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CPOSBackTagger#processAux()}. */
+	/** Called by {@link CPOSTaggerSB#processAux()}. */
 	protected void addLexica()
 	{
 		DEPNode node;
@@ -314,7 +318,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CPOSBackTagger#processAux()}. */
+	/** Called by {@link CPOSTaggerSB#processAux()}. */
 	protected List<Pair<String,StringFeatureVector>> tag()
 	{
 		return (i_flag == FLAG_TRAIN) ? tagMain().o2 : tagBranches();
@@ -413,7 +417,7 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CPOSBackTagger#tag()}. */
+	/** Called by {@link CPOSTaggerSB#tag()}. */
 	private StringPrediction getLabel(List<Pair<String,StringFeatureVector>> insts, Deque<POSState> states)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
@@ -437,13 +441,13 @@ public class CPOSBackTagger extends AbstractStatisticalComponent
 		return p;
 	}
 	
-	/** Called by {@link CPOSBackTagger#getLabel()}. */
+	/** Called by {@link CPOSTaggerSB#getLabel()}. */
 	private StringPrediction getGoldLabel()
 	{
 		return new StringPrediction(g_tags[i_input], 1);
 	}
 	
-	/** Called by {@link CPOSBackTagger#getLabel()}. */
+	/** Called by {@link CPOSTaggerSB#getLabel()}. */
 	private StringPrediction getAutoLabel(StringFeatureVector vector, Deque<POSState> states)
 	{
 		List<StringPrediction> ps = s_models[0].predictAll(vector);

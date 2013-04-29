@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -19,30 +19,25 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.IntOpenHashSet;
-import com.googlecode.clearnlp.classification.algorithm.AbstractAlgorithm;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.dependency.AbstractDEPParser;
-import com.googlecode.clearnlp.dependency.DEPHead;
 import com.googlecode.clearnlp.dependency.DEPLabel;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPLibEn;
 import com.googlecode.clearnlp.dependency.DEPNode;
-import com.googlecode.clearnlp.dependency.DEPState;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
@@ -50,7 +45,6 @@ import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 import com.googlecode.clearnlp.util.map.Prob1DMap;
-import com.googlecode.clearnlp.util.pair.ObjectDoublePair;
 import com.googlecode.clearnlp.util.pair.Pair;
 import com.googlecode.clearnlp.util.pair.StringIntPair;
 import com.googlecode.clearnlp.util.triple.Triple;
@@ -60,12 +54,14 @@ import com.googlecode.clearnlp.util.triple.Triple;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-public class CDEPBackParser extends AbstractStatisticalComponent
+public class CDEPParser extends AbstractStatisticalComponent
 {
-	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_CONFIGURATION;
-	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_FEATURE;
-	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_LEXICA;
-	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP_BACK + NLPLib.ENTRY_MODEL;
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
+	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP + NLPLib.ENTRY_CONFIGURATION;
+	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;
+	protected final String ENTRY_LEXICA		   = NLPLib.MODE_DEP + NLPLib.ENTRY_LEXICA;
+	protected final String ENTRY_MODEL		   = NLPLib.MODE_DEP + NLPLib.ENTRY_MODEL;
 	
 	protected final int LEXICA_PUNCTUATION = 0;
 	
@@ -80,51 +76,45 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	protected Prob1DMap			p_punc;		// only for collecting
 	protected Set<String>		s_punc;
 	protected StringIntPair[]	g_heads;
+	protected DEPNode[]			lm_deps, rm_deps;
+	protected DEPNode[]			ln_sibs, rn_sibs;
 	protected int				i_lambda, i_beta;
-
-	protected Map<String,Pair<DEPLabel,DEPLabel>> m_labels;
-	protected List<List<DEPHead>> l_2nd;
-	protected int                 n_trans, n_beams;
-	protected double              d_score, d_margin;
-	protected boolean             b_first;
+	
+	protected List<List<StringIntPair>> l_2nd;
 	
 //	====================================== CONSTRUCTORS ======================================
 
+	public CDEPParser() {}
+	
 	/** Constructs a dependency parser for collecting lexica. */
-	public CDEPBackParser(JointFtrXml[] xmls)
+	public CDEPParser(JointFtrXml[] xmls)
 	{
 		super(xmls);
 		p_punc = new Prob1DMap();
 	}
 	
 	/** Constructs a dependency parsing for training. */
-	public CDEPBackParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica, double margin, int beams)
+	public CDEPParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
 	{
 		super(xmls, spaces, lexica);
-		d_margin = margin;
-		n_beams  = beams;
 	}
 	
 	/** Constructs a dependency parsing for developing. */
-	public CDEPBackParser(JointFtrXml[] xmls, StringModel[] models, Object[] lexica, double margin, int beams)
+	public CDEPParser(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
 	{
 		super(xmls, models, lexica);
-		d_margin = margin;
-		n_beams  = beams;
-	}
-	
-	/** Constructs a dependency parser for bootsrapping. */
-	public CDEPBackParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica, double margin, int beams)
-	{
-		super(xmls, spaces, models, lexica);
-		d_margin = margin;
-		n_beams  = beams;
 	}
 	
 	/** Constructs a dependency parser for decoding. */
-	public CDEPBackParser(ZipInputStream in)
+	public CDEPParser(ZipInputStream in)
 	{
 		super(in);
+	}
+	
+	/** Constructs a dependency parser for bootsrapping. */
+	public CDEPParser(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
+	{
+		super(xmls, spaces, models, lexica);
 	}
 	
 	@Override @SuppressWarnings("unchecked")
@@ -151,7 +141,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 				entry = zEntry.getName();
 				
 				if      (entry.equals(ENTRY_CONFIGURATION))
-					loadConfiguration(zin);
+					loadDefaultConfiguration(zin);
 				else if (entry.startsWith(ENTRY_FEATURE))
 					loadFeatureTemplates(zin, Integer.parseInt(entry.substring(fLen)));
 				else if (entry.startsWith(ENTRY_MODEL))
@@ -163,20 +153,10 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		catch (Exception e) {e.printStackTrace();}
 	}
 	
-	protected void loadConfiguration(ZipInputStream zin) throws Exception
-	{
-		BufferedReader fin = UTInput.createBufferedReader(zin);
-		System.out.println("Loading configuration.");
-		
-		s_models = new StringModel[Integer.parseInt(fin.readLine())];
-		n_beams  = Integer.parseInt(fin.readLine());
-		d_margin = Double.parseDouble(fin.readLine());
-	}
-	
 	protected void loadLexica(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
-		System.out.println("Loading lexica.");
+		LOG.info("Loading lexica.\n");
 
 		s_punc = UTInput.getStringSet(fin);
 	}
@@ -186,34 +166,20 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	{
 		try
 		{
-			saveConfiguration    (zout, ENTRY_CONFIGURATION);
-			saveFeatureTemplates (zout, ENTRY_FEATURE);
-			saveLexica           (zout);
-			saveStatisticalModels(zout, ENTRY_MODEL);
+			saveDefaultConfiguration(zout, ENTRY_CONFIGURATION);
+			saveFeatureTemplates    (zout, ENTRY_FEATURE);
+			saveLexica              (zout);
+			saveStatisticalModels   (zout, ENTRY_MODEL);
 			zout.close();
 		}
 		catch (Exception e) {e.printStackTrace();}
-	}
-	
-	protected void saveConfiguration(ZipOutputStream zout, String entryName) throws Exception
-	{
-		zout.putNextEntry(new ZipEntry(entryName));
-		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		System.out.println("Saving configuration.");
-		
-		fout.println(s_models.length);
-		fout.println(n_beams);
-		fout.println(d_margin);
-		
-		fout.flush();
-		zout.closeEntry();
 	}
 	
 	protected void saveLexica(ZipOutputStream zout) throws Exception
 	{
 		zout.putNextEntry(new ZipEntry(ENTRY_LEXICA));
 		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		System.out.println("Saving lexica.");
+		LOG.info("Saving lexica.\n");
 		
 		UTOutput.printSet(fout, s_punc);	fout.flush();
 		zout.closeEntry();
@@ -240,8 +206,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		for (i=1; i<t_size; i++)
 		{
 			node = d_tree.get(i);
-			
-			p = g_heads[i];
+			p    = g_heads[i];
 			
 			if (node.isDependentOf(d_tree.get(p.i)))
 			{
@@ -258,16 +223,6 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		counts[3] += ls;
 	}
 	
-	public void setMargin(double margin)
-	{
-		d_margin = margin;
-	}
-	
-	public void setBeams(int beams)
-	{
-		n_beams = beams;
-	}
-	
 //	================================ PROCESS ================================
 	
 	@Override
@@ -277,38 +232,33 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		processAux();
 	}
 	
-	/** Called by {@link CDEPBackParser#process(DEPTree)}. */
+	/** Called by {@link CDEPParser#process(DEPTree)}. */
 	protected void init(DEPTree tree)
 	{
-	 	d_tree  = tree;
-	 	t_size  = tree.size();
-	 	b_first = true;
+	 	i_lambda = 0;
+	 	i_beta   = 1;
+	 	d_tree   = tree;
+	 	t_size   = tree.size();
 	 	
-	 	m_labels = new HashMap<String,Pair<DEPLabel,DEPLabel>>();
-	 	l_2nd = new ArrayList<List<DEPHead>>();
+	 	s_reduce = new IntOpenHashSet();
+	 	lm_deps  = new DEPNode[t_size];
+	 	rm_deps  = new DEPNode[t_size];
+	 	ln_sibs  = new DEPNode[t_size];
+	 	rn_sibs  = new DEPNode[t_size];
+	 	
+	 	l_2nd = new ArrayList<List<StringIntPair>>();
 	 	
 	 	int i; for (i=0; i<t_size; i++)
-	 		l_2nd.add(new ArrayList<DEPHead>());
+	 		l_2nd.add(new ArrayList<StringIntPair>());
 	 	
 	 	if (i_flag != FLAG_DECODE)
 	 	{
 	 		g_heads = tree.getHeads();
 	 		tree.clearHeads();	
 	 	}
-	 	
-	 	initAux();
 	}
 	
-	protected void initAux()
-	{
-		i_lambda = 0;
-	 	i_beta   = 1;
-	 	d_score  = 0;
-	 	n_trans  = 0;
-	 	s_reduce = new IntOpenHashSet();
-	}
-	
-	/** Called by {@link CDEPBackParser#process(DEPTree)}. */
+	/** Called by {@link CDEPParser#process(DEPTree)}. */
 	protected void processAux()
 	{
 		if (i_flag == FLAG_LEXICA)
@@ -325,7 +275,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CDEPBackParser#processAux()}. */
+	/** Called by {@link CDEPParser#processAux()}. */
 	private void addLexica()
 	{
 		String puncLabel = f_xmls[0].getPunctuationLabel();
@@ -343,21 +293,11 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		}
 	}
 	
-	/** Called by {@link CDEPBackParser#processAux()}. */
+	/** Called by {@link CDEPParser#processAux()}. */
 	protected List<Pair<String,StringFeatureVector>> parse()
 	{
-		List<Pair<String,StringFeatureVector>> insts = (i_flag == FLAG_TRAIN) ? parseMain().o2 : parseBranches();
-	
-		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
-			postProcess();
-		
-		return insts;
-	}
-	
-	protected Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> parseMain()
-	{
 		List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>();
-		List<DEPState> states = new ArrayList<DEPState>();
+		DEPNode  lambda, beta;
 		DEPLabel label;
 		
 		while (i_beta < t_size)
@@ -367,61 +307,50 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 				noShift();
 				continue;
 			}
-		
-			label = getLabel(insts, states);
-			parseAux(label);
+			
+			lambda = d_tree.get(i_lambda);
+			beta   = d_tree.get(i_beta);
+			label  = getLabel(insts);
+			
+			if (label.isArc(LB_LEFT))
+			{
+				if (i_lambda == DEPLib.ROOT_ID)
+					noShift();
+				else if (beta.isDescendentOf(lambda))
+					noPass();
+				else if (label.isList(LB_REDUCE))
+					leftReduce(lambda, beta, label.deprel);
+				else
+					leftPass(lambda, beta, label.deprel);
+			}
+			else if (label.isArc(LB_RIGHT))
+			{
+				if (lambda.isDescendentOf(beta))
+					noPass();
+				else if (label.isList(LB_SHIFT))
+					rightShift(lambda, beta, label.deprel);
+				else
+					rightPass(lambda, beta, label.deprel);
+			}
+			else
+			{
+				if (label.isList(LB_SHIFT))
+					noShift();
+				else if (label.isList(LB_REDUCE) && lambda.hasHead())
+					noReduce();
+				else
+					noPass();
+			}
 		}
 		
-		if (states.size() > n_beams - 1)
-		{
-			Collections.sort(states);
-			states = states.subList(0, n_beams - 1);
-		}
+		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
+			postProcess();
 		
-		return new Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>(d_tree.getHeads(), insts, states);
+		return insts;
 	}
 	
-	protected void parseAux(DEPLabel label)
-	{
-		DEPNode lambda = d_tree.get(i_lambda);
-		DEPNode beta   = d_tree.get(i_beta);
-		
-		d_score += label.score;
-		n_trans++;
-		
-		if (label.isArc(LB_LEFT))
-		{
-			if (i_lambda == DEPLib.ROOT_ID)
-				noShift();
-			else if (beta.isDescendentOf(lambda))
-				noPass();
-			else if (label.isList(LB_REDUCE))
-				leftReduce(lambda, beta, label.deprel);
-			else
-				leftPass(lambda, beta, label.deprel);
-		}
-		else if (label.isArc(LB_RIGHT))
-		{
-			if (lambda.isDescendentOf(beta))
-				noPass();
-			else if (label.isList(LB_SHIFT))
-				rightShift(lambda, beta, label.deprel);
-			else
-				rightPass(lambda, beta, label.deprel);
-		}
-		else
-		{
-			if (label.isList(LB_SHIFT))
-				noShift();
-			else if (label.isList(LB_REDUCE) && lambda.hasHead())
-				noReduce();
-			else
-				noPass();
-		}
-	}
-	
-	/** Called by {@link CDEPBackParser#parse()}. */
-	protected DEPLabel getLabel(List<Pair<String,StringFeatureVector>> insts, List<DEPState> states)
+	/** Called by {@link CDEPParser#parse()}. */
+	protected DEPLabel getLabel(List<Pair<String,StringFeatureVector>> insts)
 	{
 		StringFeatureVector vector = getFeatureVector(f_xmls[0]);
 		DEPLabel label = null;
@@ -433,18 +362,18 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		}
 		else if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
 		{
-			label = getAutoLabel(vector, insts, states);
+			label = getAutoLabel(vector);
 		}
 		else if (i_flag == FLAG_BOOTSTRAP)
 		{
-			label = getAutoLabel(vector, insts, states);
+			label = getAutoLabel(vector);
 			insts.add(new Pair<String,StringFeatureVector>(getGoldLabel().toString(), vector));
 		}
 
 		return label;
 	}
 	
-	/** Called by {@link CDEPBackParser#getLabel()}. */
+	/** Called by {@link CDEPParser#getLabel()}. */
 	protected DEPLabel getGoldLabel()
 	{
 		DEPLabel label = getGoldLabelArc();
@@ -463,7 +392,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		return label;
 	}
 	
-	/** Called by {@link CDEPBackParser#getGoldLabel()}. */
+	/** Called by {@link CDEPParser#getGoldLabel()}. */
 	private DEPLabel getGoldLabelArc()
 	{
 		StringIntPair head = g_heads[i_lambda];
@@ -479,7 +408,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		return new DEPLabel(LB_NO, "");
 	}
 	
-	/** Called by {@link CDEPBackParser#getGoldLabel()}. */
+	/** Called by {@link CDEPParser#getGoldLabel()}. */
 	private boolean isGoldShift()
 	{
 		if (g_heads[i_beta].i < i_lambda)
@@ -499,7 +428,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		return true;
 	}
 	
-	/** Called by {@link CDEPBackParser#getGoldLabel()}. */
+	/** Called by {@link CDEPParser#getGoldLabel()}. */
 	private boolean isGoldReduce(boolean hasHead)
 	{
 		if (!hasHead && !d_tree.get(i_lambda).hasHead())
@@ -516,94 +445,116 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		return true;
 	}
 	
-	/** Called by {@link CDEPBackParser#getLabel()}. */
-	private DEPLabel getAutoLabel(StringFeatureVector vector, List<Pair<String,StringFeatureVector>> insts, List<DEPState> states)
+	/** Called by {@link CDEPParser#getLabel()}. */
+	private DEPLabel getAutoLabel(StringFeatureVector vector)
 	{
-		String key = vector.toString();
-		Pair<DEPLabel,DEPLabel> val = m_labels.get(key);
-		DEPLabel fst, snd;
-		List<DEPHead> p;
+		Pair<StringPrediction,StringPrediction> ps = s_models[0].predictTwo(vector);
+		DEPLabel fst = new DEPLabel(ps.o1.label);
+		DEPLabel snd = new DEPLabel(ps.o2.label);
+		List<StringIntPair> p;
 		
-		if (val != null)
-		{
-			fst = val.o1;
-			snd = val.o2;
-		}
-		else
-		{
-			List<StringPrediction> ps = s_models[0].predictAll(vector);
-			AbstractAlgorithm.normalize(ps);
-
-			fst = new DEPLabel(ps.get(0).label, ps.get(0).score);
-			snd = new DEPLabel(ps.get(1).label, ps.get(1).score);
-			
-			m_labels.put(key, new Pair<DEPLabel,DEPLabel>(fst, snd));			
-		}
-		
-		if (fst.score - snd.score < d_margin)
+		if (ps.o1.score - ps.o2.score < 1)
 		{
 			if (fst.isArc(LB_NO))
 			{
 				if (snd.isArc(LB_LEFT))
 				{
 					p = l_2nd.get(i_lambda);
-					p.add(new DEPHead(i_beta, snd.deprel, snd.score));
+					p.add(new StringIntPair(snd.deprel, i_beta));
 				}
 				else if (snd.isArc(LB_RIGHT))
 				{
 					p = l_2nd.get(i_beta);
-					p.add(new DEPHead(i_lambda, snd.deprel, snd.score));
+					p.add(new StringIntPair(snd.deprel, i_lambda));
 				}
 			}
-			
-			if (b_first)
-				states.add(new DEPState(i_lambda, i_beta, n_trans, d_score, snd, d_tree.getHeads(), s_reduce.clone()));
 		}
 		
 		return fst;
 	}
 	
-	/** Called by {@link CDEPBackParser#depParseAux()}. */
+	protected int[] getCosts()
+	{
+		int[] costs = new int[2];
+		
+		costs[0] = getCostReduce();
+		costs[1] = getCostShift();
+		
+		return costs;
+	}
+	
+	private int getCostReduce()
+	{
+		int cost = (g_heads[i_lambda].i > i_beta) ? 1 : 0;
+		int i;
+		
+		for (i=i_beta+1; i<t_size; i++)
+		{
+			if (g_heads[i].i == i_lambda)
+				cost++;
+		}
+		
+		return cost;
+	}
+	
+	private int getCostShift()
+	{
+		int cost = (g_heads[i_beta].i < i_lambda) ? 1 : 0;
+		int i;
+		
+		for (i=i_lambda-1; i>0; i--)
+		{
+			if (s_reduce.contains(i))
+				continue;
+			
+			if (g_heads[i].i == i_beta)
+				cost++;
+		}
+		
+		return cost;
+	}
+	
+	/** Called by {@link CDEPParser#depParseAux()}. */
 	protected void leftReduce(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		leftArc(lambda, beta, deprel);
 		reduce();
 	}
 	
-	/** Called by {@link CDEPBackParser#depParseAux()}. */
+	/** Called by {@link CDEPParser#depParseAux()}. */
 	protected void leftPass(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		leftArc(lambda, beta, deprel);
 		pass();
 	}
 	
-	/** Called by {@link CDEPBackParser#depParseAux()}. */
+	/** Called by {@link CDEPParser#depParseAux()}. */
 	protected void rightShift(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		rightArc(lambda, beta, deprel);
 		shift();
 	}
 	
-	/** Called by {@link CDEPBackParser#depParseAux()}. */
+	/** Called by {@link CDEPParser#depParseAux()}. */
 	protected void rightPass(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		rightArc(lambda, beta, deprel);
 		pass();
 	}
 	
-	/** Called by {@link CDEPBackParser#depParseAux()}. */
+	/** Called by {@link CDEPParser#depParseAux()}. */
 	protected void noShift()
 	{
 		shift();
 	}
 	
-	/** Called by {@link CDEPBackParser#depParseAux()}. */
+	/** Called by {@link CDEPParser#depParseAux()}. */
 	protected void noReduce()
 	{
 		reduce();
 	}
 	
-	/** Called by {@link CDEPBackParser#depParseAux()}. */
+	/** Called by {@link CDEPParser#depParseAux()}. */
 	protected void noPass()
 	{
 		pass();
@@ -612,11 +563,17 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	private void leftArc(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		lambda.setHead(beta, deprel);
+		
+		if (lm_deps[i_beta] != null)	rn_sibs[i_lambda] = lm_deps[i_beta];
+		lm_deps[i_beta] = lambda;
 	}
 	
 	private void rightArc(DEPNode lambda, DEPNode beta, String deprel)
 	{
 		beta.setHead(lambda, deprel);
+		
+		if (rm_deps[i_lambda] != null)	ln_sibs[i_beta] = rm_deps[i_lambda];
+		rm_deps[i_lambda] = beta;
 	}
 	
 	private void shift()
@@ -656,7 +613,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		Triple<DEPNode,String,Double> max = new Triple<DEPNode,String,Double>(null, null, -1d);
 		DEPNode root = d_tree.get(DEPLib.ROOT_ID);
 		int i, size = d_tree.size();
-		List<DEPHead> list;
+		List<StringIntPair> list;
 		DEPNode node, head;
 		
 		for (i=1; i<size; i++)
@@ -667,13 +624,13 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 			{
 				if (!(list = l_2nd.get(node.id)).isEmpty())
 				{
-					for (DEPHead p : list)
+					for (StringIntPair p : list)
 					{
-						head = d_tree.get(p.headId);
+						head = d_tree.get(p.i);
 						
 						if (!head.isDescendentOf(node))
 						{
-							node.setHead(head, p.deprel);
+							node.setHead(head, p.s);
 							break;
 						}
 					}
@@ -686,7 +643,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 					postProcessAux(node, -1, max);
 					postProcessAux(node, +1, max);
 					
-					node.setHead(max.o1, max.o2);
+					node.setHead(max.o1, max.o2);					
 				}
 			}
 		}
@@ -712,7 +669,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 			
 			vector = getFeatureVector(f_xmls[0]);
 			ps = s_models[0].predictAll(vector);
-			AbstractAlgorithm.normalize(ps);
+			s_models[0].normalizeScores(ps);
 			
 			for (StringPrediction p : ps)
 			{
@@ -809,7 +766,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		return null;
 	}
 	
-	/** Called by {@link CDEPBackParser#getField(FtrToken)}. */
+	/** Called by {@link CDEPParser#getField(FtrToken)}. */
 	private String getLeftNearestPunctuation(int lIdx, int rIdx)
 	{
 		String form;
@@ -826,7 +783,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		return null;
 	}
 	
-	/** Called by {@link CDEPBackParser#getField(FtrToken)}. */
+	/** Called by {@link CDEPParser#getField(FtrToken)}. */
 	private String getRightNearestPunctuation(int lIdx, int rIdx)
 	{
 		String form;
@@ -845,7 +802,7 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 	
 //	================================ NODE GETTER ================================
 	
-	/** Called by {@link CDEPBackParser#getField(FtrToken)}. */
+	/** Called by {@link CDEPParser#getField(FtrToken)}. */
 	private DEPNode getNode(FtrToken token)
 	{
 		DEPNode node = null;
@@ -862,13 +819,10 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 		if (token.relation != null)
 		{
 			     if (token.isRelation(JointFtrXml.R_H))		node = node.getHead();
-			else if (token.isRelation(JointFtrXml.R_H2))	node = node.getGrandHead();
-			else if (token.isRelation(JointFtrXml.R_LMD))	node = d_tree.getLeftMostDependent  (node.id);
-			else if (token.isRelation(JointFtrXml.R_RMD))	node = d_tree.getRightMostDependent (node.id);
-			else if (token.isRelation(JointFtrXml.R_LMD2))	node = d_tree.getLeftMostDependent  (node.id, 1);
-			else if (token.isRelation(JointFtrXml.R_RMD2))	node = d_tree.getRightMostDependent (node.id, 1);
-			else if (token.isRelation(JointFtrXml.R_LNS))	node = d_tree.getLeftNearestSibling (node.id);
-			else if (token.isRelation(JointFtrXml.R_RNS))	node = d_tree.getRightNearestSibling(node.id);
+			else if (token.isRelation(JointFtrXml.R_LMD))	node = lm_deps[node.id];
+			else if (token.isRelation(JointFtrXml.R_RMD))	node = rm_deps[node.id];
+			else if (token.isRelation(JointFtrXml.R_LNS))	node = ln_sibs[node.id];
+			else if (token.isRelation(JointFtrXml.R_RNS))	node = rn_sibs[node.id];
 		}
 		
 		return node;
@@ -918,103 +872,5 @@ public class CDEPBackParser extends AbstractStatisticalComponent
 			return d_tree.get(cIndex);
 		
 		return null;
-	}
-	
-//	================================ BACKTRACK ================================
-	
-	@SuppressWarnings("unchecked")
-	public List<Pair<String,StringFeatureVector>> parseBranches()
-	{
-		List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list;
-		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t0 = parseMain();
-		if ((i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP) && t0.o3.isEmpty())	return null;
-		
-		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> tm;
-		double s0 = d_score / n_trans; 
-		b_first = false;
-		
-		list = new ArrayList<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>>();
-		list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t0, s0));
-		backTrackDEP(list, t0.o3);
-		
-		if (i_flag == FLAG_DECODE || i_flag == FLAG_DEVELOP)
-		{
-			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)getMax(list).o;
-			d_tree.resetHeads(tm.o1);
-			return null;
-		}
-		else
-		{
-			List<Pair<String,StringFeatureVector>> insts = new ArrayList<Pair<String,StringFeatureVector>>(t0.o2);
-			setGoldScores(list);
-			
-			tm = (Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)getMax(list).o;
-			insts.addAll(tm.o2);
-			
-			return insts;
-		}
-	}
-	
-	private void backTrackDEP(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list, List<DEPState> states)
-	{
-		Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>> t1;
-		double s1;
-		
-		for (DEPState state : states)
-		{
-			resetState(state);
-			t1 = parseMain();
-			s1 = d_score / n_trans;
-			list.add(new ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>(t1, s1));
-		}
-	}
-	
-	private void resetState(DEPState state)
-	{
-		i_lambda = state.lambda;
-		i_beta   = state.beta;
-		n_trans  = state.trans;
-		d_score  = state.score;
-		s_reduce = state.reduce;
-		d_tree.resetHeads(state.heads);
-		parseAux(state.label);
-	}
-	
-	private ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> getMax(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> dList) 
-	{
-		ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> max = dList.get(0), t;
-		int i, size = dList.size();
-		
-		for (i=1; i<size; i++)
-		{
-			t = dList.get(i);
-			if (max.d < t.d) max = t;
-		}
-		
-		return max;
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void setGoldScores(List<ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>>> list)
-	{
-		StringIntPair gHead, sHead;
-		StringIntPair[] sHeads;
-		int i, c;
-		
-		for (ObjectDoublePair<Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>> p : list)
-		{
-			sHeads = ((Triple<StringIntPair[],List<Pair<String,StringFeatureVector>>,List<DEPState>>)p.o).o1;
-			
-			for (i=1,c=0; i<t_size; i++)
-			{
-				gHead = g_heads[i];
-				sHead =  sHeads[i];
-				
-				if (gHead.i == sHead.i && gHead.s.equals(sHead.s))
-					c++;
-			}
-			
-			p.d = c;
-		}
 	}
 }

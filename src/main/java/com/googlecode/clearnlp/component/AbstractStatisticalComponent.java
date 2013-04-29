@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.log4j.Logger;
 
 import com.googlecode.clearnlp.classification.model.ONStringModel;
 import com.googlecode.clearnlp.classification.model.StringModel;
@@ -48,6 +49,8 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 abstract public class AbstractStatisticalComponent extends AbstractComponent
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
 	protected JointFtrXml[]			f_xmls;
@@ -117,14 +120,14 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 		BufferedReader fin = UTInput.createBufferedReader(zin);
 		int mSize = Integer.parseInt(fin.readLine());
 		
-		System.out.println("Loading configuration.");
+		LOG.info("Loading configuration.\n");
 		s_models = new StringModel[mSize];
 	}
 
 	/** Called by {@link AbstractStatisticalComponent#loadModels(ZipInputStream)}}. */
 	protected ByteArrayInputStream loadFeatureTemplates(ZipInputStream zin, int index) throws Exception
 	{
-		System.out.println("Loading feature templates.");
+		LOG.info("Loading feature templates.\n");
 
 		BufferedReader fin = UTInput.createBufferedReader(zin);
 		ByteArrayInputStream template = getFeatureTemplates(fin);
@@ -168,7 +171,7 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	{
 		zout.putNextEntry(new ZipEntry(entryName));
 		PrintStream fout = UTOutput.createPrintBufferedStream(zout);
-		System.out.println("Saving configuration.");
+		LOG.info("Saving configuration.\n");
 		
 		fout.println(s_models.length);
 		
@@ -181,7 +184,7 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	{
 		int i, size = f_xmls.length;
 		PrintStream fout;
-		System.out.println("Saving feature templates.");
+		LOG.info("Saving feature templates.\n");
 		
 		for (i=0; i<size; i++)
 		{

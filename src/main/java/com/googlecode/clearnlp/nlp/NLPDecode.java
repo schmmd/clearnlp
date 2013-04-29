@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ import org.w3c.dom.NodeList;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.component.AbstractComponent;
-import com.googlecode.clearnlp.component.dep.CDEPBackParser;
-import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.dep.CDEPParserSB;
+import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.morph.CDefaultMPAnalyzer;
 import com.googlecode.clearnlp.component.morph.CEnglishMPAnalyzer;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
@@ -190,7 +190,7 @@ public class NLPDecode extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_MORPH))
 			return getMPAnalyzer(zin, language);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPPassParser(zin);
+			return new CDEPParser(zin);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(zin);
 		else if (mode.equals(NLPLib.MODE_ROLE))
@@ -200,7 +200,7 @@ public class NLPDecode extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(zin);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			return new CDEPBackParser(zin);
+			return new CDEPParserSB(zin);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}

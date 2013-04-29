@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
-import com.googlecode.clearnlp.feature.xml.SRLFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
 
 /**
@@ -237,23 +236,23 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 		if (node == null)	return null;
 		Matcher m;
 		
-		if (token.isField(SRLFtrXml.F_FORM))
+		if (token.isField(JointFtrXml.F_FORM))
 		{
 			return node.form;
 		}
-		else if (token.isField(SRLFtrXml.F_LEMMA))
+		else if (token.isField(JointFtrXml.F_LEMMA))
 		{
 			return node.lemma;
 		}
-		else if (token.isField(SRLFtrXml.F_POS))
+		else if (token.isField(JointFtrXml.F_POS))
 		{
 			return node.pos;
 		}
-		else if (token.isField(SRLFtrXml.F_DEPREL))
+		else if (token.isField(JointFtrXml.F_DEPREL))
 		{
 			return node.getLabel();
 		}
-		else if ((m = SRLFtrXml.P_FEAT.matcher(token.field)).find())
+		else if ((m = JointFtrXml.P_FEAT.matcher(token.field)).find())
 		{
 			return node.getFeat(m.group(1));
 		}
@@ -267,7 +266,7 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 		DEPNode node = getNode(token);
 		if (node == null)	return null;
 		
-		if (token.isField(SRLFtrXml.F_DEPREL_SET))
+		if (token.isField(JointFtrXml.F_DEPREL_SET))
 		{
 			return getDeprelSet(node.getDependents());
 		}
@@ -295,9 +294,9 @@ public class CPredIdentifier extends AbstractStatisticalComponent
 		
 		if (token.relation != null)
 		{
-			     if (token.isRelation(SRLFtrXml.R_H))	node = node.getHead();
-			else if (token.isRelation(SRLFtrXml.R_LMD))	node = node.getLeftMostDependent();
-			else if (token.isRelation(SRLFtrXml.R_RMD))	node = node.getRightMostDependent();
+			     if (token.isRelation(JointFtrXml.R_H))	node = node.getHead();
+			else if (token.isRelation(JointFtrXml.R_LMD))	node = node.getLeftMostDependent();
+			else if (token.isRelation(JointFtrXml.R_RMD))	node = node.getRightMostDependent();
 		}
 		
 		return node;

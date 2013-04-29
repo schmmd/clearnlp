@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
+import org.apache.log4j.Logger;
+
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.prediction.StringPrediction;
@@ -42,7 +44,6 @@ import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.nlp.NLPLib;
-import com.googlecode.clearnlp.predicate.PredIdentifier;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
 
@@ -52,6 +53,8 @@ import com.googlecode.clearnlp.util.UTOutput;
  */
 public class CSenseClassifier extends AbstractStatisticalComponent
 {
+	private final Logger LOG = Logger.getLogger(this.getClass());
+	
 	private String ENTRY_CONFIGURATION;
 	private String ENTRY_FEATURE;
 	private String ENTRY_LEXICA;
@@ -150,7 +153,7 @@ public class CSenseClassifier extends AbstractStatisticalComponent
 	private void loadLexica(ZipInputStream zin) throws Exception
 	{
 		BufferedReader fin = new BufferedReader(new InputStreamReader(zin));
-		System.out.println("Loading lexica.");
+		LOG.info("Loading lexica.\n");
 		
 		m_senses = UTInput.getStringMap(fin, " ");
 		m_lemmas = UTInput.getStringIntOpenHashMap(fin, " ");

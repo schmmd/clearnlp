@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -34,9 +34,9 @@ import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.component.AbstractStatisticalComponent;
-import com.googlecode.clearnlp.component.dep.CDEPBackParser;
-import com.googlecode.clearnlp.component.dep.CDEPPassParser;
-import com.googlecode.clearnlp.component.pos.CPOSBackTagger;
+import com.googlecode.clearnlp.component.dep.CDEPParserSB;
+import com.googlecode.clearnlp.component.dep.CDEPParser;
+import com.googlecode.clearnlp.component.pos.CPOSTaggerSB;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.component.srl.CPredIdentifier;
 import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
@@ -106,7 +106,7 @@ public class NLPTrain extends AbstractNLP
 		if      (mode.equals(NLPLib.MODE_POS))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPPassParser(xmls), mode, devId);
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParser(xmls), mode, devId);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return getTrainedComponent(eConfig, xmls, trainFiles, null, null, mode, 0, devId);
 		else if (mode.equals(NLPLib.MODE_ROLE))
@@ -118,7 +118,7 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
 			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, devId)), mode, devId);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPBackParser(xmls), mode, devId);
+			return getTrainedComponent(eConfig, reader, xmls, trainFiles, new CDEPParserSB(xmls), mode, devId);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -129,7 +129,7 @@ public class NLPTrain extends AbstractNLP
 		if      (mode.equals(NLPLib.MODE_POS))
 			return new CPOSTagger(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			return new CDEPPassParser(xmls, models, lexica);
+			return new CDEPParser(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_ROLE))
@@ -139,9 +139,9 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return new CSRLabeler(xmls, models, lexica);
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
-			return new CPOSBackTagger(xmls, models, lexica, d_margin);
+			return new CPOSTaggerSB(xmls, models, lexica, d_margin);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			return new CDEPBackParser(xmls, models, lexica, d_margin, n_beams);
+			return new CDEPParserSB(xmls, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}
@@ -318,7 +318,7 @@ public class NLPTrain extends AbstractNLP
 		if      (mode.equals(NLPLib.MODE_POS))
 			return new CPOSTagger(xmls, spaces, lexica);
 		else if (mode.equals(NLPLib.MODE_DEP))
-			return (models == null) ? new CDEPPassParser(xmls, spaces, lexica) : new CDEPPassParser(xmls, spaces, models, lexica);
+			return (models == null) ? new CDEPParser(xmls, spaces, lexica) : new CDEPParser(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_PRED))
 			return new CPredIdentifier(xmls, spaces, lexica);	
 		else if (mode.equals(NLPLib.MODE_ROLE))
@@ -328,9 +328,9 @@ public class NLPTrain extends AbstractNLP
 		else if (mode.equals(NLPLib.MODE_SRL))
 			return (models == null) ? new CSRLabeler(xmls, spaces, lexica) : new CSRLabeler(xmls, spaces, models, lexica);
 		else if (mode.equals(NLPLib.MODE_POS_BACK))
-			return (models == null) ? new CPOSBackTagger(xmls, spaces, lexica, d_margin) : new CPOSBackTagger(xmls, spaces, models, lexica, d_margin);
+			return (models == null) ? new CPOSTaggerSB(xmls, spaces, lexica, d_margin) : new CPOSTaggerSB(xmls, spaces, models, lexica, d_margin);
 		else if (mode.equals(NLPLib.MODE_DEP_BACK))
-			return (models == null) ? new CDEPBackParser(xmls, spaces, lexica, d_margin, n_beams) : new CDEPBackParser(xmls, spaces, models, lexica, d_margin, n_beams);
+			return (models == null) ? new CDEPParserSB(xmls, spaces, lexica, d_margin, n_beams) : new CDEPParserSB(xmls, spaces, models, lexica, d_margin, n_beams);
 		
 		throw new IllegalArgumentException("The requested mode '"+mode+"' is not supported.");
 	}

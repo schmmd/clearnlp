@@ -1,5 +1,5 @@
 /**
-* Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
 * 
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.io.FileInputStream;
 import org.kohsuke.args4j.Option;
 import org.w3c.dom.Element;
 
-import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.pos.CPOSTagger;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
 import com.googlecode.clearnlp.reader.JointReader;
@@ -68,7 +68,7 @@ public class NLPGenerate extends NLPDevelop
 			if      (mode.equals(NLPLib.MODE_POS))
 				developComponent(eConfig, reader, xmls, trainFiles, devFiles, new CPOSTagger(xmls, getLowerSimplifiedForms(reader, xmls[0], trainFiles, i)), mode, i);
 			else if (mode.equals(NLPLib.MODE_DEP))
-				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPPassParser(xmls), mode, i);
+				developComponentBoot(eConfig, reader, xmls, trainFiles, devFiles, new CDEPParser(xmls), mode, i);
 		}
 	}
 		

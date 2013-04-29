@@ -1,9 +1,24 @@
+/**
+* Copyright 2012-2013 University of Massachusetts Amherst
+* 
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* 
+*   http://www.apache.org/licenses/LICENSE-2.0
+*   
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package com.googlecode.clearnlp.experiment;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import com.googlecode.clearnlp.component.dep.CDEPPassParser;
+import com.googlecode.clearnlp.component.dep.CDEPParser;
 import com.googlecode.clearnlp.component.dep.ONDEPPassParser;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
@@ -21,7 +36,7 @@ public class NLPOnline extends NLPTrain
 		String[]   devFiles = UTFile.getSortedFileListBySize(devDir, ".*", true);
 		JointReader  reader = new JointReader(0, 1, 2, 4, -1, 5, 6);
 		
-		Object[] lexica = getLexica(new CDEPPassParser(xmls), reader, xmls, trainFiles, devId);
+		Object[] lexica = getLexica(new CDEPParser(xmls), reader, xmls, trainFiles, devId);
 		ONDEPPassParser parser = new ONDEPPassParser(xmls, lexica, alpha, rho);
 		List<DEPTree> trainTrees = getTrees(reader, trainFiles, devId);
 		List<DEPTree> devTrees = getTrees(reader, devFiles, devId);

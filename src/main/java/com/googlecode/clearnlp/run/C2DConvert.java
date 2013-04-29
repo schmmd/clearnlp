@@ -23,11 +23,13 @@
 */
 package com.googlecode.clearnlp.run;
 
+import java.io.FileInputStream;
 import java.io.PrintStream;
 import java.util.List;
 
 import org.kohsuke.args4j.Option;
 
+import com.googlecode.clearnlp.component.AbstractComponent;
 import com.googlecode.clearnlp.constituent.CTLib;
 import com.googlecode.clearnlp.constituent.CTLibEn;
 import com.googlecode.clearnlp.constituent.CTReader;
@@ -37,7 +39,7 @@ import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.engine.EngineGetter;
-import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -64,12 +66,12 @@ public class C2DConvert extends AbstractRun
 
 	public C2DConvert() {}
 	
-	public C2DConvert(String[] args)
+	public C2DConvert(String[] args) throws Exception
 	{
 		initArgs(args);
 		
 		AbstractC2DConverter c2d = EngineGetter.getC2DConverter(s_language, s_headruleFile, s_mergeLabels);
-		AbstractMPAnalyzer morph = EngineGetter.getMPAnalyzer(s_language, s_dictFile);
+		AbstractComponent morph = EngineGetter.getComponent(new FileInputStream(s_dictFile), s_language, NLPLib.MODE_MORPH);
 		List<String[]> filenames = getFilenames(s_inputPath, s_inputExt, s_outputExt);
 		int n;
 		
@@ -80,7 +82,7 @@ public class C2DConvert extends AbstractRun
 		}
 	}
 	
-	protected int convert(AbstractC2DConverter c2d, AbstractMPAnalyzer morph, String language, String inputFile, String outputFile, boolean normalize)
+	protected int convert(AbstractC2DConverter c2d, AbstractComponent morph, String language, String inputFile, String outputFile, boolean normalize)
 	{
 		CTReader  reader = new CTReader(UTInput.createBufferedFileReader(inputFile));
 		PrintStream fout = UTOutput.createPrintBufferedFileStream(outputFile);
@@ -103,7 +105,7 @@ public class C2DConvert extends AbstractRun
 			}
 			else
 			{
-				morph.lemmatize(dTree);
+				morph.process(dTree);
 				fout.println(dTree.toStringDAG()+"\n");
 			}
 		}
@@ -130,6 +132,10 @@ public class C2DConvert extends AbstractRun
 
 	public static void main(String[] args)
 	{
-		new C2DConvert(args);
+		try
+		{
+			new C2DConvert(args);
+		}
+		catch (Exception e) {e.printStackTrace();}
 	}
 }

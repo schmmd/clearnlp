@@ -1,5 +1,5 @@
 /**
- * Copyright 2012 University of Massachusetts Amherst
+* Copyright 2012-2013 University of Massachusetts Amherst
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ public class Version
 {
 	public static void main(String[] args)
 	{
-		System.out.println("ClearNLP version 1.3.1");
+		System.out.println("ClearNLP version 1.3.2");
 		System.out.println("Webpage: clearnlp.googlecode.com");
 		System.out.println("Members: Jinho D. Choi (owner)");
 		System.out.println("Contact: jdchoi77@gmail.com");

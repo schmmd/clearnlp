@@ -1,3 +1,18 @@
+/**
+* Copyright 2012-2013 University of Massachusetts Amherst
+* 
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* 
+*   http://www.apache.org/licenses/LICENSE-2.0
+*   
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 package com.googlecode.clearnlp.engine;
 
 import java.io.BufferedReader;
@@ -5,28 +20,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.googlecode.clearnlp.component.srl.CRolesetClassifier;
-import com.googlecode.clearnlp.dependency.AbstractDEPParser;
 import com.googlecode.clearnlp.dependency.DEPArc;
 import com.googlecode.clearnlp.dependency.DEPFeat;
 import com.googlecode.clearnlp.dependency.DEPLib;
 import com.googlecode.clearnlp.dependency.DEPNode;
 import com.googlecode.clearnlp.dependency.DEPTree;
-import com.googlecode.clearnlp.dependency.srl.AbstractSRLabeler;
-import com.googlecode.clearnlp.morphology.AbstractMPAnalyzer;
 import com.googlecode.clearnlp.morphology.MPLib;
 import com.googlecode.clearnlp.pos.POSNode;
-import com.googlecode.clearnlp.pos.POSTagger;
-import com.googlecode.clearnlp.predicate.AbstractPredIdentifier;
 import com.googlecode.clearnlp.propbank.verbnet.PVMap;
 import com.googlecode.clearnlp.propbank.verbnet.PVRole;
 import com.googlecode.clearnlp.propbank.verbnet.PVRoleset;
-import com.googlecode.clearnlp.reader.AbstractReader;
 import com.googlecode.clearnlp.segmentation.AbstractSegmenter;
 import com.googlecode.clearnlp.tokenization.AbstractTokenizer;
 import com.googlecode.clearnlp.util.UTCollection;
-import com.googlecode.clearnlp.util.pair.Pair;
 
+/**
+ * @since 1.1.0
+ * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
+ */
 public class EngineProcess
 {
 	// ============================= input: reader =============================
@@ -36,113 +47,11 @@ public class EngineProcess
 		return segmenter.getSentences(fin);
 	}
 	
-	// ============================= input: tokens =============================
-	
-	static public POSNode[] getPOSNodes(Pair<POSTagger[],Double> taggers, List<String> tokens)
-	{
-		POSNode[] nodes = toPOSNodes(tokens);
-		predictPOS(taggers, nodes);
-
-		return nodes;
-	}
-		
-	static public POSNode[] getPOSNodesWithLemmas(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, List<String> tokens)
-	{
-		POSNode[] nodes = getPOSNodes(taggers, tokens);
-		analyzer.lemmatize(nodes);
-
-		return nodes;
-	}
-		
-	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, List<String> tokens)
-	{
-		POSNode[] nodes = getPOSNodesWithLemmas(taggers, analyzer, tokens);
-		DEPTree tree = toDEPTree(nodes);
-		parser.parse(tree);
-			
-		return tree;
-	}
-		
-	static public DEPTree getDEPTree(Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, List<String> tokens)
-	{
-		DEPTree tree = getDEPTree(taggers, analyzer, parser, tokens);
-		predictSRL(identifier, labeler, tree);
-			
-		return tree;
-	}
-	
 	// ============================= input: sentence =============================
 	
 	static public List<String> getTokens(AbstractTokenizer tokenizer, String sentence)
 	{
 		return tokenizer.getTokens(sentence);
-	}
-	
-	static public POSNode[] getPOSNodes(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, String sentence)
-	{
-		List<String> tokens = getTokens(tokenizer, sentence);
-		return getPOSNodes(taggers, tokens);
-	}
-	
-	static public POSNode[] getPOSNodesWithLemmas(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, String sentence)
-	{
-		List<String> tokens = getTokens(tokenizer, sentence);
-		return getPOSNodesWithLemmas(taggers, analyzer, tokens);
-	}
-	
-	static public DEPTree getDEPTree(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, String sentence)
-	{
-		List<String> tokens = getTokens(tokenizer, sentence);
-		return getDEPTree(taggers, analyzer, parser, tokens);
-	}
-	
-	static public DEPTree getDEPTree(AbstractTokenizer tokenizer, Pair<POSTagger[],Double> taggers, AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, String sentence)
-	{
-		List<String> tokens = getTokens(tokenizer, sentence);
-		return getDEPTree(taggers, analyzer, parser, identifier, labeler, tokens);
-	}
-	
-	// ============================= input: POSNode[] =============================
-	
-	static public DEPTree getDEPTree(AbstractMPAnalyzer analyzer, AbstractDEPParser parser, POSNode[] nodes)
-	{
-		DEPTree tree = toDEPTree(nodes);
-		analyzer.lemmatize(tree);
-		parser.parse(tree);
-		
-		return tree;
-	}
-	
-	static public DEPTree getDEPTree(AbstractMPAnalyzer analyzer, AbstractDEPParser parser, AbstractPredIdentifier identifier, AbstractSRLabeler labeler, POSNode[] nodes)
-	{
-		DEPTree tree = getDEPTree(analyzer, parser, nodes);
-		predictSRL(identifier, labeler, tree);
-		
-		return tree;
-	}
-	
-	// ============================= process: POSNode[] =============================
-	
-	static public void predictPOS(Pair<POSTagger[],Double> taggers, POSNode[] nodes)
-	{
-		normalizeForms(nodes);
-
-		if (taggers.o1.length == 1 || taggers.o2 < taggers.o1[0].getCosineSimilarity(nodes))
-			taggers.o1[0].tag(nodes);
-		else
-			taggers.o1[1].tag(nodes);
-	}
-	
-	static public void normalizeForms(POSNode[] nodes)
-	{
-		if (!nodes[0].isSimplifiedForm(AbstractReader.DUMMY_TAG))
-			return;
-		
-		for (POSNode node : nodes)
-		{
-			node.simplifiedForm = MPLib.normalizeBasic(node.form);
-			node.lemma = node.simplifiedForm.toLowerCase();
-		}
 	}
 	
 	// ============================= process: DEPTree =============================
@@ -161,21 +70,6 @@ public class EngineProcess
 	}
 	
 	// ============================= predict: SRL =============================
-	
-	static public void predictSRL(AbstractPredIdentifier identifier, AbstractSRLabeler labeler, DEPTree tree)
-	{
-		identifier.identify(tree);
-		tree.initSHeads();
-		labeler.label(tree);	
-	}
-	
-	static public void predictSRL(AbstractPredIdentifier identifier, CRolesetClassifier classifier, AbstractSRLabeler labeler, DEPTree tree)
-	{
-		identifier.identify(tree);
-		classifier.process(tree);
-		tree.initSHeads();
-		labeler.label(tree);	
-	}
 	
 	static public void addVerbNet(PVMap map, DEPTree tree)
 	{
