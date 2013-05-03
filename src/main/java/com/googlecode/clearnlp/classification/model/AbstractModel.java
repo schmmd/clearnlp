@@ -32,7 +32,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
@@ -49,7 +50,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 abstract public class AbstractModel
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	static public String LABEL_TRUE  = "T";
 	static public String LABEL_FALSE = "F";

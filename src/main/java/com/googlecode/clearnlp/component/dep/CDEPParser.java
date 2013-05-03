@@ -26,7 +26,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.IntOpenHashSet;
 import com.googlecode.clearnlp.classification.model.StringModel;
@@ -56,7 +57,7 @@ import com.googlecode.clearnlp.util.triple.Triple;
  */
 public class CDEPParser extends AbstractStatisticalComponent
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	protected final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP + NLPLib.ENTRY_CONFIGURATION;
 	protected final String ENTRY_FEATURE	   = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;

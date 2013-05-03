@@ -31,7 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
@@ -48,7 +49,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class StringModel extends AbstractModel
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	/** The map between features and their indices. */
 	protected Map<String,ObjectIntOpenHashMap<String>> m_features;

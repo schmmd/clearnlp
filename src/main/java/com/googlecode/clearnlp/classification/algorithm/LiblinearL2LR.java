@@ -26,7 +26,8 @@ package com.googlecode.clearnlp.classification.algorithm;
 import java.util.ArrayList;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.googlecode.clearnlp.classification.train.AbstractTrainSpace;
@@ -39,7 +40,7 @@ import com.googlecode.clearnlp.util.UTArray;
  */
 public class LiblinearL2LR extends AbstractLiblinear
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	/**
 	 * Constructs the liblinear L2-regularized logistic regression algorithm.

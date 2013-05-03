@@ -30,7 +30,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
@@ -47,7 +48,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class StringTrainSpace extends AbstractTrainSpace
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	/** Casted from {@likn AbstractTrainSpace#m_model}. */
 	private StringModel s_model;

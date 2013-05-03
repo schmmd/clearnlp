@@ -23,7 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.ObjectIntOpenHashMap;
@@ -43,7 +44,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class ONStringModel extends StringModel
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	/** The weight vector for all labels. */
 	protected List<DoubleArrayList> d_weights;

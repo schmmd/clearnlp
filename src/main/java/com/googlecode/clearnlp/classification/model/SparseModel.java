@@ -27,7 +27,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintStream;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.googlecode.clearnlp.util.UTArray;
 
@@ -39,7 +40,7 @@ import com.googlecode.clearnlp.util.UTArray;
  */
 public class SparseModel extends AbstractModel
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	/** Constructs a sparse model for training. */
 	public SparseModel()

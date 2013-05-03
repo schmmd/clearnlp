@@ -26,7 +26,8 @@ package com.googlecode.clearnlp.classification.train;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.googlecode.clearnlp.classification.model.SparseModel;
 import com.googlecode.clearnlp.classification.vector.SparseFeatureVector;
@@ -40,7 +41,7 @@ import com.googlecode.clearnlp.util.pair.Pair;
  */
 public class SparseTrainSpace extends AbstractTrainSpace
 {
-	private final Logger LOG = Logger.getLogger(this.getClass());
+	private final Logger LOG = LoggerFactory.getLogger(this.getClass());
 	
 	/** Casted from {@likn AbstractTrainSpace#m_model}. */
 	private SparseModel s_model;
