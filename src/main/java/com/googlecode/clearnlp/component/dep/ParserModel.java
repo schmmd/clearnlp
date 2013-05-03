@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package com.googlecode.clearnlp.component;
+package com.googlecode.clearnlp.component.dep;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -34,11 +34,10 @@ import com.googlecode.clearnlp.classification.model.ONStringModel;
 import com.googlecode.clearnlp.classification.model.StringModel;
 import com.googlecode.clearnlp.classification.train.StringTrainSpace;
 import com.googlecode.clearnlp.classification.vector.StringFeatureVector;
-import com.googlecode.clearnlp.component.dep.ParserModel;
-import com.googlecode.clearnlp.dependency.DEPTree;
 import com.googlecode.clearnlp.feature.xml.FtrTemplate;
 import com.googlecode.clearnlp.feature.xml.FtrToken;
 import com.googlecode.clearnlp.feature.xml.JointFtrXml;
+import com.googlecode.clearnlp.nlp.NLPLib;
 import com.googlecode.clearnlp.reader.AbstractColumnReader;
 import com.googlecode.clearnlp.util.UTInput;
 import com.googlecode.clearnlp.util.UTOutput;
@@ -48,72 +47,23 @@ import com.googlecode.clearnlp.util.pair.Pair;
  * @since 1.3.0
  * @author Jinho D. Choi ({@code jdchoi77@gmail.com})
  */
-abstract public class AbstractStatisticalComponent extends AbstractComponent
+abstract public class ParserModel
 {
 	private final Logger LOG = Logger.getLogger(this.getClass());
+
+	protected static final String ENTRY_CONFIGURATION = NLPLib.MODE_DEP + NLPLib.ENTRY_CONFIGURATION;
+	protected static final String ENTRY_FEATURE  = NLPLib.MODE_DEP + NLPLib.ENTRY_FEATURE;
+	protected static final String ENTRY_LEXICA = NLPLib.MODE_DEP + NLPLib.ENTRY_LEXICA;
+	protected static final String ENTRY_MODEL = NLPLib.MODE_DEP + NLPLib.ENTRY_MODEL;
 
 	protected StringTrainSpace[]	s_spaces;
 	protected StringModel[]			s_models;
 	protected JointFtrXml[]			f_xmls;
-	protected DEPTree				d_tree;
-	protected int 					t_size;		// size of d_tree
-
-//	====================================== CONSTRUCTORS ======================================
-
-	public AbstractStatisticalComponent() {}
-
-	/** Constructs a component for collecting lexica. */
-	public AbstractStatisticalComponent(JointFtrXml[] xmls)
-	{
-		i_flag = FLAG_LEXICA;
-		f_xmls = xmls;
-	}
-
-	/** Constructs a component for training. */
-	public AbstractStatisticalComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, Object[] lexica)
-	{
-		i_flag   = FLAG_TRAIN;
-		f_xmls   = xmls;
-		s_spaces = spaces;
-
-		initLexia(lexica);
-	}
-
-	/** Constructs a component for developing. */
-	public AbstractStatisticalComponent(JointFtrXml[] xmls, StringModel[] models, Object[] lexica)
-	{
-		i_flag   = FLAG_DEVELOP;
-		f_xmls   = xmls;
-		s_models = models;
-
-		initLexia(lexica);
-	}
 
 	/** Constructs a component for decoding. */
-	public AbstractStatisticalComponent(ZipInputStream zin)
+	public ParserModel(ZipInputStream zin)
 	{
-		i_flag = FLAG_DECODE;
-
 		loadModels(zin);
-	}
-
-	/** Constructs a component for decoding. */
-	public AbstractStatisticalComponent(ParserModel model)
-	{
-		this(model.getXmls(), model.getModels(), model.getLexica());
-
-		i_flag = FLAG_DECODE;
-	}
-
-	/** Constructs a component for bootstrapping. */
-	public AbstractStatisticalComponent(JointFtrXml[] xmls, StringTrainSpace[] spaces, StringModel[] models, Object[] lexica)
-	{
-		i_flag   = FLAG_BOOTSTRAP;
-		f_xmls   = xmls;
-		s_spaces = spaces;
-		s_models = models;
-
-		initLexia(lexica);
 	}
 
 	/** Initializes lexica used for this component. */
@@ -227,6 +177,11 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	public StringTrainSpace[] getTrainSpaces()
 	{
 		return s_spaces;
+	}
+
+	public JointFtrXml[] getXmls()
+	{
+		return f_xmls;
 	}
 
 	/** @return all models of this joint-components. */
