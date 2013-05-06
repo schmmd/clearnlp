@@ -77,6 +77,9 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	
 //	====================================== CONSTRUCTORS ======================================
 
+    public CDEPPassParser() {
+    }
+
 	/** Constructs a dependency parser for collecting lexica. */
 	public CDEPPassParser(JointFtrXml[] xmls)
 	{
@@ -113,6 +116,17 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	{
 		s_punc = (Set<String>)lexica[LEXICA_PUNCTUATION];
 	}
+
+    public CDEPPassParser threadsafeCopy() {
+        CDEPPassParser parser = new CDEPPassParser();
+        parser.i_flag = this.i_flag;
+        parser.s_spaces = this.s_spaces;
+        parser.s_models = this.s_models;
+        parser.f_xmls = this.f_xmls;
+        parser.p_punc = this.p_punc;
+        parser.s_punc = this.s_punc;
+        return parser;
+    }
 	
 //	====================================== LOAD/SAVE MODELS ======================================
 	

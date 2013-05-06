@@ -56,6 +56,9 @@ abstract public class AbstractStatisticalComponent extends AbstractComponent
 	protected int 					t_size;		// size of d_tree
 	
 //	====================================== CONSTRUCTORS ======================================
+
+    protected AbstractStatisticalComponent () {
+    }
 	
 	/** Constructs a component for collecting lexica. */
 	public AbstractStatisticalComponent(JointFtrXml[] xmls)
