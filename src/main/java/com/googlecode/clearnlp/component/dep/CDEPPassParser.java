@@ -67,13 +67,10 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	protected final String LB_REDUCE	= "R";
 	protected final String LB_PASS		= "P";
 	
-	protected IntOpenHashSet	s_reduce;
 	protected Prob1DMap			p_punc;		// only for collecting
 	protected Set<String>		s_punc;
 	protected StringIntPair[]	g_heads;
-	protected DEPNode[]			lm_deps, rm_deps;
-	protected DEPNode[]			ln_sibs, rn_sibs;
-	protected int				i_lambda, i_beta;
+	
 	
 //	====================================== CONSTRUCTORS ======================================
 
@@ -225,9 +222,20 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 	@Override
 	public void process(DEPTree tree)
 	{
-		init(tree);
-		processAux();
+		State state = new State();
+		state.d_tree = super.d_tree;
+		state.init(tree);
+		state.processAux();
 	}
+	
+	class State {
+	protected IntOpenHashSet	s_reduce;
+	protected DEPNode[]			lm_deps, rm_deps;
+	protected DEPNode[]			ln_sibs, rn_sibs;
+	protected int				i_lambda, i_beta;
+	
+	protected DEPTree				d_tree;
+	protected int 					t_size;		// size of d_tree
 	
 	/** Called by {@link CDEPPassParser#process(DEPTree)}. */
 	protected void init(DEPTree tree)
@@ -588,71 +596,6 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 
 //	================================ FEATURE EXTRACTION ================================
 
-	@Override
-	protected String getField(FtrToken token)
-	{
-		DEPNode node = getNode(token);
-		if (node == null)	return null;
-		Matcher m;
-		
-		if (token.isField(JointFtrXml.F_FORM))
-		{
-			return node.form;
-		}
-		else if (token.isField(JointFtrXml.F_LEMMA))
-		{
-			return node.lemma;
-		}
-		else if (token.isField(JointFtrXml.F_POS))
-		{
-			return node.pos;
-		}
-		else if (token.isField(JointFtrXml.F_DEPREL))
-		{
-			return node.getLabel();
-		}
-		else if (token.isField(JointFtrXml.F_LNPL))
-		{
-			return getLeftNearestPunctuation (0, i_lambda);
-		}
-		else if (token.isField(JointFtrXml.F_RNPL))
-		{
-			return getRightNearestPunctuation(i_lambda, i_beta);
-		}
-		else if (token.isField(JointFtrXml.F_LNPB))
-		{
-			return getLeftNearestPunctuation (i_lambda, i_beta);
-		}
-		else if (token.isField(JointFtrXml.F_RNPB))
-		{
-			return getRightNearestPunctuation(i_beta, d_tree.size());
-		}
-		else if ((m = JointFtrXml.P_BOOLEAN.matcher(token.field)).find())
-		{
-			int field = Integer.parseInt(m.group(1));
-			
-			switch (field)
-			{
-			case  0: return (i_lambda == 1) ? token.field : null;
-			case  1: return (i_beta == t_size-1) ? token.field : null;
-			case  2: return (i_lambda+1 == i_beta) ? token.field : null;
-			case  3: return s_punc.contains(node.form) ? token.field : null;
-			default: throw new IllegalArgumentException("Unsupported feature: "+field);
-			}
-		}
-		else if ((m = JointFtrXml.P_FEAT.matcher(token.field)).find())
-		{
-			return node.getFeat(m.group(1));
-		}
-		
-		return null;
-	}
-	
-	@Override
-	protected String[] getFields(FtrToken token)
-	{
-		return null;
-	}
 	
 	/** Called by {@link CDEPPassParser#getField(FtrToken)}. */
 	private String getLeftNearestPunctuation(int lIdx, int rIdx)
@@ -759,6 +702,19 @@ public class CDEPPassParser extends AbstractStatisticalComponent
 		if (i_lambda < cIndex && cIndex < t_size)
 			return d_tree.get(cIndex);
 		
+		return null;
+	}
+	}
+	
+	@Override
+	protected String getField(FtrToken token)
+	{
+		return null;
+	}
+	
+	@Override
+	protected String[] getFields(FtrToken token)
+	{
 		return null;
 	}
 }
