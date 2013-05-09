@@ -255,6 +255,8 @@ public class CPOSTagger extends AbstractStatisticalComponent
 	protected DEPTree				d_tree;
 	
 	protected int 					i_input;
+
+	protected int 					t_size;		// size of d_tree
 	
 	/** Called by {@link CPOSTagger#process(DEPTree)}. */
 	protected void init(DEPTree tree)
