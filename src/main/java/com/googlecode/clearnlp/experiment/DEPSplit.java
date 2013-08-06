@@ -44,7 +44,7 @@ public class DEPSplit
 		int i;
 		
 		for (i=0; i<fout.length; i++)
-			fout[i] = UTOutput.createPrintBufferedFileStream(args[1]+File.separator+i+".dep");
+			fout[i] = UTOutput.createPrintBufferedFileStream(args[1]+"/"+i+".dep");
 		
 		for (String filename : filelist)
 		{

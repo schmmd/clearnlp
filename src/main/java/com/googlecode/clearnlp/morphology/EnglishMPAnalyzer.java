@@ -53,7 +53,7 @@ public class EnglishMPAnalyzer extends AbstractMPAnalyzer
 {
 	final public String FIELD_DELIM = "_";
 	
-	final String LANG_DIR  = AbstractReader.LANG_EN + File.separator;
+	final String LANG_DIR  = AbstractReader.LANG_EN + "/";
 	final String NOUN_EXC  = LANG_DIR+"noun.exc";
 	final String VERB_EXC  = LANG_DIR+"verb.exc";
 	final String ADJ_EXC   = LANG_DIR+"adj.exc";

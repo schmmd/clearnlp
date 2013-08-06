@@ -50,24 +50,24 @@ public class GenerateOntoNotesCoref
 
 		for (String genre : root.list())
 		{
-			fGenre = new File(root.getAbsolutePath() + File.separator + genre);
+			fGenre = new File(root.getAbsolutePath() + "/" + genre);
 			
 			if (fGenre.isDirectory())
 			{
 				for (String source : fGenre.list())
 				{
-					fSource = new File(fGenre.getAbsolutePath() + File.separator + source);
+					fSource = new File(fGenre.getAbsolutePath() + "/" + source);
 							
 					if (fSource.isDirectory())
 					{
 						for (String section : fSource.list())
 						{
-							fSection = new File(fSource.getAbsolutePath() + File.separator + section);
+							fSection = new File(fSource.getAbsolutePath() + "/" + section);
 							
 							if (fSection.isDirectory())
 							{
 								for (String corpus : fSection.list(new FileExtFilter(ext)))
-									filenames.add(fSection.getAbsolutePath() + File.separator + corpus);
+									filenames.add(fSection.getAbsolutePath() + "/" + corpus);
 							}
 						}
 					}

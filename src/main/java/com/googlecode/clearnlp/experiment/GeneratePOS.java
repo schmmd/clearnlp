@@ -22,7 +22,7 @@ public class GeneratePOS
 		{
 			if (section.isDirectory())
 			{
-				outputFile = outputDir+File.separator+section.getName()+".pos";
+				outputFile = outputDir+"/"+section.getName()+".pos";
 				fout = UTOutput.createPrintBufferedFileStream(outputFile);
 				System.out.println(outputFile);
 				

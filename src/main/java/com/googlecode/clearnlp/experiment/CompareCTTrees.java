@@ -44,7 +44,7 @@ public class CompareCTTrees
 		for (String filename1 : new File(treeDir).list(new FileExtFilter(ext1)))
 		{
 		//	System.out.print(filename1+": ");
-			filename1 = treeDir + File.separator + filename1;
+			filename1 = treeDir + "/" + filename1;
 			filename2 = UTFile.replaceExtension(filename1, ext1, ext2);
 			reader1   = new CTReader(UTInput.createBufferedFileReader(filename1));
 			reader2   = new CTReader(UTInput.createBufferedFileReader(filename2));

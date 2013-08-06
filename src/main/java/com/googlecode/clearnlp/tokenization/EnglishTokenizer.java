@@ -43,7 +43,7 @@ import com.googlecode.clearnlp.util.pair.StringBooleanPair;
  */
 public class EnglishTokenizer extends AbstractTokenizer
 {
-	protected final String F_DIR			= "tokenize"+File.separator;
+	protected final String F_DIR			= "tokenize"+"/";
 	protected final String F_EMOTICONS		= F_DIR+"emoticons.txt";
 	protected final String F_ABBREVIATIONS	= F_DIR+"abbreviations.txt";
 	protected final String F_HYPHENS		= F_DIR+"hyphens.txt";

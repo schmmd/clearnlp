@@ -38,7 +38,7 @@ public class PrintTree
 		String treeFile = args[1];
 		int treeId = Integer.parseInt(args[2]);
 		
-		CTReader reader = new CTReader(UTInput.createBufferedFileReader(treeDir+File.separator+treeFile));
+		CTReader reader = new CTReader(UTInput.createBufferedFileReader(treeDir+"/"+treeFile));
 		CTTree tree = null;
 		int i;
 		

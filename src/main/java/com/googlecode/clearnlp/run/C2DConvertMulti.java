@@ -103,7 +103,7 @@ public class C2DConvertMulti extends AbstractRun
 		if (file.isDirectory())
 		{
 			for (String filePath : file.list())
-				convertRec(c2d, morph, language, inputPath+File.separator+filePath, parseExt, propExt, senseExt, nameExt, outputExt);
+				convertRec(c2d, morph, language, inputPath+"/"+filePath, parseExt, propExt, senseExt, nameExt, outputExt);
 		}
 		else if (inputPath.endsWith(parseExt))
 		{

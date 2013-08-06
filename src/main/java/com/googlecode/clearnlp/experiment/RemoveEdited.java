@@ -27,7 +27,7 @@ public class RemoveEdited
 		if (file.isDirectory())
 		{
 			for (String filePath : file.list())
-				remove(inputPath+File.separator+filePath, parseExt, outputExt);
+				remove(inputPath+"/"+filePath, parseExt, outputExt);
 		}
 		else if (inputPath.endsWith(parseExt))
 		{

@@ -727,7 +727,7 @@ public class PBPostProcess extends AbstractRun
 				if (new File(propPath).exists())
 					System.err.println("Warning: '"+propPath+"' already exists");
 				
-				fout = UTOutput.createPrintBufferedFileStream(treeDir+File.separator+propPath);
+				fout = UTOutput.createPrintBufferedFileStream(treeDir+"/"+propPath);
 			}
 			
 			fout.println(instance.toString());

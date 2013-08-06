@@ -30,9 +30,9 @@ public class TopicAssigner
 		for (String basename : new File(depDir).list(new FileExtFilter("dep.2")))
 		{
 			System.out.println(basename);
-			depFile = depDir + File.separator + basename;
-			tpcFile = tpcDir + File.separator + basename;
-			outFile = depDir + File.separator + basename + ".tpc";
+			depFile = depDir + "/" + basename;
+			tpcFile = tpcDir + "/" + basename;
+			outFile = depDir + "/" + basename + ".tpc";
 			
 			assign(depFile, tpcFile, outFile, threshold);
 		}

@@ -484,7 +484,7 @@ abstract public class AbstractRun
 		{
 			for (String inputFile : f.list(new FileExtFilter(inputExt)))
 			{
-				inputFile  = inputPath + File.separator + inputFile;
+				inputFile  = inputPath + "/" + inputFile;
 				outputFile = inputFile + "." + outputExt;
 				filenames.add(new String[]{inputFile, outputFile});
 			}

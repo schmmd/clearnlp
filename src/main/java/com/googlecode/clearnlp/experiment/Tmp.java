@@ -468,7 +468,7 @@ public class Tmp
 		}
 		
 		for (i=0; i<size; i++)
-			print(outputDir+File.separator+NAMES[i], maps[i]);
+			print(outputDir+"/"+NAMES[i], maps[i]);
 	}
 	
 	void print(String outputFile, Prob1DMap map)
@@ -565,7 +565,7 @@ public class Tmp
 		{
 			for (String inputFile : f.list(new FileExtFilter(inputExt)))
 			{
-				inputFile  = inputPath + File.separator + inputFile;
+				inputFile  = inputPath + "/" + inputFile;
 				outputFile = inputFile + "." + outputExt;
 				filenames.add(new String[]{inputFile, outputFile});
 			}

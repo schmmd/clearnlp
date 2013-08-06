@@ -140,9 +140,9 @@ public class SemlinkToOntoNotes
 			
 			if (!semPath.equals(tmp[0]))
 			{
-				ontoPath = UTFile.replaceExtension("nw"+File.separator+tmp[0], "parse");
+				ontoPath = UTFile.replaceExtension("nw"+"/"+tmp[0], "parse");
 				
-				if (!new File(ontoDir+File.separator+ontoPath).exists())
+				if (!new File(ontoDir+"/"+ontoPath).exists())
 				{
 					skipPaths.add(tmp[0]);
 					continue;
@@ -154,8 +154,8 @@ public class SemlinkToOntoNotes
 				reader1.close();
 				reader2.close();
 				
-				reader1.open(UTInput.createBufferedFileReader(ontoDir+File.separator+ontoPath));
-				reader2.open(UTInput.createBufferedFileReader(semDir +File.separator+semPath));
+				reader1.open(UTInput.createBufferedFileReader(ontoDir+"/"+ontoPath));
+				reader2.open(UTInput.createBufferedFileReader(semDir +"/"+semPath));
 			}
 			
 			treeId = Integer.parseInt(tmp[1]);

@@ -74,8 +74,8 @@ public class ECNormalize extends AbstractRun
 		File dir = new File(outputPath);
 		if (!dir.exists())	dir.mkdirs();
 		
-		inputPath  += File.separator;
-		outputPath += File.separator;
+		inputPath  += "/";
+		outputPath += "/";
 		
 		String inputFile, outputFile;
 		

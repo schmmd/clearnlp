@@ -21,7 +21,7 @@ public class CheckMentions
 		for (String filename : file.list())
 		{
 			if (!filename.endsWith("c"))	continue;
-			reader.open(UTInput.createBufferedFileReader(inDir+File.separator+filename));
+			reader.open(UTInput.createBufferedFileReader(inDir+"/"+filename));
 			System.out.println(filename);
 			
 			while ((tree = reader.next()) != null)

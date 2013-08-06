@@ -78,7 +78,7 @@ public class UTFile
 	 */
 	static public String getBasename(String filepath)
 	{
-		int idx = filepath.lastIndexOf(File.separator);
+		int idx = filepath.lastIndexOf("/");
 		return filepath.substring(idx+1);
 	}
 	
@@ -105,7 +105,7 @@ public class UTFile
 		
 		for (String filepath : new File(fileDir).list(new FileExtFilter(fileExt)))
 		{
-			filepath = fileDir + File.separator + filepath;
+			filepath = fileDir + "/" + filepath;
 			
 			if (new File(filepath).isFile())
 				list.add(filepath);
@@ -125,7 +125,7 @@ public class UTFile
 		
 		for (String filepath : new File(fileDir).list(new FileExtFilter(fileExt)))
 		{
-			filepath = fileDir + File.separator + filepath;
+			filepath = fileDir + "/" + filepath;
 			file = new File(filepath);
 			
 			if (file.isFile())

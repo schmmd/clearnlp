@@ -77,8 +77,8 @@ public class CT2POS extends AbstractRun
 		File dir = new File(outputDir);
 		if (!dir.exists())	dir.mkdirs();
 		
-		inputDir  += File.separator;
-		outputDir += File.separator;
+		inputDir  += "/";
+		outputDir += "/";
 		
 		for (String filename : new File(inputDir).list(new FileExtFilter(extension)))
 		{

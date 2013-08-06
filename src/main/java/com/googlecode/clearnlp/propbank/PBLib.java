@@ -111,7 +111,7 @@ public class PBLib
 				treeFile = instance.treePath;
 				treeId   = -1;
 				reader.close();
-				reader.open(UTInput.createBufferedFileReader(treeDir+File.separator+treeFile));
+				reader.open(UTInput.createBufferedFileReader(treeDir+"/"+treeFile));
 			}
 			
 			for (; treeId < instance.treeId; treeId++)

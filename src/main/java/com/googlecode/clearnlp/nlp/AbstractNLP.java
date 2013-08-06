@@ -153,7 +153,7 @@ abstract public class AbstractNLP
 			
 			for (String inputFile : inputFiles)
 			{
-				inputFile  = inputPath + File.separator + inputFile;
+				inputFile  = inputPath + "/" + inputFile;
 				outputFile = inputFile + "." + outputExt;
 				filenames.add(new String[]{inputFile, outputFile});
 			}

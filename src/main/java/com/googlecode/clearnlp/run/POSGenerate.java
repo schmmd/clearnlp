@@ -58,7 +58,7 @@ public class POSGenerate extends POSTrain
 		for (devId=0; devId<size; devId++)
 		{
 			devFile = trnFiles[devId];
-			devFile = devFile.substring(devFile.lastIndexOf(File.separator)+1);
+			devFile = devFile.substring(devFile.lastIndexOf("/")+1);
 			
 			System.out.println("Cross validation: "+devFile);
 			
@@ -67,7 +67,7 @@ public class POSGenerate extends POSTrain
 			else
 				taggers.o1 = new POSTagger[]{getTrainedTagger(eConfig, reader, xml, trnFiles, devId, FLAG_GENERAL)};
 			
-			p.predict(taggers, reader, trnFiles[devId], s_trainDir+File.separator+devFile+".tagged");
+			p.predict(taggers, reader, trnFiles[devId], s_trainDir+"/"+devFile+".tagged");
 		}
 	}
 	

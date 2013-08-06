@@ -105,7 +105,7 @@ public class PVMap extends HashMap<String,PVVerb>
 			
 			for (String framesetFile : filelist)
 			{
-				doc       = builder.parse(new FileInputStream(framesetDir+File.separator+framesetFile));
+				doc       = builder.parse(new FileInputStream(framesetDir+"/"+framesetFile));
 				eFrameset = (Element)doc.getElementsByTagName(PVMap.E_FRAMESET).item(0);
 				lemma     = framesetFile.substring(0, framesetFile.length()-VERB_EXT.length());
 				pvVerb    = new PVVerb(eFrameset, lemma, false);
